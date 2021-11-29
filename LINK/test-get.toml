@@ -1,0 +1,9 @@
+type = "webhook"
+schemaVersion = 1
+name = "TestMoralisConnection"
+externalJobID = "fbf85a90-cbdc-42d6-874e-78edfefaad6b"
+observationSource = """
+fetch        [type=bridge name="liminallocalhost" requestData="{\\"id\\":$(jobSpec.externalJobID), \\"data\\":{\\"accountId\\":\\"abc\\", \\"symbol\\":\\"MSFT\\", \\"amount\\":\\"100\\"}}"]
+
+    fetch
+"""

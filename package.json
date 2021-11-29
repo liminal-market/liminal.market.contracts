@@ -1,0 +1,41 @@
+{
+  "name": "hardhat-project",
+  "devDependencies": {
+    "@ethereum-waffle/provider": "^3.4.0",
+    "@nomiclabs/buidler": "^1.4.8",
+    "@nomiclabs/hardhat-ethers": "^2.0.2",
+    "@nomiclabs/hardhat-etherscan": "^2.1.8",
+    "@nomiclabs/hardhat-waffle": "^2.0.1",
+    "@typechain/ethers-v5": "^8.0.5",
+    "@typechain/hardhat": "^3.0.0",
+    "@types/chai": "^4.2.22",
+    "@types/chai-as-promised": "^7.1.4",
+    "@types/mocha": "^9.0.0",
+    "@types/node": "^16.11.10",
+    "chai": "^4.3.4",
+    "ethereum-waffle": "^3.4.0",
+    "ethers": "^5.4.7",
+    "hardhat": "^2.7.0",
+    "hardhat-gas-reporter": "^1.0.4",
+    "solidity-coverage": "^0.7.17",
+    "ts-node": "^10.4.0",
+    "typechain": "^6.0.4",
+    "typescript": "^4.5.2"
+  },
+  "dependencies": {
+    "@chainlink/contracts": "^0.2.2",
+    "@defi-wonderland/smock": "^2.0.7",
+    "@openzeppelin/contracts": "^4.4.0",
+    "@openzeppelin/contracts-upgradeable": "^4.4.0",
+    "chai-as-promised": "^7.1.1",
+    "dotenv": "^10.0.0",
+    "hardhat-dependency-compiler": "^1.1.2",
+    "moralis": "0.0.124",
+    "react": "^17.0.2",
+    "react-dom": "^17.0.2",
+    "react-moralis": "^0.2.8"
+  },
+  "scripts": {
+    "tests": "ts-node --require ts-node/register test/**/*.ts"
+  }
+}

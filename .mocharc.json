@@ -1,0 +1,16 @@
+{
+	"diff": true,
+	"extension": ["ts", "js", "cjs", "mjs"],
+	"package": "./package.json",
+	"reporter": "spec",
+	"slow": "75",
+	"timeout": "20000",
+	"ui": "bdd",
+	"watch-files": ["lib/**/*.js", "test/**/*.js", "test/**/*.ts", "test/*.ts"],
+	"watch-ignore": ["lib/vendor"],
+	"require": ["ts-node/register", "hardhat/register"],
+	"files": ["test/**/*.ts", "test/*.ts"],
+	"scripts": {
+		"tests": "ts-node --require ts-node/register test/**/*.ts"
+	}
+}
