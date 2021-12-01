@@ -29,12 +29,10 @@ const linkTokenAddress = '0x01BE23585060835E02B77ef475b0Cc51aA1e0709'; //'0xa360
 const usdcContractAddress = '0x4DBCdF9B62e891a7cec5A2568C3F4FAF9E8Abe2b'; // '0xe22da380ee6B445bb8273C81944ADEB6E8450422'; //kovan - 0x4DBCdF9B62e891a7cec5A2568C3F4FAF9E8Abe2b rinkeby
 const liminalBackendAddress = '0xa22610E72cF86f3ef1a2A1f34D89f9E5B0EFc0AA'; //'0x90f79bf6eb2c4f870365e785982e1f101e93b906'; local
 //funding addresses
-const fromDAIAddress = '0x38720D56899d46cAD253d08f7cD6CC89d2c83190';
+
 //const fromUSDCAddress = '0x50b42514389F25E1f471C8F03f6f5954df0204b0'; //main net
 const fromUSDCAddress = '0xAb6424ece567043d09DB011d7075fd83616EFd93' //rinkeby '0x99fd75645b30870071909c261a660bfe9d90b267'; //kovan
-const fromAddress = fromDAIAddress;
-const CONTRACT_ADDRESS = DAI_ADDRESS;
-const CONTRACT_ABI = DAI_ABI;
+
 
 const deployContract = async function (href: any, contractName: string, regen: boolean, preexistingAddress: string, conArgs?: any[]) {
 
@@ -284,38 +282,6 @@ task('getlink', 'gets LINK token', async (taskArgs, hre) => {
 });
 
 
-
-task("getdai", "get some dai", async (taskArgs, hre) => {
-
-  await hre.network.provider.send("hardhat_impersonateAccount", [fromAddress])
-  const signer = await hre.ethers.getSigner(fromAddress);
-  const contract = new hre.ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, signer);
-
-  let balance = await contract.balanceOf(fromAddress);
-  console.log('balance:', hre.ethers.utils.formatUnits(balance, 18));
-
-  const result = await contract.connect(signer).transfer(liminalUserAdress, balance)
-    .then(async (transaction: any) => {
-      console.log("Transaction:", transaction);
-
-    }).finally((ble: any) => {
-      //console.log('finally', ble);
-    });
-
-  const accountBalance = await contract.balanceOf(liminalUserAdress)
-  var ble = process.env.PRIVATE_KEY;
-  console.log("funded account balance", accountBalance / 1e6)
-  const whaleBalanceAfter = await contract.balanceOf(fromAddress);
-
-  console.log("whale balance after", whaleBalanceAfter / 1e6)
-
-  const stopImpersinateResult = await hre.network.provider.request({
-    method: "hardhat_stopImpersonatingAccount",
-    params: [fromAddress],
-  });
-  console.log(6, stopImpersinateResult);
-
-});
 
 const getPrivateKey = function () {
   return process.env.PRIVATE_KEY;

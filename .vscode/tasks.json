@@ -1,0 +1,22 @@
+{
+	// See https://go.microsoft.com/fwlink/?LinkId=733558
+	// for the documentation about the tasks.json format
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "local eth",
+			"type": "shell",
+			"command": "npx hardhat node --network hardhat --verbose --show-stack-traces"
+		},
+		{
+			"label": "deploy contracts",
+			"type": "shell",
+			"command": "npx hardhat cd --network hardhat --show-stack-traces"
+		},
+		{
+			"label": "fund usdc",
+			"type": "shell",
+			"command": "npx hardhat getusdc --network hardhat --show-stack-traces"
+		}
+	]
+}
