@@ -40,6 +40,7 @@ console.log("kycAccount", kycAccount[msg.sender].accountId);
 	function isValid(address userAddress) public view returns (string memory) {
 		//TODO: Remove this, this is hardhat test wallet #1
 		if (userAddress == 0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266) return "aee548b2-b250-449c-8d0b-937b0b87ccef";
+		if (userAddress == 0x93DA645082493BBd7116fC057c5b9aDfd5363912) return "aee548b2-b250-449c-8d0b-937b0b87ccef";
 console.log("KYC isValid is called");
 		AccountValidation memory account = kycAccount[userAddress];
 

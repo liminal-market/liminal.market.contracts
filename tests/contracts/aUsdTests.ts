@@ -4,8 +4,8 @@ import chaiAsPromised from 'chai-as-promised';
 import { solidity } from "ethereum-waffle";
 
 import { Wallet } from 'ethers';
-import ContractJson from "../artifacts/contracts/aUSD.sol/aUSD.json";
-import { AUSD }from '../typechain-types/AUSD';
+import ContractJson from "../../artifacts/contracts/aUSD.sol/aUSD.json";
+import { AUSD }from '../../typechain-types/AUSD';
 import { deployContract } from 'ethereum-waffle';
 
 
