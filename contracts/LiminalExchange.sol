@@ -113,7 +113,7 @@ contract LiminalExchange is Ownable {
         SecurityFactory sf = SecurityFactory(securityFactoryAddress);
         address securityTokenAddress = sf.getSecurityToken(symbol);
         if (securityTokenAddress == address(0)) {
-            securityTokenAddress = sf.createToken("Liminal symbol", symbol);
+            securityTokenAddress = sf.createToken("Liminal.market symbol", symbol);
         }
 
         emit Bought(

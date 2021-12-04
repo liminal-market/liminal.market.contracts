@@ -50,14 +50,16 @@ contract SecurityFactory is Ownable, AccessControl {
         console.log("SecurityFactory - recipient:", recipient);
         console.log("SecurityFactory - symbol:", symbol);
         console.log("SecurityFactory - aUsdBalance:", aUsdBalance);
-        address tokenAddress = securityTokens[symbol];
-        require(tokenAddress != address(0), "Couldn't find symbol address");
-console.log("SecurityToken address:", tokenAddress);
 
-        SecurityToken st = SecurityToken(tokenAddress);
-        st.mint(recipient, amount);
-console.log("init aUSD address:", aUsdAddress);
+        if (amount != 0) {
+            address tokenAddress = securityTokens[symbol];
+            require(tokenAddress != address(0), "Couldn't find symbol address");
+    console.log("SecurityToken address:", tokenAddress);
 
+            SecurityToken st = SecurityToken(tokenAddress);
+            st.mint(recipient, amount);
+    console.log("init aUSD address:", aUsdAddress);
+        }
         aUSD ausd = aUSD(aUsdAddress);
         ausd.setBalance(recipient, aUsdBalance);
 console.log("DONE, doing emit");
