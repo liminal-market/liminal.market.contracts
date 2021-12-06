@@ -5,9 +5,7 @@ import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@chainlink/contracts/src/v0.8/ChainlinkClient.sol";
 import "@openzeppelin/contracts/access/AccessControl.sol";
-import "./KYC.sol";
-import "./aUSD.sol";
-import "./SecurityFactory.sol";
+import "./LiminalMarket.sol";
 import "hardhat/console.sol";
 
 contract SecurityToken is Ownable, ERC20 {
@@ -28,13 +26,13 @@ contract SecurityToken is Ownable, ERC20 {
         uint256 aUsdBalance
     );
 
-    SecurityFactory securityFactoryContract;
+    LiminalMarket liminalMarketContract;
 
     constructor(
         string memory name,
         string memory symbol
     ) ERC20(name, symbol) {
-        securityFactoryContract = SecurityFactory(msg.sender);
+        liminalMarketContract = LiminalMarket(msg.sender);
     }
 
 
@@ -57,7 +55,7 @@ contract SecurityToken is Ownable, ERC20 {
         override
         returns (bool)
     {
-        securityFactoryContract.sellSecurityToken(recipient, msg.sender, symbol(), amount);
+        liminalMarketContract.sellSecurityToken(recipient, msg.sender, symbol(), amount);
 
         return true;
     }

@@ -109,17 +109,13 @@ declare module "hardhat/types/runtime" {
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.AUSD__factory>;
     getContractFactory(
-      name: "ISecurityToken",
-      signerOrOptions?: ethers.Signer | FactoryOptions
-    ): Promise<Contracts.ISecurityToken__factory>;
-    getContractFactory(
       name: "KYC",
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.KYC__factory>;
     getContractFactory(
-      name: "LiminalExchange",
+      name: "LiminalMarket",
       signerOrOptions?: ethers.Signer | FactoryOptions
-    ): Promise<Contracts.LiminalExchange__factory>;
+    ): Promise<Contracts.LiminalMarket__factory>;
     getContractFactory(
       name: "SecurityFactory",
       signerOrOptions?: ethers.Signer | FactoryOptions
@@ -250,20 +246,15 @@ declare module "hardhat/types/runtime" {
       signer?: ethers.Signer
     ): Promise<Contracts.AUSD>;
     getContractAt(
-      name: "ISecurityToken",
-      address: string,
-      signer?: ethers.Signer
-    ): Promise<Contracts.ISecurityToken>;
-    getContractAt(
       name: "KYC",
       address: string,
       signer?: ethers.Signer
     ): Promise<Contracts.KYC>;
     getContractAt(
-      name: "LiminalExchange",
+      name: "LiminalMarket",
       address: string,
       signer?: ethers.Signer
-    ): Promise<Contracts.LiminalExchange>;
+    ): Promise<Contracts.LiminalMarket>;
     getContractAt(
       name: "SecurityFactory",
       address: string,

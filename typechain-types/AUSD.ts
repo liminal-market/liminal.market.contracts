@@ -366,7 +366,7 @@ export interface AUSD extends BaseContract {
     ): Promise<ContractTransaction>;
 
     setAddresses(
-      _securityFactoryAddress: string,
+      _liminalMarketContract: string,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<ContractTransaction>;
 
@@ -476,7 +476,7 @@ export interface AUSD extends BaseContract {
   ): Promise<ContractTransaction>;
 
   setAddresses(
-    _securityFactoryAddress: string,
+    _liminalMarketContract: string,
     overrides?: Overrides & { from?: string | Promise<string> }
   ): Promise<ContractTransaction>;
 
@@ -584,7 +584,7 @@ export interface AUSD extends BaseContract {
     ): Promise<void>;
 
     setAddresses(
-      _securityFactoryAddress: string,
+      _liminalMarketContract: string,
       overrides?: CallOverrides
     ): Promise<void>;
 
@@ -770,7 +770,7 @@ export interface AUSD extends BaseContract {
     ): Promise<BigNumber>;
 
     setAddresses(
-      _securityFactoryAddress: string,
+      _liminalMarketContract: string,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<BigNumber>;
 
@@ -889,7 +889,7 @@ export interface AUSD extends BaseContract {
     ): Promise<PopulatedTransaction>;
 
     setAddresses(
-      _securityFactoryAddress: string,
+      _liminalMarketContract: string,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<PopulatedTransaction>;
 

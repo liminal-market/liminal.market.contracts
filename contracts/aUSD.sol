@@ -5,11 +5,11 @@ import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/access/AccessControl.sol";
 import "hardhat/console.sol";
-import "./SecurityFactory.sol";
+import "./LiminalMarket.sol";
 
 contract aUSD is ERC20, Ownable, AccessControl {
 
-    SecurityFactory securityFactoryAddress;
+    LiminalMarket liminalMarketContract;
 
     bytes32 public constant SET_BALANCE = keccak256("SET_BALANCE");
     event BalanceSet(address recipient, uint256 amount);
@@ -22,8 +22,8 @@ contract aUSD is ERC20, Ownable, AccessControl {
         _setupRole(SET_BALANCE, msg.sender);
     }
 
-    function setAddresses(address payable _securityFactoryAddress) public onlyOwner {
-        securityFactoryAddress = SecurityFactory(_securityFactoryAddress);
+    function setAddresses(address payable _liminalMarketContract) public onlyOwner {
+        liminalMarketContract = LiminalMarket(_liminalMarketContract);
     }
 
     function grantRoleForBalance(address recipient) public onlyOwner {
@@ -55,7 +55,7 @@ contract aUSD is ERC20, Ownable, AccessControl {
         override
         returns (bool)
     {
-		return securityFactoryAddress.buyWithAUsd(msg.sender, recipient, amount);
+		return liminalMarketContract.buyWithAUsd(msg.sender, recipient, amount);
 	}
 
     function allowance(address, address)

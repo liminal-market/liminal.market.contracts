@@ -5,8 +5,10 @@ import "hardhat/console.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/access/AccessControl.sol";
 import "./SecurityToken.sol";
+import "./aUSD.sol";
+import "./KYC.sol";
 
-contract SecurityFactory is Ownable, AccessControl {
+contract LiminalMarket is Ownable, AccessControl {
 
     aUSD public aUsdContract;
     KYC public kycContract;
