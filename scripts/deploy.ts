@@ -12,9 +12,9 @@ export const compileAndDeploy = async function(hre : any) {
   const redeployAUSD = true;
   const redeployLiminalMarket = true;
 
-  const oracleContract = await deployContract(hre, "Oracle", redeployOracle,
+  /*const oracleContract = await deployContract(hre, "Oracle", redeployOracle,
     "0xd1d50299505DE6C56e564E15eeF88CcA3b168832", [contractInfo.linkTokenAddress]);
-
+*/
   const kycContract = await deployContract(hre, "KYC", redeployKYC,
     "0xD5f071F2D8BF6E7d6BC25A1D89e9b1430AC78A58");
   const aUsdContract = await deployContract(hre, "aUSD", redeployAUSD,
