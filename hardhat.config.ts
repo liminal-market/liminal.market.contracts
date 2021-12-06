@@ -8,7 +8,7 @@ import "hardhat-gas-reporter";
 import "solidity-coverage";
 
 
-import {compileAndDeploy} from './scripts/deploy';
+import {compileAndDeploy, grantRole} from './scripts/deploy';
 import {fundLink, fundUSDC} from './scripts/funding';
 
 const result = dotenv.config();
@@ -31,6 +31,10 @@ task("d", "", async (taskArgs, hre) => {
   console.log(hre.network.name)
 
 });
+
+task('giverole', '', async (taskArgs, hre) => {
+  await grantRole(hre);
+})
 
 task('cd', 'compiles and deploys', async (taskArgs, hre) => {
   await compileAndDeploy(hre);

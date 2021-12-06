@@ -29,39 +29,26 @@ contract SecurityToken is Ownable, ERC20 {
     );
 
     SecurityFactory securityFactoryContract;
-    KYC kycContract;
 
     constructor(
         string memory name,
-        string memory symbol,
-        KYC _kycContract,
-        SecurityFactory _securityFactoryContract
+        string memory symbol
     ) ERC20(name, symbol) {
-        kycContract = _kycContract;
-        securityFactoryContract = _securityFactoryContract;
+        securityFactoryContract = SecurityFactory(msg.sender);
     }
 
 
-    function mint(address recipient, uint256 amount) public {
-        require(msg.sender == owner(), "You don't have permission to mint");
-console.log("SecurityToken - balanceBefore:", balanceOf(recipient));
+    function mint(address recipient, uint256 amount) public onlyOwner {
         _mint(recipient, amount);
-console.log("SecurityToken - recipient:", recipient);
-console.log("SecurityToken - amount:", amount);
-console.log("SecurityToken - symbol:", symbol());
-console.log("SecurityToken - balanceAfter:", balanceOf(recipient));
 
         emit Mint(recipient, amount, symbol(), balanceOf(recipient));
     }
       //should be called by Chainlink
-    function burn(/*bytes32,*/ address account, uint256 amount) public {
-        require(msg.sender == owner(), "You don't have permission");
-
+    function burn(/*bytes32,*/ address account, uint256 amount) public onlyOwner {
         uint balance = balanceOf(account);
         if (balance < amount) amount = balance;
 
         _burn(account, amount);
-
     }
 
     function transfer(address recipient, uint256 amount)
@@ -70,11 +57,7 @@ console.log("SecurityToken - balanceAfter:", balanceOf(recipient));
         override
         returns (bool)
     {
-        require(recipient == owner(), "V0.1 doesn't support transfer");
-
-        string memory accountId = kycContract.isValid(msg.sender);
-
-        securityFactoryContract.sellSecurityToken(accountId, recipient, msg.sender, symbol(), amount);
+        securityFactoryContract.sellSecurityToken(recipient, msg.sender, symbol(), amount);
 
         return true;
     }

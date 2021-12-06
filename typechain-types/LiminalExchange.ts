@@ -9,7 +9,6 @@ import {
   CallOverrides,
   ContractTransaction,
   Overrides,
-  PayableOverrides,
   PopulatedTransaction,
   Signer,
   utils,
@@ -21,7 +20,6 @@ import { TypedEventFilter, TypedEvent, TypedListener, OnEvent } from "./common";
 export interface LiminalExchangeInterface extends utils.Interface {
   functions: {
     "aUSDAddress()": FunctionFragment;
-    "buy(string,uint256)": FunctionFragment;
     "buyWithAUsd(address,address,uint256)": FunctionFragment;
     "calculateFee(uint256)": FunctionFragment;
     "kycAddress()": FunctionFragment;
@@ -38,10 +36,6 @@ export interface LiminalExchangeInterface extends utils.Interface {
   encodeFunctionData(
     functionFragment: "aUSDAddress",
     values?: undefined
-  ): string;
-  encodeFunctionData(
-    functionFragment: "buy",
-    values: [string, BigNumberish]
   ): string;
   encodeFunctionData(
     functionFragment: "buyWithAUsd",
@@ -89,7 +83,6 @@ export interface LiminalExchangeInterface extends utils.Interface {
     functionFragment: "aUSDAddress",
     data: BytesLike
   ): Result;
-  decodeFunctionResult(functionFragment: "buy", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "buyWithAUsd",
     data: BytesLike
@@ -188,12 +181,6 @@ export interface LiminalExchange extends BaseContract {
   functions: {
     aUSDAddress(overrides?: CallOverrides): Promise<[string]>;
 
-    buy(
-      symbol: string,
-      amount: BigNumberish,
-      overrides?: PayableOverrides & { from?: string | Promise<string> }
-    ): Promise<ContractTransaction>;
-
     buyWithAUsd(
       from: string,
       recipient: string,
@@ -232,12 +219,6 @@ export interface LiminalExchange extends BaseContract {
 
   aUSDAddress(overrides?: CallOverrides): Promise<string>;
 
-  buy(
-    symbol: string,
-    amount: BigNumberish,
-    overrides?: PayableOverrides & { from?: string | Promise<string> }
-  ): Promise<ContractTransaction>;
-
   buyWithAUsd(
     from: string,
     recipient: string,
@@ -275,12 +256,6 @@ export interface LiminalExchange extends BaseContract {
 
   callStatic: {
     aUSDAddress(overrides?: CallOverrides): Promise<string>;
-
-    buy(
-      symbol: string,
-      amount: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<boolean>;
 
     buyWithAUsd(
       from: string,
@@ -345,12 +320,6 @@ export interface LiminalExchange extends BaseContract {
   estimateGas: {
     aUSDAddress(overrides?: CallOverrides): Promise<BigNumber>;
 
-    buy(
-      symbol: string,
-      amount: BigNumberish,
-      overrides?: PayableOverrides & { from?: string | Promise<string> }
-    ): Promise<BigNumber>;
-
     buyWithAUsd(
       from: string,
       recipient: string,
@@ -389,12 +358,6 @@ export interface LiminalExchange extends BaseContract {
 
   populateTransaction: {
     aUSDAddress(overrides?: CallOverrides): Promise<PopulatedTransaction>;
-
-    buy(
-      symbol: string,
-      amount: BigNumberish,
-      overrides?: PayableOverrides & { from?: string | Promise<string> }
-    ): Promise<PopulatedTransaction>;
 
     buyWithAUsd(
       from: string,

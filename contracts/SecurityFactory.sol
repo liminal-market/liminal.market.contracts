@@ -5,25 +5,26 @@ import "hardhat/console.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/access/AccessControl.sol";
 import "./SecurityToken.sol";
-import "./ISecurityToken.sol";
 
 contract SecurityFactory is Ownable, AccessControl {
 
-    address public aUsdAddress;
-    address public kycAddress;
+    aUSD public aUsdContract;
+    KYC public kycContract;
     mapping(string => address) public securityTokens;
 
    bytes32 public constant MINT_AND_BURN_ROLE = keccak256("BURN");
 
-	constructor(address _aUsdAddress, address _kycAddress) Ownable() {
-        aUsdAddress = _aUsdAddress;
-        kycAddress = _kycAddress;
+	constructor(aUSD _aUsdContract, KYC _kycContract) Ownable() {
+        aUsdContract = _aUsdContract;
+        kycContract =  _kycContract;
 
         _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
         _setupRole(MINT_AND_BURN_ROLE, msg.sender);
 	}
 
     event TokenCreated(address tokenAddress, string symbol);
+
+    event BoughtWithAUsd(address userAddress, uint amount, string accountId, string symbol, address tokenAddress);
 
     event SellSecurityToken(string accountId, address recipient,
                             address sender, string symbol, uint amount);
@@ -34,8 +35,37 @@ contract SecurityFactory is Ownable, AccessControl {
 		return securityTokens[symbol];
 	}
 
+    function buyWithAUsd(address userAddress, address tokenAddress, uint256 amount) public returns (bool) {
+        uint256 ausdBalance = aUsdContract.balanceOf(userAddress);
+        require(ausdBalance >= amount, "You don't have enough USDC");
 
-    function sellSecurityToken(string memory accountId, address recipient, address sender, string memory symbol, uint amount) public {
+        string memory accountId = kycContract.isValid(userAddress);
+
+        aUsdContract.setBalance(userAddress, ausdBalance - amount);
+console.log("Token address:", tokenAddress);
+        SecurityToken securityToken = SecurityToken(tokenAddress);
+        string memory symbol = securityToken.symbol();
+
+        emit BoughtWithAUsd(
+            userAddress,
+            amount,
+            accountId,
+            symbol,
+            tokenAddress
+        );
+
+        return true;
+
+    }
+
+    function sellSecurityToken(address recipient, address sender, string memory symbol, uint amount) public {
+        require(recipient == address(this), "V0.1 doesn't support transfer");
+
+        string memory accountId = kycContract.isValid(sender);
+
+        SecurityToken token = SecurityToken(msg.sender);
+        token.burn(sender, amount);
+
         emit SellSecurityToken(accountId, recipient, sender, symbol, amount);
     }
 
@@ -58,10 +88,9 @@ contract SecurityFactory is Ownable, AccessControl {
 
             SecurityToken st = SecurityToken(tokenAddress);
             st.mint(recipient, amount);
-    console.log("init aUSD address:", aUsdAddress);
         }
-        aUSD ausd = aUSD(aUsdAddress);
-        ausd.setBalance(recipient, aUsdBalance);
+
+        aUsdContract.setBalance(recipient, aUsdBalance);
 console.log("DONE, doing emit");
         emit BoughtSecurityToken(symbol, recipient, amount, aUsdBalance);
     }
@@ -75,15 +104,14 @@ console.log("DONE, doing emit");
         SecurityToken st = SecurityToken(tokenAddress);
         st.burn(recipient, amount);
 
-        aUSD ausd = aUSD(aUsdAddress);
-        ausd.setBalance(recipient, aUsdBalance);
+        aUsdContract.setBalance(recipient, aUsdBalance);
     }
 
-    function createToken(string memory name, string memory symbol) external payable returns (address) {
+    function createToken(string memory symbol) external payable returns (address) {
         require(bytes(symbol).length != 0, "Symbol cannot be empty");
         require(securityTokens[symbol] == address(0), "Security token already exists");
 
-		bytes memory byteCode = getBytecode(name, symbol, address(this));
+		bytes memory byteCode = getBytecode("Liminal.market symbol", symbol, address(this));
 		uint256 salt = 7895324854327894;
 
         address token = getAddress(byteCode, salt);
@@ -100,10 +128,10 @@ console.log("DONE, doing emit");
     // 1. Get bytecode of contract to be deployed
     // NOTE: _owner and _foo are arguments of the TestContract's constructor
     function getBytecode(string memory name, string memory symbol, address factoryAddress)
-                private view returns (bytes memory) {
+                private pure returns (bytes memory) {
         bytes memory bytecode = type(SecurityToken).creationCode;
 
-        return abi.encodePacked(bytecode, abi.encode(name, symbol, kycAddress, factoryAddress));
+        return abi.encodePacked(bytecode, abi.encode(name, symbol, factoryAddress));
     }
 
     // 2. Compute the address of the contract to be deployed

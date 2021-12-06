@@ -1,14 +1,13 @@
 import * as fs from 'fs';
 
 
-export const writeContractAddressesToJs = async function (href: any, liminalAddress: string, kycAddress: string,
+export const writeContractAddressesToJs = async function (href: any, kycAddress: string,
 	aUsdAddress: string, securityFactoryAddress: string, usdcContractAddress: string) {
 
 	let networkName = (href.network.name == 'hardhat') ? 'localhost' : href.network.name;
 	let constantFile = 'export const ' + networkName + 'ContractAddresses = function() {\n\n';
 
 	constantFile += '\tthis.KYC_ADDRESS = "' + kycAddress + '";\n';
-	constantFile += '\tthis.LIMINAL_ADDRESS = "' + liminalAddress + '";\n';
 	constantFile += '\tthis.AUSD_ADDRESS = "' + aUsdAddress + '";\n';
 	constantFile += '\tthis.SECURITY_FACTORY_ADDRESS = "' + securityFactoryAddress + '";\n';
 	constantFile += '\tthis.SECURITY_TOKEN_OWNER = "' + securityFactoryAddress + '";\n';
@@ -17,13 +16,20 @@ export const writeContractAddressesToJs = async function (href: any, liminalAddr
 
 	await fs.writeFileSync('../liminal.market.web/app/js/contracts/' + networkName + '-contract-addresses.js', constantFile, 'utf-8');
 
-	copyAbiFile('LiminalExchange');
 	copyAbiFile('SecurityFactory');
 	copyAbiFile('aUSD');
 	copyAbiFile('SecurityToken');
 	copyAbiFile('KYC');
 
 	await copyAbiFileForWeb('SecurityFactory', securityFactoryAddress);
+
+	let content = await fs.readFileSync('../liminal.web.bridge/appsettings.networks.json');
+	let json = JSON.parse(content.toString());
+
+	json[networkName].securityFactoryAddress = securityFactoryAddress;
+	fs.writeFileSync('../liminal.web.bridge/appsettings.networks.json', JSON.stringify(json));
+
+
 	//console.log('constantFile', constantFile);
 }
 

@@ -22,22 +22,23 @@ export interface SecurityFactoryInterface extends utils.Interface {
   functions: {
     "DEFAULT_ADMIN_ROLE()": FunctionFragment;
     "MINT_AND_BURN_ROLE()": FunctionFragment;
-    "aUsdAddress()": FunctionFragment;
+    "aUsdContract()": FunctionFragment;
     "burnSecurityTokenAndSetAUsdBalance(string,address,uint256,uint256)": FunctionFragment;
-    "createToken(string,string)": FunctionFragment;
+    "buyWithAUsd(address,address,uint256)": FunctionFragment;
+    "createToken(string)": FunctionFragment;
     "getRoleAdmin(bytes32)": FunctionFragment;
     "getSecurityToken(string)": FunctionFragment;
     "grantMintAndBurnRole(address)": FunctionFragment;
     "grantRole(bytes32,address)": FunctionFragment;
     "hasRole(bytes32,address)": FunctionFragment;
-    "kycAddress()": FunctionFragment;
+    "kycContract()": FunctionFragment;
     "mintSecurityTokenAndSetAUsdBalance(string,address,uint256,uint256)": FunctionFragment;
     "owner()": FunctionFragment;
     "renounceOwnership()": FunctionFragment;
     "renounceRole(bytes32,address)": FunctionFragment;
     "revokeRole(bytes32,address)": FunctionFragment;
     "securityTokens(string)": FunctionFragment;
-    "sellSecurityToken(string,address,address,string,uint256)": FunctionFragment;
+    "sellSecurityToken(address,address,string,uint256)": FunctionFragment;
     "supportsInterface(bytes4)": FunctionFragment;
     "transferOwnership(address)": FunctionFragment;
   };
@@ -51,7 +52,7 @@ export interface SecurityFactoryInterface extends utils.Interface {
     values?: undefined
   ): string;
   encodeFunctionData(
-    functionFragment: "aUsdAddress",
+    functionFragment: "aUsdContract",
     values?: undefined
   ): string;
   encodeFunctionData(
@@ -59,9 +60,10 @@ export interface SecurityFactoryInterface extends utils.Interface {
     values: [string, string, BigNumberish, BigNumberish]
   ): string;
   encodeFunctionData(
-    functionFragment: "createToken",
-    values: [string, string]
+    functionFragment: "buyWithAUsd",
+    values: [string, string, BigNumberish]
   ): string;
+  encodeFunctionData(functionFragment: "createToken", values: [string]): string;
   encodeFunctionData(
     functionFragment: "getRoleAdmin",
     values: [BytesLike]
@@ -83,7 +85,7 @@ export interface SecurityFactoryInterface extends utils.Interface {
     values: [BytesLike, string]
   ): string;
   encodeFunctionData(
-    functionFragment: "kycAddress",
+    functionFragment: "kycContract",
     values?: undefined
   ): string;
   encodeFunctionData(
@@ -109,7 +111,7 @@ export interface SecurityFactoryInterface extends utils.Interface {
   ): string;
   encodeFunctionData(
     functionFragment: "sellSecurityToken",
-    values: [string, string, string, string, BigNumberish]
+    values: [string, string, string, BigNumberish]
   ): string;
   encodeFunctionData(
     functionFragment: "supportsInterface",
@@ -129,11 +131,15 @@ export interface SecurityFactoryInterface extends utils.Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(
-    functionFragment: "aUsdAddress",
+    functionFragment: "aUsdContract",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
     functionFragment: "burnSecurityTokenAndSetAUsdBalance",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "buyWithAUsd",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
@@ -154,7 +160,10 @@ export interface SecurityFactoryInterface extends utils.Interface {
   ): Result;
   decodeFunctionResult(functionFragment: "grantRole", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "hasRole", data: BytesLike): Result;
-  decodeFunctionResult(functionFragment: "kycAddress", data: BytesLike): Result;
+  decodeFunctionResult(
+    functionFragment: "kycContract",
+    data: BytesLike
+  ): Result;
   decodeFunctionResult(
     functionFragment: "mintSecurityTokenAndSetAUsdBalance",
     data: BytesLike
@@ -188,6 +197,7 @@ export interface SecurityFactoryInterface extends utils.Interface {
 
   events: {
     "BoughtSecurityToken(string,address,uint256,uint256)": EventFragment;
+    "BoughtWithAUsd(address,uint256,string,string,address)": EventFragment;
     "Deployed(address,uint256)": EventFragment;
     "OwnershipTransferred(address,address)": EventFragment;
     "RoleAdminChanged(bytes32,bytes32,bytes32)": EventFragment;
@@ -198,6 +208,7 @@ export interface SecurityFactoryInterface extends utils.Interface {
   };
 
   getEvent(nameOrSignatureOrTopic: "BoughtSecurityToken"): EventFragment;
+  getEvent(nameOrSignatureOrTopic: "BoughtWithAUsd"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "Deployed"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "OwnershipTransferred"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "RoleAdminChanged"): EventFragment;
@@ -219,6 +230,19 @@ export type BoughtSecurityTokenEvent = TypedEvent<
 
 export type BoughtSecurityTokenEventFilter =
   TypedEventFilter<BoughtSecurityTokenEvent>;
+
+export type BoughtWithAUsdEvent = TypedEvent<
+  [string, BigNumber, string, string, string],
+  {
+    userAddress: string;
+    amount: BigNumber;
+    accountId: string;
+    symbol: string;
+    tokenAddress: string;
+  }
+>;
+
+export type BoughtWithAUsdEventFilter = TypedEventFilter<BoughtWithAUsdEvent>;
 
 export type DeployedEvent = TypedEvent<
   [string, BigNumber],
@@ -309,7 +333,7 @@ export interface SecurityFactory extends BaseContract {
 
     MINT_AND_BURN_ROLE(overrides?: CallOverrides): Promise<[string]>;
 
-    aUsdAddress(overrides?: CallOverrides): Promise<[string]>;
+    aUsdContract(overrides?: CallOverrides): Promise<[string]>;
 
     burnSecurityTokenAndSetAUsdBalance(
       symbol: string,
@@ -319,8 +343,14 @@ export interface SecurityFactory extends BaseContract {
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<ContractTransaction>;
 
+    buyWithAUsd(
+      userAddress: string,
+      tokenAddress: string,
+      amount: BigNumberish,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<ContractTransaction>;
+
     createToken(
-      name: string,
       symbol: string,
       overrides?: PayableOverrides & { from?: string | Promise<string> }
     ): Promise<ContractTransaction>;
@@ -349,7 +379,7 @@ export interface SecurityFactory extends BaseContract {
       overrides?: CallOverrides
     ): Promise<[boolean]>;
 
-    kycAddress(overrides?: CallOverrides): Promise<[string]>;
+    kycContract(overrides?: CallOverrides): Promise<[string]>;
 
     mintSecurityTokenAndSetAUsdBalance(
       symbol: string,
@@ -380,7 +410,6 @@ export interface SecurityFactory extends BaseContract {
     securityTokens(arg0: string, overrides?: CallOverrides): Promise<[string]>;
 
     sellSecurityToken(
-      accountId: string,
       recipient: string,
       sender: string,
       symbol: string,
@@ -403,7 +432,7 @@ export interface SecurityFactory extends BaseContract {
 
   MINT_AND_BURN_ROLE(overrides?: CallOverrides): Promise<string>;
 
-  aUsdAddress(overrides?: CallOverrides): Promise<string>;
+  aUsdContract(overrides?: CallOverrides): Promise<string>;
 
   burnSecurityTokenAndSetAUsdBalance(
     symbol: string,
@@ -413,8 +442,14 @@ export interface SecurityFactory extends BaseContract {
     overrides?: Overrides & { from?: string | Promise<string> }
   ): Promise<ContractTransaction>;
 
+  buyWithAUsd(
+    userAddress: string,
+    tokenAddress: string,
+    amount: BigNumberish,
+    overrides?: Overrides & { from?: string | Promise<string> }
+  ): Promise<ContractTransaction>;
+
   createToken(
-    name: string,
     symbol: string,
     overrides?: PayableOverrides & { from?: string | Promise<string> }
   ): Promise<ContractTransaction>;
@@ -440,7 +475,7 @@ export interface SecurityFactory extends BaseContract {
     overrides?: CallOverrides
   ): Promise<boolean>;
 
-  kycAddress(overrides?: CallOverrides): Promise<string>;
+  kycContract(overrides?: CallOverrides): Promise<string>;
 
   mintSecurityTokenAndSetAUsdBalance(
     symbol: string,
@@ -471,7 +506,6 @@ export interface SecurityFactory extends BaseContract {
   securityTokens(arg0: string, overrides?: CallOverrides): Promise<string>;
 
   sellSecurityToken(
-    accountId: string,
     recipient: string,
     sender: string,
     symbol: string,
@@ -494,7 +528,7 @@ export interface SecurityFactory extends BaseContract {
 
     MINT_AND_BURN_ROLE(overrides?: CallOverrides): Promise<string>;
 
-    aUsdAddress(overrides?: CallOverrides): Promise<string>;
+    aUsdContract(overrides?: CallOverrides): Promise<string>;
 
     burnSecurityTokenAndSetAUsdBalance(
       symbol: string,
@@ -504,11 +538,14 @@ export interface SecurityFactory extends BaseContract {
       overrides?: CallOverrides
     ): Promise<void>;
 
-    createToken(
-      name: string,
-      symbol: string,
+    buyWithAUsd(
+      userAddress: string,
+      tokenAddress: string,
+      amount: BigNumberish,
       overrides?: CallOverrides
-    ): Promise<string>;
+    ): Promise<boolean>;
+
+    createToken(symbol: string, overrides?: CallOverrides): Promise<string>;
 
     getRoleAdmin(role: BytesLike, overrides?: CallOverrides): Promise<string>;
 
@@ -534,7 +571,7 @@ export interface SecurityFactory extends BaseContract {
       overrides?: CallOverrides
     ): Promise<boolean>;
 
-    kycAddress(overrides?: CallOverrides): Promise<string>;
+    kycContract(overrides?: CallOverrides): Promise<string>;
 
     mintSecurityTokenAndSetAUsdBalance(
       symbol: string,
@@ -563,7 +600,6 @@ export interface SecurityFactory extends BaseContract {
     securityTokens(arg0: string, overrides?: CallOverrides): Promise<string>;
 
     sellSecurityToken(
-      accountId: string,
       recipient: string,
       sender: string,
       symbol: string,
@@ -595,6 +631,21 @@ export interface SecurityFactory extends BaseContract {
       amount?: null,
       aUsdBalance?: null
     ): BoughtSecurityTokenEventFilter;
+
+    "BoughtWithAUsd(address,uint256,string,string,address)"(
+      userAddress?: null,
+      amount?: null,
+      accountId?: null,
+      symbol?: null,
+      tokenAddress?: null
+    ): BoughtWithAUsdEventFilter;
+    BoughtWithAUsd(
+      userAddress?: null,
+      amount?: null,
+      accountId?: null,
+      symbol?: null,
+      tokenAddress?: null
+    ): BoughtWithAUsdEventFilter;
 
     "Deployed(address,uint256)"(addr?: null, salt?: null): DeployedEventFilter;
     Deployed(addr?: null, salt?: null): DeployedEventFilter;
@@ -668,7 +719,7 @@ export interface SecurityFactory extends BaseContract {
 
     MINT_AND_BURN_ROLE(overrides?: CallOverrides): Promise<BigNumber>;
 
-    aUsdAddress(overrides?: CallOverrides): Promise<BigNumber>;
+    aUsdContract(overrides?: CallOverrides): Promise<BigNumber>;
 
     burnSecurityTokenAndSetAUsdBalance(
       symbol: string,
@@ -678,8 +729,14 @@ export interface SecurityFactory extends BaseContract {
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<BigNumber>;
 
+    buyWithAUsd(
+      userAddress: string,
+      tokenAddress: string,
+      amount: BigNumberish,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<BigNumber>;
+
     createToken(
-      name: string,
       symbol: string,
       overrides?: PayableOverrides & { from?: string | Promise<string> }
     ): Promise<BigNumber>;
@@ -711,7 +768,7 @@ export interface SecurityFactory extends BaseContract {
       overrides?: CallOverrides
     ): Promise<BigNumber>;
 
-    kycAddress(overrides?: CallOverrides): Promise<BigNumber>;
+    kycContract(overrides?: CallOverrides): Promise<BigNumber>;
 
     mintSecurityTokenAndSetAUsdBalance(
       symbol: string,
@@ -742,7 +799,6 @@ export interface SecurityFactory extends BaseContract {
     securityTokens(arg0: string, overrides?: CallOverrides): Promise<BigNumber>;
 
     sellSecurityToken(
-      accountId: string,
       recipient: string,
       sender: string,
       symbol: string,
@@ -770,7 +826,7 @@ export interface SecurityFactory extends BaseContract {
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
 
-    aUsdAddress(overrides?: CallOverrides): Promise<PopulatedTransaction>;
+    aUsdContract(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
     burnSecurityTokenAndSetAUsdBalance(
       symbol: string,
@@ -780,8 +836,14 @@ export interface SecurityFactory extends BaseContract {
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<PopulatedTransaction>;
 
+    buyWithAUsd(
+      userAddress: string,
+      tokenAddress: string,
+      amount: BigNumberish,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<PopulatedTransaction>;
+
     createToken(
-      name: string,
       symbol: string,
       overrides?: PayableOverrides & { from?: string | Promise<string> }
     ): Promise<PopulatedTransaction>;
@@ -813,7 +875,7 @@ export interface SecurityFactory extends BaseContract {
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
 
-    kycAddress(overrides?: CallOverrides): Promise<PopulatedTransaction>;
+    kycContract(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
     mintSecurityTokenAndSetAUsdBalance(
       symbol: string,
@@ -847,7 +909,6 @@ export interface SecurityFactory extends BaseContract {
     ): Promise<PopulatedTransaction>;
 
     sellSecurityToken(
-      accountId: string,
       recipient: string,
       sender: string,
       symbol: string,

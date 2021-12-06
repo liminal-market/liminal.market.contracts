@@ -9,14 +9,29 @@
 			"command": "npx hardhat node --network hardhat --verbose --show-stack-traces"
 		},
 		{
-			"label": "deploy contracts",
+			"label": "deploy contracts localhost",
 			"type": "shell",
-			"command": "npx hardhat cd --network hardhat --show-stack-traces"
+			"command": "npx hardhat cd --network localhost --show-stack-traces"
+		},
+		{
+			"label": "deploy contracts rinkeby",
+			"type": "shell",
+			"command": "npx hardhat cd --network rinkeby --show-stack-traces"
+		},
+		{
+			"label": "deploy contracts mumbai",
+			"type": "shell",
+			"command": "npx hardhat cd --network mumbai --show-stack-traces"
 		},
 		{
 			"label": "fund usdc",
 			"type": "shell",
 			"command": "npx hardhat getusdc --network hardhat --show-stack-traces"
+		},
+		{
+			"label": "frpc",
+			"type": "shell",
+			"command": "moralis-admin-cli connect-local-devchain --c \"Hardhat\" --frpcPath \"C:\blockchain\frp_0.38.0\frpc.exe\""
 		}
 	]
 }

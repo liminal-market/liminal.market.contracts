@@ -1,5 +1,6 @@
 import { getContractsByNetwork } from "./networks";
 import { writeContractAddressesToJs} from './filehelper'
+import { BigNumber } from "@ethersproject/bignumber";
 
 export const compileAndDeploy = async function(hre : any) {
   await hre.run('compile');
@@ -21,20 +22,27 @@ export const compileAndDeploy = async function(hre : any) {
   const securityFactoryContract = await deployContract(hre, "SecurityFactory", redeploySecurityFactory,
     "0x0c8Cd13ff68D41263E6937224B9e5c7fF54d72f9", [aUsdContract.address, kycContract.address]);
 
-  const liminalContract = await deployContract(hre, "LiminalExchange", true, "",
-    [securityFactoryContract.address, oracleContract.address, kycContract.address, aUsdContract.address,
-      contractInfo.liminalAddress, contractInfo.brokerAddress, contractInfo.linkTokenAddress, contractInfo.usdcContractAddress]);
-
   await securityFactoryContract.grantMintAndBurnRole(contractInfo.liminalBackendAddress);
   await aUsdContract.grantRoleForBalance(securityFactoryContract.address);
-  await aUsdContract.setAddresses(liminalContract.address);
+  await aUsdContract.setAddresses(securityFactoryContract.address);
+  await aUsdContract.setBalance("0x93DA645082493BBd7116fC057c5b9aDfd5363912", BigNumber.from("1000" + "0".repeat(18)));
+  await aUsdContract.setBalance("0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266", BigNumber.from("1000" + "0".repeat(18)));
 
-
-  await writeContractAddressesToJs(hre, liminalContract.address, kycContract.address,
+  await writeContractAddressesToJs(hre, kycContract.address,
     aUsdContract.address, securityFactoryContract.address, contractInfo.usdcContractAddress);
   //await fundLink(hre, liminalContract.address);
 
   console.log('done:' + new Date());
+}
+
+
+export const grantRole = async function(hre : any) {
+  console.log('granting role');
+
+  let securityFactoryContract = await deployContract(hre, "SecurityFactory", false,
+    "0x30bC5Da8636Ff5DAd4c44E624FAa2ebb61848814");
+  let result = await securityFactoryContract.grantMintAndBurnRole('0xa22610E72cF86f3ef1a2A1f34D89f9E5B0EFc0AA');
+  console.log(JSON.stringify(result));
 }
 
 
