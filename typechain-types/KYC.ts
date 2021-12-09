@@ -19,6 +19,7 @@ import { TypedEventFilter, TypedEvent, TypedListener, OnEvent } from "./common";
 export interface KYCInterface extends utils.Interface {
   functions: {
     "getAccountId(address)": FunctionFragment;
+    "invalidateAccount(address)": FunctionFragment;
     "isValid(address)": FunctionFragment;
     "kycAccount(address)": FunctionFragment;
     "owner()": FunctionFragment;
@@ -29,6 +30,10 @@ export interface KYCInterface extends utils.Interface {
 
   encodeFunctionData(
     functionFragment: "getAccountId",
+    values: [string]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "invalidateAccount",
     values: [string]
   ): string;
   encodeFunctionData(functionFragment: "isValid", values: [string]): string;
@@ -51,6 +56,10 @@ export interface KYCInterface extends utils.Interface {
     functionFragment: "getAccountId",
     data: BytesLike
   ): Result;
+  decodeFunctionResult(
+    functionFragment: "invalidateAccount",
+    data: BytesLike
+  ): Result;
   decodeFunctionResult(functionFragment: "isValid", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "kycAccount", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "owner", data: BytesLike): Result;
@@ -68,13 +77,23 @@ export interface KYCInterface extends utils.Interface {
   ): Result;
 
   events: {
+    "AccountInvalidated(address)": EventFragment;
     "AccountValidated(string)": EventFragment;
     "OwnershipTransferred(address,address)": EventFragment;
   };
 
+  getEvent(nameOrSignatureOrTopic: "AccountInvalidated"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "AccountValidated"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "OwnershipTransferred"): EventFragment;
 }
+
+export type AccountInvalidatedEvent = TypedEvent<
+  [string],
+  { accountAddress: string }
+>;
+
+export type AccountInvalidatedEventFilter =
+  TypedEventFilter<AccountInvalidatedEvent>;
 
 export type AccountValidatedEvent = TypedEvent<[string], { accountId: string }>;
 
@@ -121,6 +140,11 @@ export interface KYC extends BaseContract {
       overrides?: CallOverrides
     ): Promise<[string]>;
 
+    invalidateAccount(
+      accountAddress: string,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<ContractTransaction>;
+
     isValid(userAddress: string, overrides?: CallOverrides): Promise<[string]>;
 
     kycAccount(
@@ -148,6 +172,11 @@ export interface KYC extends BaseContract {
   };
 
   getAccountId(userAddress: string, overrides?: CallOverrides): Promise<string>;
+
+  invalidateAccount(
+    accountAddress: string,
+    overrides?: Overrides & { from?: string | Promise<string> }
+  ): Promise<ContractTransaction>;
 
   isValid(userAddress: string, overrides?: CallOverrides): Promise<string>;
 
@@ -180,6 +209,11 @@ export interface KYC extends BaseContract {
       overrides?: CallOverrides
     ): Promise<string>;
 
+    invalidateAccount(
+      accountAddress: string,
+      overrides?: CallOverrides
+    ): Promise<void>;
+
     isValid(userAddress: string, overrides?: CallOverrides): Promise<string>;
 
     kycAccount(
@@ -205,6 +239,11 @@ export interface KYC extends BaseContract {
   };
 
   filters: {
+    "AccountInvalidated(address)"(
+      accountAddress?: null
+    ): AccountInvalidatedEventFilter;
+    AccountInvalidated(accountAddress?: null): AccountInvalidatedEventFilter;
+
     "AccountValidated(string)"(accountId?: null): AccountValidatedEventFilter;
     AccountValidated(accountId?: null): AccountValidatedEventFilter;
 
@@ -222,6 +261,11 @@ export interface KYC extends BaseContract {
     getAccountId(
       userAddress: string,
       overrides?: CallOverrides
+    ): Promise<BigNumber>;
+
+    invalidateAccount(
+      accountAddress: string,
+      overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<BigNumber>;
 
     isValid(userAddress: string, overrides?: CallOverrides): Promise<BigNumber>;
@@ -249,6 +293,11 @@ export interface KYC extends BaseContract {
     getAccountId(
       userAddress: string,
       overrides?: CallOverrides
+    ): Promise<PopulatedTransaction>;
+
+    invalidateAccount(
+      accountAddress: string,
+      overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<PopulatedTransaction>;
 
     isValid(
