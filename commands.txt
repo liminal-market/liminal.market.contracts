@@ -20,8 +20,7 @@ npx hardhat dep-rinkeby --network rinkeby --show-stack-traces
 moralis-admin-cli connect-local-devchain --c "Hardhat" --frpcPath "C:\blockchain\frp_0.38.0\frpc.exe"
 
 #moralis monitor contract event
-moralis-admin-cli add-contract --abiPath ".\artifacts\contracts\LiminalExchange.sol\LiminalExchange.json"
-moralis-admin-cli add-contract --abiPath ".\artifacts\contracts\SecurityFactory.sol\SecurityFactory.json"
+moralis-admin-cli add-contract --abiPath ".\artifacts\contracts\LiminalMarket.sol\LiminalMarket.json"
 
 
 #LINK docker run

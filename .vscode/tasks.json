@@ -32,6 +32,11 @@
 			"label": "frpc",
 			"type": "shell",
 			"command": "moralis-admin-cli connect-local-devchain --c \"Hardhat\" --frpcPath \"C:\blockchain\frp_0.38.0\frpc.exe\""
+		},
+		{
+			"label": "listen to events",
+			"type": "shell",
+			"command": "moralis-admin-cli add-contract --abiPath \".\\artifacts\\contracts\\LiminalMarket.sol\\LiminalMarket.json\""
 		}
 	]
 }
