@@ -18,6 +18,13 @@ contract KYC is Ownable  {
 	}
 
 	event AccountValidated(string accountId);
+	event AccountInvalidated(address accountAddress);
+
+	function invalidateAccount(address accountAddress) public onlyOwner {
+		delete kycAccount[accountAddress];
+
+		emit AccountInvalidated(accountAddress);
+	}
 
 	function validateAccount(string memory accountId) public returns(bool) {
 		console.log("ValidateAccount called");

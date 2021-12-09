@@ -44,7 +44,11 @@ contract SecurityToken is Ownable, ERC20 {
       //should be called by Chainlink
     function burn(/*bytes32,*/ address account, uint256 amount) public onlyOwner {
         uint balance = balanceOf(account);
+console.log("amount:", amount);
+console.log("balance", balance);
+
         if (balance < amount) amount = balance;
+console.log("burning:", amount);
 
         _burn(account, amount);
     }

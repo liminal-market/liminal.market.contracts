@@ -26,12 +26,13 @@ contract LiminalMarket is Ownable, AccessControl {
 
     event TokenCreated(address tokenAddress, string symbol);
 
-    event BoughtWithAUsd(address userAddress, uint amount, string accountId, string symbol, address tokenAddress);
+    event BuyWithAUsd(address userAddress, uint amount, string accountId, string symbol, address tokenAddress);
 
     event SellSecurityToken(string accountId, address recipient,
                             address sender, string symbol, uint amount);
 
-    event BoughtSecurityToken(string symbol, address recipient, uint amount, uint aUsdBalance);
+    event BoughtSecurityToken(string symbol, address recipient, uint amount, uint filledAvgPrice);
+    event SoldSecurityToken(string symbol, address recipient, uint amount, uint filledAvgPrice);
 
 	function getSecurityToken(string memory symbol) public view returns (address) {
 		return securityTokens[symbol];
@@ -39,7 +40,7 @@ contract LiminalMarket is Ownable, AccessControl {
 
     function buyWithAUsd(address userAddress, address tokenAddress, uint256 amount) public returns (bool) {
         uint256 ausdBalance = aUsdContract.balanceOf(userAddress);
-        require(ausdBalance >= amount, "You don't have enough USDC");
+        require(ausdBalance >= amount, "You don't have enough aUSD");
 
         string memory accountId = kycContract.isValid(userAddress);
 
@@ -48,7 +49,7 @@ console.log("Token address:", tokenAddress);
         SecurityToken securityToken = SecurityToken(tokenAddress);
         string memory symbol = securityToken.symbol();
 
-        emit BoughtWithAUsd(
+        emit BuyWithAUsd(
             userAddress,
             amount,
             accountId,
@@ -61,7 +62,7 @@ console.log("Token address:", tokenAddress);
     }
 
     function sellSecurityToken(address recipient, address sender, string memory symbol, uint amount) public {
-        require(recipient == address(this), "V0.1 doesn't support transfer");
+        require(recipient == address(aUsdContract), "V0.1 doesn't support transfer");
 
         string memory accountId = kycContract.isValid(sender);
 
@@ -76,7 +77,7 @@ console.log("Token address:", tokenAddress);
         grantRole(MINT_AND_BURN_ROLE, recipient);
     }
 
-    function mintSecurityTokenAndSetAUsdBalance(string memory symbol, address recipient, uint amount, uint aUsdBalance) public {
+    function mintSecurityTokenAndSetAUsdBalance(string memory symbol, address recipient, uint amount, uint filledAvgPrice, uint aUsdBalance) public {
         require(hasRole(MINT_AND_BURN_ROLE, msg.sender), "You dont have permission to mint");
         console.log("SecurityFactory - amount:", amount);
         console.log("SecurityFactory - recipient:", recipient);
@@ -94,10 +95,10 @@ console.log("Token address:", tokenAddress);
 
         aUsdContract.setBalance(recipient, aUsdBalance);
 console.log("DONE, doing emit");
-        emit BoughtSecurityToken(symbol, recipient, amount, aUsdBalance);
+        emit BoughtSecurityToken(symbol, recipient, amount, filledAvgPrice);
     }
 
-    function burnSecurityTokenAndSetAUsdBalance(string memory symbol, address recipient, uint amount, uint aUsdBalance) public {
+    function burnSecurityTokenAndSetAUsdBalance(string memory symbol, address recipient, uint amount, uint filledAvgPrice, uint aUsdBalance) public {
         require(hasRole(MINT_AND_BURN_ROLE, msg.sender), "You dont have permission to mint");
 
         address tokenAddress = securityTokens[symbol];
@@ -107,6 +108,8 @@ console.log("DONE, doing emit");
         st.burn(recipient, amount);
 
         aUsdContract.setBalance(recipient, aUsdBalance);
+
+        emit SoldSecurityToken(symbol, recipient, amount, filledAvgPrice);
     }
 
     function createToken(string memory symbol) external payable returns (address) {

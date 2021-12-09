@@ -117,10 +117,6 @@ declare module "hardhat/types/runtime" {
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.LiminalMarket__factory>;
     getContractFactory(
-      name: "SecurityFactory",
-      signerOrOptions?: ethers.Signer | FactoryOptions
-    ): Promise<Contracts.SecurityFactory__factory>;
-    getContractFactory(
       name: "SecurityToken",
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.SecurityToken__factory>;
@@ -255,11 +251,6 @@ declare module "hardhat/types/runtime" {
       address: string,
       signer?: ethers.Signer
     ): Promise<Contracts.LiminalMarket>;
-    getContractAt(
-      name: "SecurityFactory",
-      address: string,
-      signer?: ethers.Signer
-    ): Promise<Contracts.SecurityFactory>;
     getContractAt(
       name: "SecurityToken",
       address: string,

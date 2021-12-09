@@ -23,7 +23,6 @@ export type { IERC165 } from "./IERC165";
 export type { AUSD } from "./AUSD";
 export type { KYC } from "./KYC";
 export type { LiminalMarket } from "./LiminalMarket";
-export type { SecurityFactory } from "./SecurityFactory";
 export type { SecurityToken } from "./SecurityToken";
 
 export { ChainlinkRequestInterface__factory } from "./factories/ChainlinkRequestInterface__factory";
@@ -48,5 +47,4 @@ export { IERC165__factory } from "./factories/IERC165__factory";
 export { AUSD__factory } from "./factories/AUSD__factory";
 export { KYC__factory } from "./factories/KYC__factory";
 export { LiminalMarket__factory } from "./factories/LiminalMarket__factory";
-export { SecurityFactory__factory } from "./factories/SecurityFactory__factory";
 export { SecurityToken__factory } from "./factories/SecurityToken__factory";
