@@ -24,6 +24,11 @@
 			"command": "npx hardhat cd --network mumbai --show-stack-traces"
 		},
 		{
+			"label": "deploy contracts fuji",
+			"type": "shell",
+			"command": "npx hardhat cd --network fuji --show-stack-traces"
+		},
+		{
 			"label": "fund usdc",
 			"type": "shell",
 			"command": "npx hardhat getusdc --network hardhat --show-stack-traces"

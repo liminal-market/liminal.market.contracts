@@ -21,12 +21,14 @@ export const compileAndDeploy = async function(hre : any) {
     "0x6854DC0e58Ef1029aA42Ba61ca1160527bBeC01E");
   const liminaMarketContract = await deployContract(hre, "LiminalMarket", redeployLiminalMarket,
     "0x0c8Cd13ff68D41263E6937224B9e5c7fF54d72f9", [aUsdContract.address, kycContract.address]);
-
+console.log('Grand mint & burn role');
   await liminaMarketContract.grantMintAndBurnRole(contractInfo.liminalBackendAddress);
+  console.log('grantRoleForBalance');
   await aUsdContract.grantRoleForBalance(liminaMarketContract.address);
+  console.log('setAddresses');
   await aUsdContract.setAddresses(liminaMarketContract.address);
-  await aUsdContract.setBalance("0x93DA645082493BBd7116fC057c5b9aDfd5363912", BigNumber.from("1000" + "0".repeat(18)));
-  await aUsdContract.setBalance("0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266", BigNumber.from("1000" + "0".repeat(18)));
+  //await aUsdContract.setBalance("0x93DA645082493BBd7116fC057c5b9aDfd5363912", BigNumber.from("1000" + "0".repeat(18)));
+  //await aUsdContract.setBalance("0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266", BigNumber.from("1000" + "0".repeat(18)));
 
   await writeContractAddressesToJs(hre, kycContract.address,
     aUsdContract.address, liminaMarketContract.address, contractInfo.usdcContractAddress);

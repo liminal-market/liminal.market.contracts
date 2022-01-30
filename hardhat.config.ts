@@ -105,6 +105,10 @@ const config: HardhatUserConfig = {
     mumbai: {
       url: 'https://polygon-mumbai.g.alchemy.com/v2/sCmg1qtO8dGxcgTZxjvcFazjkqUyHI6r',
       accounts: [process.env.PRIVATE_KEY ?? 'bla']
+    },
+    fuji: {
+      url: 'https://api.avax-test.network/ext/bc/C/rpc',
+      accounts: [process.env.PRIVATE_KEY ?? 'bla']
     }
   },
   gasReporter: {
