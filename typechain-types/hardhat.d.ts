@@ -13,65 +13,45 @@ import * as Contracts from ".";
 declare module "hardhat/types/runtime" {
   interface HardhatEthersHelpers extends HardhatEthersHelpersBase {
     getContractFactory(
-      name: "ChainlinkRequestInterface",
+      name: "AccessControlUpgradeable",
       signerOrOptions?: ethers.Signer | FactoryOptions
-    ): Promise<Contracts.ChainlinkRequestInterface__factory>;
+    ): Promise<Contracts.AccessControlUpgradeable__factory>;
     getContractFactory(
-      name: "LinkTokenInterface",
+      name: "IAccessControlUpgradeable",
       signerOrOptions?: ethers.Signer | FactoryOptions
-    ): Promise<Contracts.LinkTokenInterface__factory>;
+    ): Promise<Contracts.IAccessControlUpgradeable__factory>;
     getContractFactory(
-      name: "OracleInterface",
+      name: "OwnableUpgradeable",
       signerOrOptions?: ethers.Signer | FactoryOptions
-    ): Promise<Contracts.OracleInterface__factory>;
+    ): Promise<Contracts.OwnableUpgradeable__factory>;
     getContractFactory(
-      name: "WithdrawalInterface",
+      name: "IERC1822ProxiableUpgradeable",
       signerOrOptions?: ethers.Signer | FactoryOptions
-    ): Promise<Contracts.WithdrawalInterface__factory>;
+    ): Promise<Contracts.IERC1822ProxiableUpgradeable__factory>;
     getContractFactory(
-      name: "LinkTokenReceiver",
+      name: "IBeaconUpgradeable",
       signerOrOptions?: ethers.Signer | FactoryOptions
-    ): Promise<Contracts.LinkTokenReceiver__factory>;
+    ): Promise<Contracts.IBeaconUpgradeable__factory>;
     getContractFactory(
-      name: "Oracle",
+      name: "ERC1967UpgradeUpgradeable",
       signerOrOptions?: ethers.Signer | FactoryOptions
-    ): Promise<Contracts.Oracle__factory>;
+    ): Promise<Contracts.ERC1967UpgradeUpgradeable__factory>;
     getContractFactory(
-      name: "Ownable",
+      name: "UUPSUpgradeable",
       signerOrOptions?: ethers.Signer | FactoryOptions
-    ): Promise<Contracts.Ownable__factory>;
+    ): Promise<Contracts.UUPSUpgradeable__factory>;
     getContractFactory(
-      name: "ChainlinkClient",
+      name: "PausableUpgradeable",
       signerOrOptions?: ethers.Signer | FactoryOptions
-    ): Promise<Contracts.ChainlinkClient__factory>;
+    ): Promise<Contracts.PausableUpgradeable__factory>;
     getContractFactory(
-      name: "ChainlinkRequestInterface",
+      name: "ERC165Upgradeable",
       signerOrOptions?: ethers.Signer | FactoryOptions
-    ): Promise<Contracts.ChainlinkRequestInterface__factory>;
+    ): Promise<Contracts.ERC165Upgradeable__factory>;
     getContractFactory(
-      name: "ENSInterface",
+      name: "IERC165Upgradeable",
       signerOrOptions?: ethers.Signer | FactoryOptions
-    ): Promise<Contracts.ENSInterface__factory>;
-    getContractFactory(
-      name: "LinkTokenInterface",
-      signerOrOptions?: ethers.Signer | FactoryOptions
-    ): Promise<Contracts.LinkTokenInterface__factory>;
-    getContractFactory(
-      name: "OperatorInterface",
-      signerOrOptions?: ethers.Signer | FactoryOptions
-    ): Promise<Contracts.OperatorInterface__factory>;
-    getContractFactory(
-      name: "OracleInterface",
-      signerOrOptions?: ethers.Signer | FactoryOptions
-    ): Promise<Contracts.OracleInterface__factory>;
-    getContractFactory(
-      name: "PointerInterface",
-      signerOrOptions?: ethers.Signer | FactoryOptions
-    ): Promise<Contracts.PointerInterface__factory>;
-    getContractFactory(
-      name: "ENSResolver",
-      signerOrOptions?: ethers.Signer | FactoryOptions
-    ): Promise<Contracts.ENSResolver__factory>;
+    ): Promise<Contracts.IERC165Upgradeable__factory>;
     getContractFactory(
       name: "AccessControl",
       signerOrOptions?: ethers.Signer | FactoryOptions
@@ -122,80 +102,55 @@ declare module "hardhat/types/runtime" {
     ): Promise<Contracts.SecurityToken__factory>;
 
     getContractAt(
-      name: "ChainlinkRequestInterface",
+      name: "AccessControlUpgradeable",
       address: string,
       signer?: ethers.Signer
-    ): Promise<Contracts.ChainlinkRequestInterface>;
+    ): Promise<Contracts.AccessControlUpgradeable>;
     getContractAt(
-      name: "LinkTokenInterface",
+      name: "IAccessControlUpgradeable",
       address: string,
       signer?: ethers.Signer
-    ): Promise<Contracts.LinkTokenInterface>;
+    ): Promise<Contracts.IAccessControlUpgradeable>;
     getContractAt(
-      name: "OracleInterface",
+      name: "OwnableUpgradeable",
       address: string,
       signer?: ethers.Signer
-    ): Promise<Contracts.OracleInterface>;
+    ): Promise<Contracts.OwnableUpgradeable>;
     getContractAt(
-      name: "WithdrawalInterface",
+      name: "IERC1822ProxiableUpgradeable",
       address: string,
       signer?: ethers.Signer
-    ): Promise<Contracts.WithdrawalInterface>;
+    ): Promise<Contracts.IERC1822ProxiableUpgradeable>;
     getContractAt(
-      name: "LinkTokenReceiver",
+      name: "IBeaconUpgradeable",
       address: string,
       signer?: ethers.Signer
-    ): Promise<Contracts.LinkTokenReceiver>;
+    ): Promise<Contracts.IBeaconUpgradeable>;
     getContractAt(
-      name: "Oracle",
+      name: "ERC1967UpgradeUpgradeable",
       address: string,
       signer?: ethers.Signer
-    ): Promise<Contracts.Oracle>;
+    ): Promise<Contracts.ERC1967UpgradeUpgradeable>;
     getContractAt(
-      name: "Ownable",
+      name: "UUPSUpgradeable",
       address: string,
       signer?: ethers.Signer
-    ): Promise<Contracts.Ownable>;
+    ): Promise<Contracts.UUPSUpgradeable>;
     getContractAt(
-      name: "ChainlinkClient",
+      name: "PausableUpgradeable",
       address: string,
       signer?: ethers.Signer
-    ): Promise<Contracts.ChainlinkClient>;
+    ): Promise<Contracts.PausableUpgradeable>;
     getContractAt(
-      name: "ChainlinkRequestInterface",
+      name: "ERC165Upgradeable",
       address: string,
       signer?: ethers.Signer
-    ): Promise<Contracts.ChainlinkRequestInterface>;
+    ): Promise<Contracts.ERC165Upgradeable>;
     getContractAt(
-      name: "ENSInterface",
+      name: "IERC165Upgradeable",
       address: string,
       signer?: ethers.Signer
-    ): Promise<Contracts.ENSInterface>;
-    getContractAt(
-      name: "LinkTokenInterface",
-      address: string,
-      signer?: ethers.Signer
-    ): Promise<Contracts.LinkTokenInterface>;
-    getContractAt(
-      name: "OperatorInterface",
-      address: string,
-      signer?: ethers.Signer
-    ): Promise<Contracts.OperatorInterface>;
-    getContractAt(
-      name: "OracleInterface",
-      address: string,
-      signer?: ethers.Signer
-    ): Promise<Contracts.OracleInterface>;
-    getContractAt(
-      name: "PointerInterface",
-      address: string,
-      signer?: ethers.Signer
-    ): Promise<Contracts.PointerInterface>;
-    getContractAt(
-      name: "ENSResolver",
-      address: string,
-      signer?: ethers.Signer
-    ): Promise<Contracts.ENSResolver>;
+    ): Promise<Contracts.IERC165Upgradeable>;
     getContractAt(
       name: "AccessControl",
       address: string,

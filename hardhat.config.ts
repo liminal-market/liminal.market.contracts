@@ -6,10 +6,10 @@ import "@nomiclabs/hardhat-waffle";
 import "@typechain/hardhat";
 import "hardhat-gas-reporter";
 import "solidity-coverage";
+import '@openzeppelin/hardhat-upgrades';
 
-
-import {compileAndDeploy, grantRole} from './scripts/deploy';
-import {fundLink, fundUSDC} from './scripts/funding';
+import { compileAndDeploy, compileAndUpgradeLiminalMarket, compileAndUpgradeKYC, compileAndUpgradeAUSD, compileAndUpgradeAll } from './scripts/deploy';
+import {fundAUSD } from './scripts/funding';
 
 const result = dotenv.config();
 
@@ -32,22 +32,24 @@ task("d", "", async (taskArgs, hre) => {
 
 });
 
-task('giverole', '', async (taskArgs, hre) => {
-  await grantRole(hre);
-})
 
 task('cd', 'compiles and deploys', async (taskArgs, hre) => {
   await compileAndDeploy(hre);
 });
-
-
-task('fundlink', 'fund link', async function(taskArgs, href) {
-  await fundLink(href, "0x3D7CD28EfD08FfE9Ce8cA329EC2e67822C756526");
+task('cu-liminal', 'compiles and upgrade Liminal.market contract', async (taskArgs, hre) => {
+	await compileAndUpgradeLiminalMarket(hre);
 });
-
-
-task('getusdc', 'gets USDC token', async (taskArgs, hre) => {
-  await fundUSDC(hre)
+task('cu-kyc', 'compiles and upgrade KYC contract', async (taskArgs, hre) => {
+	await compileAndUpgradeKYC(hre);
+});
+task('cu-kyc', 'compiles and upgrade aUSD contract', async (taskArgs, hre) => {
+	await compileAndUpgradeAUSD(hre);
+});
+task('cu-all', 'compiles and upgrade all contract', async (taskArgs, hre) => {
+	await compileAndUpgradeAll(hre);
+});
+task('getausd', 'gets USDC token', async (taskArgs, hre) => {
+  await fundAUSD(hre)
 });
 
 

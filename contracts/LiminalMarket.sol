@@ -2,26 +2,59 @@
 pragma solidity ^0.8.0;
 
 import "hardhat/console.sol";
-import "@openzeppelin/contracts/access/Ownable.sol";
-import "@openzeppelin/contracts/access/AccessControl.sol";
+
+import "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
+
 import "./SecurityToken.sol";
 import "./aUSD.sol";
 import "./KYC.sol";
 
-contract LiminalMarket is Ownable, AccessControl {
+contract LiminalMarket is Initializable, PausableUpgradeable, AccessControlUpgradeable, UUPSUpgradeable  {
 
     aUSD public aUsdContract;
     KYC public kycContract;
     mapping(string => address) public securityTokens;
 
-   bytes32 public constant MINT_AND_BURN_ROLE = keccak256("BURN");
+    bytes32 public constant PAUSER_ROLE = keccak256("PAUSER_ROLE");
+    bytes32 public constant MINTER_ROLE = keccak256("MINTER_ROLE");
+    bytes32 public constant UPGRADER_ROLE = keccak256("UPGRADER_ROLE");
 
-	constructor(aUSD _aUsdContract, KYC _kycContract) Ownable() {
+ 	/// @custom:oz-upgrades-unsafe-allow constructor
+    constructor() initializer {}
+
+    function initialize() public initializer  {
+        __Pausable_init();
+        __AccessControl_init();
+        __UUPSUpgradeable_init();
+
+        _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
+        _grantRole(PAUSER_ROLE, msg.sender);
+        _grantRole(MINTER_ROLE, msg.sender);
+        _grantRole(UPGRADER_ROLE, msg.sender);
+    }
+
+    function setAddresses(aUSD _aUsdContract, KYC _kycContract) public onlyRole(DEFAULT_ADMIN_ROLE) {
         aUsdContract = _aUsdContract;
         kycContract =  _kycContract;
+    }
 
-        _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
-        _setupRole(MINT_AND_BURN_ROLE, msg.sender);
+    function pause() public onlyRole(PAUSER_ROLE) {
+        _pause();
+    }
+
+    function unpause() public onlyRole(PAUSER_ROLE) {
+        _unpause();
+    }
+
+    function _authorizeUpgrade(address newImplementation)
+        internal
+        onlyRole(UPGRADER_ROLE)
+        override
+    {
+		_upgradeTo(newImplementation);
 	}
 
     event TokenCreated(address tokenAddress, string symbol);
@@ -33,12 +66,13 @@ contract LiminalMarket is Ownable, AccessControl {
 
     event BoughtSecurityToken(string symbol, address recipient, uint amount, uint filledAvgPrice);
     event SoldSecurityToken(string symbol, address recipient, uint amount, uint filledAvgPrice);
+	event Deployed(address addr, uint salt);
 
 	function getSecurityToken(string memory symbol) public view returns (address) {
 		return securityTokens[symbol];
 	}
 
-    function buyWithAUsd(address userAddress, address tokenAddress, uint256 amount) public returns (bool) {
+    function buyWithAUsd(address userAddress, address tokenAddress, uint256 amount) public whenNotPaused returns (bool) {
         uint256 ausdBalance = aUsdContract.balanceOf(userAddress);
         require(ausdBalance >= amount, "You don't have enough aUSD");
 
@@ -61,7 +95,7 @@ console.log("Token address:", tokenAddress);
 
     }
 
-    function sellSecurityToken(address recipient, address sender, string memory symbol, uint amount) public {
+    function sellSecurityToken(address recipient, address sender, string memory symbol, uint amount)  public whenNotPaused {
         require(recipient == address(aUsdContract), "V0.1 doesn't support transfer");
 
         string memory accountId = kycContract.isValid(sender);
@@ -72,13 +106,13 @@ console.log("Token address:", tokenAddress);
         emit SellSecurityToken(accountId, recipient, sender, symbol, amount);
     }
 
-    function grantMintAndBurnRole(address recipient) public {
-        require(msg.sender == owner(), "Only owner can grant roles");
-        grantRole(MINT_AND_BURN_ROLE, recipient);
+    function grantMintAndBurnRole(address recipient) public onlyRole(DEFAULT_ADMIN_ROLE) {
+        grantRole(MINTER_ROLE, recipient);
     }
 
-    function mintSecurityTokenAndSetAUsdBalance(string memory symbol, address recipient, uint amount, uint filledAvgPrice, uint aUsdBalance) public {
-        require(hasRole(MINT_AND_BURN_ROLE, msg.sender), "You dont have permission to mint");
+    function mintSecurityTokenAndSetAUsdBalance(string memory symbol, address recipient,
+            uint amount, uint filledAvgPrice, uint aUsdBalance) public whenNotPaused onlyRole(MINTER_ROLE) {
+
         console.log("SecurityFactory - amount:", amount);
         console.log("SecurityFactory - recipient:", recipient);
         console.log("SecurityFactory - symbol:", symbol);
@@ -98,9 +132,8 @@ console.log("DONE, doing emit");
         emit BoughtSecurityToken(symbol, recipient, amount, filledAvgPrice);
     }
 
-    function burnSecurityTokenAndSetAUsdBalance(string memory symbol, address recipient, uint amount, uint filledAvgPrice, uint aUsdBalance) public {
-        require(hasRole(MINT_AND_BURN_ROLE, msg.sender), "You dont have permission to mint");
-
+    function burnSecurityTokenAndSetAUsdBalance(string memory symbol, address recipient,
+                uint amount, uint filledAvgPrice, uint aUsdBalance) public whenNotPaused onlyRole(MINTER_ROLE) {
         address tokenAddress = securityTokens[symbol];
         require(tokenAddress != address(0), "Couldn't find symbol address");
 
@@ -112,7 +145,7 @@ console.log("DONE, doing emit");
         emit SoldSecurityToken(symbol, recipient, amount, filledAvgPrice);
     }
 
-    function createToken(string memory symbol) external payable returns (address) {
+    function createToken(string memory symbol) external payable whenNotPaused returns (address) {
         require(bytes(symbol).length != 0, "Symbol cannot be empty");
         require(securityTokens[symbol] == address(0), "Security token already exists");
 
@@ -127,8 +160,6 @@ console.log("DONE, doing emit");
 
 		return token;
     }
-
-	event Deployed(address addr, uint salt);
 
     // 1. Get bytecode of contract to be deployed
     // NOTE: _owner and _foo are arguments of the TestContract's constructor

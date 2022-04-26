@@ -2,18 +2,18 @@ import * as fs from 'fs';
 
 
 export const writeContractAddressesToJs = async function (href: any, kycAddress: string,
-	aUsdAddress: string, liminaMarketAddress: string, usdcContractAddress: string) {
+	aUsdAddress: string, liminaMarketAddress: string) {
 
 	let networkName = (href.network.name == 'hardhat') ? 'localhost' : href.network.name;
-	let constantFile = 'export const ' + networkName + 'ContractAddresses = function() {\n\n';
+	let constantFile = 'import ContractAddresses from "./ContractAddresses";';
+	constantFile += '\n\n\tdefault class ' + networkName + 'ContractAddresses extends ContractAddresses {\n\n';
 
-	constantFile += '\tthis.KYC_ADDRESS = "' + kycAddress + '";\n';
-	constantFile += '\tthis.AUSD_ADDRESS = "' + aUsdAddress + '";\n';
-	constantFile += '\tthis.LIMINAL_MARKET_ADDRESS = "' + liminaMarketAddress + '";\n';
-	constantFile += '\tthis.USDC_ADDRESS = "' + usdcContractAddress + '";\n';
-	constantFile += '}';
+	constantFile += '\t\tKYC_ADDRESS = "' + kycAddress + '";\n';
+	constantFile += '\t\tAUSD_ADDRESS = "' + aUsdAddress + '";\n';
+	constantFile += '\t\tLIMINAL_MARKET_ADDRESS = "' + liminaMarketAddress + '";\n';
+	constantFile += '\t}';
 
-	await fs.writeFileSync('../liminal.market.web/app/js/contracts/' + networkName + '-contract-addresses.js', constantFile, 'utf-8');
+	await fs.writeFileSync('../liminal.market.web/src/contracts/' + networkName + '-contract-addresses.ts', constantFile, 'utf-8');
 
 	copyAbiFile('LiminalMarket');
 	copyAbiFile('aUSD');
@@ -28,8 +28,6 @@ export const writeContractAddressesToJs = async function (href: any, kycAddress:
 	json[networkName].liminaMarketAddress = liminaMarketAddress;
 	fs.writeFileSync('../liminal.web.bridge/appsettings.networks.json', JSON.stringify(json));
 
-
-	//console.log('constantFile', constantFile);
 }
 
 

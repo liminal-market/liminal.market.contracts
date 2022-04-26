@@ -9,8 +9,8 @@ import "./LiminalMarket.sol";
 
 contract aUSD is ERC20, Ownable, AccessControl {
 
-    LiminalMarket liminalMarketContract;
-
+    LiminalMarket private liminalMarketContract;
+string private _logo;
     bytes32 public constant SET_BALANCE = keccak256("SET_BALANCE");
     event BalanceSet(address recipient, uint256 amount);
 
@@ -20,8 +20,11 @@ contract aUSD is ERC20, Ownable, AccessControl {
     {
         _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
         _setupRole(SET_BALANCE, msg.sender);
+        _logo = "https://app.liminal.market/img/ausd.png";
     }
-
+    function logo() public view virtual returns (string memory) {
+        return _logo;
+    }
     function setAddresses(address payable _liminalMarketContract) public onlyOwner {
         liminalMarketContract = LiminalMarket(_liminalMarketContract);
     }
@@ -30,9 +33,7 @@ contract aUSD is ERC20, Ownable, AccessControl {
         grantRole(SET_BALANCE, recipient);
     }
 
-	function setBalance(address recipient, uint256 amount) public returns (uint256) {
-        require(hasRole(SET_BALANCE, msg.sender), "You dont have permission to set balance");
-
+	function setBalance(address recipient, uint256 amount) public onlyRole(SET_BALANCE) returns (uint256) {
 		uint256 balance = balanceOf(recipient);
         if (amount == balance) return amount;
         if (amount > balance) {
@@ -40,10 +41,10 @@ contract aUSD is ERC20, Ownable, AccessControl {
         } else {
             _burn(recipient, balance - amount);
         }
-        console.log('aUsd - amount:', amount);
-        console.log('aUsd - balanceBefore:', balance);
+        console.log("aUsd - amount:", amount);
+        console.log("aUsd - balanceBefore:", balance);
         uint balanceAfter = balanceOf(recipient);
-        console.log('aUsd - balanceAfter:', balanceAfter);
+        console.log("aUsd - balanceAfter:", balanceAfter);
 
         emit BalanceSet(recipient, amount);
 		return balanceAfter;

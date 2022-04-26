@@ -3,7 +3,6 @@ pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
-import "@openzeppelin/contracts/access/AccessControl.sol";
 import "./LiminalMarket.sol";
 import "hardhat/console.sol";
 
@@ -25,7 +24,7 @@ contract SecurityToken is Ownable, ERC20 {
         uint256 aUsdBalance
     );
 
-    LiminalMarket liminalMarketContract;
+    LiminalMarket private liminalMarketContract;
 
     constructor(
         string memory name,
@@ -63,36 +62,35 @@ console.log("burning:", amount);
         return true;
     }
 
-
-
-    function allowance(address, address)
+    function allowance(address owner, address spender)
         public
         view
         virtual
         override
         returns (uint256)
     {
-        require(false, "V0.1 doesn't support allowance");
-        return 0;
+        return super.allowance(owner, spender);
     }
 
-    function approve(address, uint256)
+    function approve(address spender, uint256 amount)
         public
         virtual
         override
         returns (bool)
     {
-        require(false, "V0.1 doesn't support approve");
-        return false;
+        return super.approve(spender, amount);
     }
 
     function transferFrom(
-        address,
-        address,
-        uint256
+        address from,
+        address to ,
+        uint256 amount
     ) public virtual override returns (bool) {
-        require(false, "V0.1 doesn't support tranferFrom");
-        return false;
+        address spender = _msgSender();
+        _spendAllowance(from, spender, amount);
+
+        liminalMarketContract.sellSecurityToken(to, from, symbol(), amount);
+        return true;
     }
 
 }
