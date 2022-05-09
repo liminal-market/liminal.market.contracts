@@ -57,7 +57,7 @@ contract LiminalMarket is Initializable, PausableUpgradeable, AccessControlUpgra
 		_upgradeTo(newImplementation);
 	}
 
-    event TokenCreated(address tokenAddress, string symbol);
+    event TokenCreated( address tokenAddress, string symbol);
 
     event BuyWithAUsd(address userAddress, uint amount, string accountId, string symbol, address tokenAddress);
 
