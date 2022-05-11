@@ -5,7 +5,7 @@ import * as Handlebars from "handlebars";
 export const writeContractAddressesToJs = async function (href: any, kycAddress: string,
 	aUsdAddress: string, liminalMarketAddress: string) {
 
-	let fileContent = fs.readFileSync('./scripts/templates/ContractAddress.template');
+	let fileContent = fs.readFileSync('./scripts/templates/ContractAddress.handlebars');
 
 	let networkName = (href.network.name == 'hardhat') ? 'localhost' : href.network.name;
 	let obj = {

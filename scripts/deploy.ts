@@ -2,6 +2,7 @@ import {getContractsByNetwork} from "./networks";
 import {writeContractAddressesToJs} from './filehelper'
 import "@openzeppelin/hardhat-upgrades";
 import {HardhatRuntimeEnvironment} from "hardhat/types";
+import "@nomiclabs/hardhat-etherscan";
 
 export const compileAndDeploy = async function (hre: HardhatRuntimeEnvironment) {
     await hre.run('compile');
@@ -107,6 +108,15 @@ const deployContract = async function (hre: HardhatRuntimeEnvironment, contractN
 
     await contract.deployed();
     console.log(contractName + " " + status + ":", contract.address);
+
+    console.log('verifying contract');
+    if (hre.network.name != 'localhost') {
+        await hre.run("verify:verify", {
+                address: contract.address,
+            }
+        );
+    }
+
 
     return contract;
 }

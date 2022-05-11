@@ -94,7 +94,6 @@ const config: HardhatUserConfig = {
     defaultNetwork: "hardhat",
     networks: {
         hardhat: {
-
             forking: {
                 url: "https://polygon-mumbai.g.alchemy.com/v2/sCmg1qtO8dGxcgTZxjvcFazjkqUyHI6r",
                 //blockNumber: 9693973
@@ -118,7 +117,11 @@ const config: HardhatUserConfig = {
         currency: "USD",
     },
     etherscan: {
-        apiKey: process.env.ETHERSCAN_API_KEY,
+        apiKey : {
+            rinkeby: process.env.ETHERSCAN_API_KEY,
+            polygonMumbai: process.env.POLYGON_API_KEY
+        }
+
     }
 };
 
