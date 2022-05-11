@@ -1,8 +1,8 @@
 
-import localhostContractAddresses from '../../liminal.market.web/src/contracts/localhost-contract-addresses';
-import rinkebyContractAddresses from '../../liminal.market.web/src/contracts/rinkeby-contract-addresses';
-import mumbaiContractAddresses from '../../liminal.market.web/src/contracts/mumbai-contract-addresses';
-import fujiContractAddresses from '../../liminal.market.web/src/contracts/fuji-contract-addresses';
+import localhostContractAddresses from './addresses/localhost-contract-addresses';
+import rinkebyContractAddresses from './addresses/rinkeby-contract-addresses';
+import mumbaiContractAddresses from './addresses/mumbai-contract-addresses';
+import fujiContractAddresses from './addresses/fuji-contract-addresses';
 
 export const getContractsByNetwork = function(hre : any) {
 

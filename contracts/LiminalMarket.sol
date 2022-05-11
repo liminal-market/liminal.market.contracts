@@ -1,5 +1,5 @@
 //SPDX-License-Identifier: Business Source License 1.1
-pragma solidity ^0.8.0;
+pragma solidity ^0.8.9;
 
 import "hardhat/console.sol";
 
@@ -22,6 +22,16 @@ contract LiminalMarket is Initializable, PausableUpgradeable, AccessControlUpgra
     bytes32 public constant MINTER_ROLE = keccak256("MINTER_ROLE");
     bytes32 public constant UPGRADER_ROLE = keccak256("UPGRADER_ROLE");
 
+    event TokenCreated( address tokenAddress, string symbol);
+    event BuyWithAUsd(address userAddress, uint amount, string accountId,
+            string symbol, address tokenAddress);
+    event SellSecurityToken(string accountId, address recipient,
+            address sender, string symbol, uint amount);
+    event OrderExecuted(address recipient, string symbol, uint qty,
+            uint filledQty, uint filledAvgPrice, string side, uint filledAt,
+            uint commission, uint aUsdBalance);
+    event Deployed(address addr, uint salt);
+
  	/// @custom:oz-upgrades-unsafe-allow constructor
     constructor() initializer {}
 
@@ -36,41 +46,20 @@ contract LiminalMarket is Initializable, PausableUpgradeable, AccessControlUpgra
         _grantRole(UPGRADER_ROLE, msg.sender);
     }
 
+
+
+
     function setAddresses(aUSD _aUsdContract, KYC _kycContract) public onlyRole(DEFAULT_ADMIN_ROLE) {
         aUsdContract = _aUsdContract;
         kycContract =  _kycContract;
     }
 
-    function pause() public onlyRole(PAUSER_ROLE) {
-        _pause();
-    }
-
-    function unpause() public onlyRole(PAUSER_ROLE) {
-        _unpause();
-    }
-
-    function _authorizeUpgrade(address newImplementation)
-        internal
-        onlyRole(UPGRADER_ROLE)
-        override
-    {
-		_upgradeTo(newImplementation);
-	}
-
-    event TokenCreated( address tokenAddress, string symbol);
-
-    event BuyWithAUsd(address userAddress, uint amount, string accountId, string symbol, address tokenAddress);
-
-    event SellSecurityToken(string accountId, address recipient,
-                            address sender, string symbol, uint amount);
-
-    event BoughtSecurityToken(string symbol, address recipient, uint amount, uint filledAvgPrice);
-    event SoldSecurityToken(string symbol, address recipient, uint amount, uint filledAvgPrice);
-	event Deployed(address addr, uint salt);
-
 	function getSecurityToken(string memory symbol) public view returns (address) {
 		return securityTokens[symbol];
 	}
+
+
+
 
     function buyWithAUsd(address userAddress, address tokenAddress, uint256 amount) public whenNotPaused returns (bool) {
         uint256 ausdBalance = aUsdContract.balanceOf(userAddress);
@@ -110,40 +99,32 @@ console.log("Token address:", tokenAddress);
         grantRole(MINTER_ROLE, recipient);
     }
 
-    function mintSecurityTokenAndSetAUsdBalance(string memory symbol, address recipient,
-            uint amount, uint filledAvgPrice, uint aUsdBalance) public whenNotPaused onlyRole(MINTER_ROLE) {
+    function orderExecuted(address recipient, string memory symbol,
+            uint qty, uint filledQty, uint filledAvgPrice, string memory side,
+            uint filledAt, uint commission, uint aUsdBalance)
+                            public whenNotPaused onlyRole(MINTER_ROLE) {
+        require(recipient != address(0), "Address cannot be zero");
 
-        console.log("SecurityFactory - amount:", amount);
+        console.log("SecurityFactory - qty:", qty);
         console.log("SecurityFactory - recipient:", recipient);
         console.log("SecurityFactory - symbol:", symbol);
         console.log("SecurityFactory - aUsdBalance:", aUsdBalance);
 
-        if (amount != 0) {
+        if (qty != 0) {
             address tokenAddress = securityTokens[symbol];
             require(tokenAddress != address(0), "Couldn't find symbol address");
     console.log("SecurityToken address:", tokenAddress);
 
             SecurityToken st = SecurityToken(tokenAddress);
-            st.mint(recipient, amount);
+            st.setQuantity(recipient, qty);
         }
 
         aUsdContract.setBalance(recipient, aUsdBalance);
 console.log("DONE, doing emit");
-        emit BoughtSecurityToken(symbol, recipient, amount, filledAvgPrice);
+        emit OrderExecuted(recipient, symbol, qty, filledQty, filledAvgPrice, side, filledAt, commission, aUsdBalance);
     }
 
-    function burnSecurityTokenAndSetAUsdBalance(string memory symbol, address recipient,
-                uint amount, uint filledAvgPrice, uint aUsdBalance) public whenNotPaused onlyRole(MINTER_ROLE) {
-        address tokenAddress = securityTokens[symbol];
-        require(tokenAddress != address(0), "Couldn't find symbol address");
 
-        SecurityToken st = SecurityToken(tokenAddress);
-        st.burn(recipient, amount);
-
-        aUsdContract.setBalance(recipient, aUsdBalance);
-
-        emit SoldSecurityToken(symbol, recipient, amount, filledAvgPrice);
-    }
 
     function createToken(string memory symbol) external payable whenNotPaused returns (address) {
         require(bytes(symbol).length != 0, "Symbol cannot be empty");
@@ -220,6 +201,21 @@ console.log("DONE, doing emit");
     }
 
 
+    function pause() public onlyRole(PAUSER_ROLE) {
+        _pause();
+    }
+
+    function unpause() public onlyRole(PAUSER_ROLE) {
+        _unpause();
+    }
+
+    function _authorizeUpgrade(address newImplementation)
+    internal
+    onlyRole(UPGRADER_ROLE)
+    override
+    {
+        _upgradeTo(newImplementation);
+    }
 
 
 }

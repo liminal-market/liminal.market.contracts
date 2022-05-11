@@ -4,6 +4,10 @@ npx hardhat node --network hardhat --verbose --show-stack-traces
 #deploy contracts to localhost
 npx hardhat cd --network localhost --show-stack-traces
 
+#fund aUSD
+npx hardhat getausd --network localhost --show-stack-traces
+
+
 #fund USDC
 npx hardhat getusdc --network localhost --show-stack-traces
 
@@ -17,10 +21,10 @@ npx hardhat getlink --network localhost --show-stack-traces
 npx hardhat dep-rinkeby --network rinkeby --show-stack-traces
 
 #frpc startup
+npm run proxy
+
 moralis-admin-cli connect-local-devchain --c "Hardhat" --frpcPath "C:\blockchain\frp_0.38.0\frpc.exe"
 
-#moralis monitor contract event
-moralis-admin-cli add-contract --abiPath ".\artifacts\contracts\LiminalMarket.sol\LiminalMarket.json"
 
 
 #LINK docker run

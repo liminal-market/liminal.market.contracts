@@ -30,6 +30,7 @@ export interface SecurityTokenInterface extends utils.Interface {
     "name()": FunctionFragment;
     "owner()": FunctionFragment;
     "renounceOwnership()": FunctionFragment;
+    "setQuantity(address,uint256)": FunctionFragment;
     "symbol()": FunctionFragment;
     "totalSupply()": FunctionFragment;
     "transfer(address,uint256)": FunctionFragment;
@@ -69,6 +70,10 @@ export interface SecurityTokenInterface extends utils.Interface {
     functionFragment: "renounceOwnership",
     values?: undefined
   ): string;
+  encodeFunctionData(
+    functionFragment: "setQuantity",
+    values: [string, BigNumberish]
+  ): string;
   encodeFunctionData(functionFragment: "symbol", values?: undefined): string;
   encodeFunctionData(
     functionFragment: "totalSupply",
@@ -107,6 +112,10 @@ export interface SecurityTokenInterface extends utils.Interface {
     functionFragment: "renounceOwnership",
     data: BytesLike
   ): Result;
+  decodeFunctionResult(
+    functionFragment: "setQuantity",
+    data: BytesLike
+  ): Result;
   decodeFunctionResult(functionFragment: "symbol", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "totalSupply",
@@ -124,6 +133,7 @@ export interface SecurityTokenInterface extends utils.Interface {
 
   events: {
     "Approval(address,address,uint256)": EventFragment;
+    "BalanceSet(address,uint256)": EventFragment;
     "Burn(address,uint256,string,uint256,address,uint256)": EventFragment;
     "Mint(address,uint256,string,uint256)": EventFragment;
     "OwnershipTransferred(address,address)": EventFragment;
@@ -131,6 +141,7 @@ export interface SecurityTokenInterface extends utils.Interface {
   };
 
   getEvent(nameOrSignatureOrTopic: "Approval"): EventFragment;
+  getEvent(nameOrSignatureOrTopic: "BalanceSet"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "Burn"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "Mint"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "OwnershipTransferred"): EventFragment;
@@ -143,6 +154,13 @@ export type ApprovalEvent = TypedEvent<
 >;
 
 export type ApprovalEventFilter = TypedEventFilter<ApprovalEvent>;
+
+export type BalanceSetEvent = TypedEvent<
+  [string, BigNumber],
+  { recipient: string; amount: BigNumber }
+>;
+
+export type BalanceSetEventFilter = TypedEventFilter<BalanceSetEvent>;
 
 export type BurnEvent = TypedEvent<
   [string, BigNumber, string, BigNumber, string, BigNumber],
@@ -255,6 +273,12 @@ export interface SecurityToken extends BaseContract {
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<ContractTransaction>;
 
+    setQuantity(
+      recipient: string,
+      qty: BigNumberish,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<ContractTransaction>;
+
     symbol(overrides?: CallOverrides): Promise<[string]>;
 
     totalSupply(overrides?: CallOverrides): Promise<[BigNumber]>;
@@ -323,6 +347,12 @@ export interface SecurityToken extends BaseContract {
   owner(overrides?: CallOverrides): Promise<string>;
 
   renounceOwnership(
+    overrides?: Overrides & { from?: string | Promise<string> }
+  ): Promise<ContractTransaction>;
+
+  setQuantity(
+    recipient: string,
+    qty: BigNumberish,
     overrides?: Overrides & { from?: string | Promise<string> }
   ): Promise<ContractTransaction>;
 
@@ -395,6 +425,12 @@ export interface SecurityToken extends BaseContract {
 
     renounceOwnership(overrides?: CallOverrides): Promise<void>;
 
+    setQuantity(
+      recipient: string,
+      qty: BigNumberish,
+      overrides?: CallOverrides
+    ): Promise<void>;
+
     symbol(overrides?: CallOverrides): Promise<string>;
 
     totalSupply(overrides?: CallOverrides): Promise<BigNumber>;
@@ -429,6 +465,12 @@ export interface SecurityToken extends BaseContract {
       spender?: string | null,
       value?: null
     ): ApprovalEventFilter;
+
+    "BalanceSet(address,uint256)"(
+      recipient?: null,
+      amount?: null
+    ): BalanceSetEventFilter;
+    BalanceSet(recipient?: null, amount?: null): BalanceSetEventFilter;
 
     "Burn(address,uint256,string,uint256,address,uint256)"(
       recipient?: null,
@@ -530,6 +572,12 @@ export interface SecurityToken extends BaseContract {
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<BigNumber>;
 
+    setQuantity(
+      recipient: string,
+      qty: BigNumberish,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<BigNumber>;
+
     symbol(overrides?: CallOverrides): Promise<BigNumber>;
 
     totalSupply(overrides?: CallOverrides): Promise<BigNumber>;
@@ -602,6 +650,12 @@ export interface SecurityToken extends BaseContract {
     owner(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
     renounceOwnership(
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<PopulatedTransaction>;
+
+    setQuantity(
+      recipient: string,
+      qty: BigNumberish,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<PopulatedTransaction>;
 
