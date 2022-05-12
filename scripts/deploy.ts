@@ -23,6 +23,8 @@ export const compileAndDeploy = async function (hre: HardhatRuntimeEnvironment) 
     await aUsdContract.setLiminalMarketAddress(liminalMarketContract.address);
     //await aUsdContract.setBalance("0x93DA645082493BBd7116fC057c5b9aDfd5363912", BigNumber.from("1000" + "0".repeat(18)));
     //await aUsdContract.setBalance("0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266", BigNumber.from("1000" + "0".repeat(18)));
+    let kycDefenderAddress = '0x7aced305382ac47a901bfda45b9ee6935765708d';
+    await kycContract.grantRoleForKyc(kycDefenderAddress);
 
     await writeContractAddressesToJs(hre, kycContract.address,
         aUsdContract.address, liminalMarketContract.address);
@@ -99,7 +101,8 @@ const deployContract = async function (hre: HardhatRuntimeEnvironment, contractN
 
     let contract;
     let status = 'deployed';
-    if (await contractExistsOnChain(hre, contractName, preexistingAddress)) {
+    let upgrade = await contractExistsOnChain(hre, contractName, preexistingAddress);
+    if (upgrade) {
         contract = await hre.upgrades.upgradeProxy(preexistingAddress, Contract);
         status = 'upgraded';
     } else {
@@ -109,14 +112,27 @@ const deployContract = async function (hre: HardhatRuntimeEnvironment, contractN
     await contract.deployed();
     console.log(contractName + " " + status + ":", contract.address);
 
-    console.log('verifying contract');
-    if (hre.network.name != 'localhost') {
-        await hre.run("verify:verify", {
-                address: contract.address,
-            }
-        );
-    }
-
 
     return contract;
+}
+
+export const setRole = async function (hre: HardhatRuntimeEnvironment) {
+    let relayerAddress = "0x7aced305382ac47a901bfda45b9ee6935765708d";
+
+    let aUsdContract = await getContract(hre, "aUSD", "0xD1FCCdC474a3708B44C2F4F5C7De8C34328cD203");
+    await aUsdContract.grantRoleForBalance(relayerAddress);
+
+    let kycContract = await getContract(hre, "KYC", "0x0B263ab693FAB0CaA06EbbF33395eD90b6b0bCec");
+    await kycContract.grantRoleForKyc(relayerAddress);
+
+    let liminalMarketContract = await getContract(hre, "LiminalMarket", "0xcD5FD1e5A49F474d26c535962C0eb2a680250904");
+    await liminalMarketContract.grantMintAndBurnRole(relayerAddress);
+}
+
+export const verifyContract = async function(hre : HardhatRuntimeEnvironment, address : string) {
+    console.log('verify address:' + address);
+    await hre.run("verify:verify", {
+            address: address,
+        }
+    );
 }

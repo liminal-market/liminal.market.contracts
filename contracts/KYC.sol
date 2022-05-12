@@ -41,7 +41,7 @@ contract KYC is
     event AccountValidated(string accountId);
     event AccountInvalidated(address accountAddress);
 
-    function grantRoleForBalance(address recipient) public onlyRole(DEFAULT_ADMIN_ROLE) {
+    function grantRoleForKyc(address recipient) public onlyRole(DEFAULT_ADMIN_ROLE) {
         grantRole(SET_KYC, recipient);
     }
 
@@ -55,7 +55,7 @@ contract KYC is
         emit AccountInvalidated(accountAddress);
     }
 
-    function validateAccount(string memory accountId)
+    function validateAccount(string memory accountId, address userAddress)
         public
         onlyRole(SET_KYC)
         returns (bool)
@@ -64,10 +64,10 @@ contract KYC is
 
         require(bytes(accountId).length == 36, "Looks like invalid accountId");
 
-        kycAccount[msg.sender] = AccountValidation(accountId, block.timestamp);
-        console.log("address to kycAccount", msg.sender);
+        kycAccount[userAddress] = AccountValidation(accountId, block.timestamp);
+        console.log("address to kycAccount", userAddress);
         console.log("accountId", accountId);
-        console.log("kycAccount", kycAccount[msg.sender].accountId);
+        console.log("kycAccount", kycAccount[userAddress].accountId);
 
         emit AccountValidated(accountId);
 

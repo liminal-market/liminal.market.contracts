@@ -8,7 +8,14 @@ import "hardhat-gas-reporter";
 import "solidity-coverage";
 import '@openzeppelin/hardhat-upgrades';
 
-import { compileAndDeploy, compileAndUpgradeLiminalMarket, compileAndUpgradeKYC, compileAndUpgradeAUSD, compileAndUpgradeAll } from './scripts/deploy';
+import {
+    compileAndDeploy,
+    compileAndUpgradeLiminalMarket,
+    compileAndUpgradeKYC,
+    compileAndUpgradeAUSD,
+    compileAndUpgradeAll,
+    verifyContract, setRole
+} from './scripts/deploy';
 import {fundAUSD } from './scripts/funding';
 
 const result = dotenv.config();
@@ -31,8 +38,18 @@ task("d", "", async (taskArgs, hre) => {
     console.log(hre.network.name)
 
 });
+task('setRole', 'verifies', async (taskArgs, hre) => {
+    //how to find implementation address of contract. lookup contract address from web/src/contracts/*-address.ts
+    //on block explorer. Click Contract, click More options. Click Is this proxy, click verify
+    await setRole(hre);
 
+});
+task('verifyContract', 'verifies', async (taskArgs, hre) => {
+    //how to find implementation address of contract. lookup contract address from web/src/contracts/*-address.ts
+    //on block explorer. Click Contract, click More options. Click Is this proxy, click verify
+    await verifyContract(hre,"0xfbaab9f394f1aa80182dd6ffb5187e48cafb9922");
 
+});
 task('cd', 'compiles and deploys', async (taskArgs, hre) => {
     await compileAndDeploy(hre);
 });
@@ -42,7 +59,7 @@ task('cu-liminal', 'compiles and upgrade Liminal.market contract', async (taskAr
 task('cu-kyc', 'compiles and upgrade KYC contract', async (taskArgs, hre) => {
     await compileAndUpgradeKYC(hre);
 });
-task('cu-kyc', 'compiles and upgrade aUSD contract', async (taskArgs, hre) => {
+task('cu-ausd', 'compiles and upgrade aUSD contract', async (taskArgs, hre) => {
     await compileAndUpgradeAUSD(hre);
 });
 task('cu-all', 'compiles and upgrade all contract', async (taskArgs, hre) => {
@@ -74,7 +91,7 @@ const config: HardhatUserConfig = {
                         }
                     }
                 }
-            },
+            }/*,
             {
                 version: "0.6.6",
                 settings: {
@@ -88,7 +105,7 @@ const config: HardhatUserConfig = {
                         }
                     }
                 }
-            },
+            },*/
         ]
     },
     defaultNetwork: "hardhat",
