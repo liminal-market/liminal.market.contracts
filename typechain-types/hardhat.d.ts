@@ -21,10 +21,6 @@ declare module "hardhat/types/runtime" {
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.IAccessControlUpgradeable__factory>;
     getContractFactory(
-      name: "OwnableUpgradeable",
-      signerOrOptions?: ethers.Signer | FactoryOptions
-    ): Promise<Contracts.OwnableUpgradeable__factory>;
-    getContractFactory(
       name: "IERC1822ProxiableUpgradeable",
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.IERC1822ProxiableUpgradeable__factory>;
@@ -37,6 +33,10 @@ declare module "hardhat/types/runtime" {
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.ERC1967UpgradeUpgradeable__factory>;
     getContractFactory(
+      name: "Initializable",
+      signerOrOptions?: ethers.Signer | FactoryOptions
+    ): Promise<Contracts.Initializable__factory>;
+    getContractFactory(
       name: "UUPSUpgradeable",
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.UUPSUpgradeable__factory>;
@@ -44,6 +44,22 @@ declare module "hardhat/types/runtime" {
       name: "PausableUpgradeable",
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.PausableUpgradeable__factory>;
+    getContractFactory(
+      name: "ERC20Upgradeable",
+      signerOrOptions?: ethers.Signer | FactoryOptions
+    ): Promise<Contracts.ERC20Upgradeable__factory>;
+    getContractFactory(
+      name: "IERC20MetadataUpgradeable",
+      signerOrOptions?: ethers.Signer | FactoryOptions
+    ): Promise<Contracts.IERC20MetadataUpgradeable__factory>;
+    getContractFactory(
+      name: "IERC20Upgradeable",
+      signerOrOptions?: ethers.Signer | FactoryOptions
+    ): Promise<Contracts.IERC20Upgradeable__factory>;
+    getContractFactory(
+      name: "ContextUpgradeable",
+      signerOrOptions?: ethers.Signer | FactoryOptions
+    ): Promise<Contracts.ContextUpgradeable__factory>;
     getContractFactory(
       name: "ERC165Upgradeable",
       signerOrOptions?: ethers.Signer | FactoryOptions
@@ -112,11 +128,6 @@ declare module "hardhat/types/runtime" {
       signer?: ethers.Signer
     ): Promise<Contracts.IAccessControlUpgradeable>;
     getContractAt(
-      name: "OwnableUpgradeable",
-      address: string,
-      signer?: ethers.Signer
-    ): Promise<Contracts.OwnableUpgradeable>;
-    getContractAt(
       name: "IERC1822ProxiableUpgradeable",
       address: string,
       signer?: ethers.Signer
@@ -132,6 +143,11 @@ declare module "hardhat/types/runtime" {
       signer?: ethers.Signer
     ): Promise<Contracts.ERC1967UpgradeUpgradeable>;
     getContractAt(
+      name: "Initializable",
+      address: string,
+      signer?: ethers.Signer
+    ): Promise<Contracts.Initializable>;
+    getContractAt(
       name: "UUPSUpgradeable",
       address: string,
       signer?: ethers.Signer
@@ -141,6 +157,26 @@ declare module "hardhat/types/runtime" {
       address: string,
       signer?: ethers.Signer
     ): Promise<Contracts.PausableUpgradeable>;
+    getContractAt(
+      name: "ERC20Upgradeable",
+      address: string,
+      signer?: ethers.Signer
+    ): Promise<Contracts.ERC20Upgradeable>;
+    getContractAt(
+      name: "IERC20MetadataUpgradeable",
+      address: string,
+      signer?: ethers.Signer
+    ): Promise<Contracts.IERC20MetadataUpgradeable>;
+    getContractAt(
+      name: "IERC20Upgradeable",
+      address: string,
+      signer?: ethers.Signer
+    ): Promise<Contracts.IERC20Upgradeable>;
+    getContractAt(
+      name: "ContextUpgradeable",
+      address: string,
+      signer?: ethers.Signer
+    ): Promise<Contracts.ContextUpgradeable>;
     getContractAt(
       name: "ERC165Upgradeable",
       address: string,

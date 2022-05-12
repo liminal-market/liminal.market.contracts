@@ -1,8 +1,8 @@
 //SPDX-License-Identifier: Business Source License 1.1
-pragma solidity ^0.8.0;
+pragma solidity ^0.8.9;
 
 import "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 
@@ -11,17 +11,24 @@ import "hardhat/console.sol";
 contract KYC is
     Initializable,
     PausableUpgradeable,
-    OwnableUpgradeable,
+    AccessControlUpgradeable,
     UUPSUpgradeable
 {
+
+    bytes32 public constant SET_KYC = keccak256("SET_KYC");
+    bytes32 public constant PAUSER_ROLE = keccak256("PAUSER_ROLE");
+    bytes32 public constant UPGRADER_ROLE = keccak256("UPGRADER_ROLE");
 
  	/// @custom:oz-upgrades-unsafe-allow constructor
 	constructor() initializer {}
 
  	function initialize() public initializer {
         __Pausable_init();
-		__Ownable_init();
+        __AccessControl_init();
         __UUPSUpgradeable_init();
+
+        _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
+        _grantRole(SET_KYC, msg.sender);
 
     }
     mapping(address => AccountValidation) public kycAccount;
@@ -34,45 +41,33 @@ contract KYC is
     event AccountValidated(string accountId);
     event AccountInvalidated(address accountAddress);
 
-
-
-    function pause() public onlyOwner {
-        _pause();
+    function grantRoleForKyc(address recipient) public onlyRole(DEFAULT_ADMIN_ROLE) {
+        grantRole(SET_KYC, recipient);
     }
 
-    function unpause() public onlyOwner {
-        _unpause();
-    }
 
-    function _authorizeUpgrade(address newImplementation)
-        internal
-        onlyOwner
-        override
-    {
-		_upgradeTo(newImplementation);
-	}
     function invalidateAccount(address accountAddress)
         public
-        onlyOwner
+        onlyRole(SET_KYC)
     {
         delete kycAccount[accountAddress];
 
         emit AccountInvalidated(accountAddress);
     }
 
-    function validateAccount(string memory accountId)
+    function validateAccount(string memory accountId, address userAddress)
         public
-        onlyOwner
+        onlyRole(SET_KYC)
         returns (bool)
     {
         console.log("ValidateAccount called");
 
         require(bytes(accountId).length == 36, "Looks like invalid accountId");
 
-        kycAccount[msg.sender] = AccountValidation(accountId, block.timestamp);
-        console.log("address to kycAccount", msg.sender);
+        kycAccount[userAddress] = AccountValidation(accountId, block.timestamp);
+        console.log("address to kycAccount", userAddress);
         console.log("accountId", accountId);
-        console.log("kycAccount", kycAccount[msg.sender].accountId);
+        console.log("kycAccount", kycAccount[userAddress].accountId);
 
         emit AccountValidated(accountId);
 
@@ -113,5 +108,21 @@ contract KYC is
             "Address is not KYC valid"
         );
         return account.accountId;
+    }
+
+    function pause() public onlyRole(PAUSER_ROLE) {
+        _pause();
+    }
+
+    function unpause() public onlyRole(PAUSER_ROLE) {
+        _unpause();
+    }
+
+    function _authorizeUpgrade(address newImplementation)
+    internal
+    onlyRole(DEFAULT_ADMIN_ROLE)
+    override
+    {
+        _upgradeTo(newImplementation);
     }
 }

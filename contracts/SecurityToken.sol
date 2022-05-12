@@ -1,5 +1,5 @@
 //SPDX-License-Identifier: Business Source License 1.1
-pragma solidity ^0.8.0;
+pragma solidity ^0.8.9;
 
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
@@ -7,7 +7,6 @@ import "./LiminalMarket.sol";
 import "hardhat/console.sol";
 
 contract SecurityToken is Ownable, ERC20 {
-    //using Chainlink for Chainlink.Request;
 
     event Mint(
         address recipient,
@@ -24,6 +23,8 @@ contract SecurityToken is Ownable, ERC20 {
         uint256 aUsdBalance
     );
 
+    event BalanceSet(address recipient, uint256 amount);
+
     LiminalMarket private liminalMarketContract;
 
     constructor(
@@ -33,6 +34,22 @@ contract SecurityToken is Ownable, ERC20 {
         liminalMarketContract = LiminalMarket(msg.sender);
     }
 
+    function setQuantity(address recipient, uint256 qty) public onlyOwner {
+        uint256 balance = balanceOf(recipient);
+        if (qty == balance) return;
+
+        if (qty > balance) {
+            _mint(recipient, qty - balance);
+        } else {
+            _burn(recipient, balance - qty);
+        }
+        console.log("token - qty:", qty);
+        console.log("token - balanceBefore:", balance);
+        uint256 balanceAfter = balanceOf(recipient);
+        console.log("token - balanceAfter:", balanceAfter);
+
+        emit BalanceSet(recipient, qty);
+    }
 
     function mint(address recipient, uint256 amount) public onlyOwner {
         _mint(recipient, amount);
