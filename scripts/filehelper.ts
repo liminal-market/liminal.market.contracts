@@ -21,16 +21,16 @@ export const writeContractAddressesToJs = async function (href: any, kycAddress:
 	await fs.writeFileSync('../liminal.market.web/src/contracts/' + networkName + '-contract-addresses.ts', constantFile, 'utf-8');
 	await fs.writeFileSync('./scripts/addresses/' + networkName + '-contract-addresses.ts', constantFile, 'utf-8');
 
-	copyAbiFile('LiminalMarket');
-	copyAbiFile('aUSD');
-	copyAbiFile('SecurityToken');
-	copyAbiFile('KYC');
+	await copyAbiFile('LiminalMarket');
+	await copyAbiFile('aUSD');
+	await copyAbiFile('SecurityToken');
+	await copyAbiFile('KYC');
 }
 
-function copyAbiFile(name: string) {
+const copyAbiFile = async function(name: string) {
 	let abiFrom = './artifacts/contracts/' + name + '.sol/' + name + '.json';
-	let abiTo = '../liminal.market.web/app/js/abi/' + name + '.json';
-	fs.copyFile(abiFrom, abiTo, (err: any) => {
+	let abiTo = '../liminal.market.web/app/abi/' + name + '.json';
+	await fs.copyFile(abiFrom, abiTo, (err: any) => {
 		if (err) throw err;
 		console.log(abiFrom + ' was copied to ' + abiTo);
 	});

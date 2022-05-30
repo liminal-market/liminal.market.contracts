@@ -9,8 +9,8 @@ export const fundAUSD = async function (hre: any) {
     // create the token instance
     const contract = await hre.ethers.getContractAt("aUSD", contractInfo.AUSD_ADDRESS)
 
-    let userWallet = contractInfo.liminalUserAdress;
-    userWallet = "0x93da645082493bbd7116fc057c5b9adfd5363912";
+    //let userWallet = contractInfo.liminalUserAdress;
+    let userWallet = "0x93da645082493bbd7116fc057c5b9adfd5363912";
     // connect it to the impersonated signer and send it to your signer
 
     var result = await contract.setBalance(userWallet, "10000" + "0".repeat(18))

@@ -11,6 +11,7 @@ import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import "./SecurityToken.sol";
 import "./aUSD.sol";
 import "./KYC.sol";
+import "./MarketCalendar.sol";
 
 contract LiminalMarket is Initializable, PausableUpgradeable, AccessControlUpgradeable, UUPSUpgradeable  {
 
@@ -21,6 +22,8 @@ contract LiminalMarket is Initializable, PausableUpgradeable, AccessControlUpgra
     bytes32 public constant PAUSER_ROLE = keccak256("PAUSER_ROLE");
     bytes32 public constant MINTER_ROLE = keccak256("MINTER_ROLE");
     bytes32 public constant UPGRADER_ROLE = keccak256("UPGRADER_ROLE");
+
+    MarketCalendar public marketCalendar;
 
     event TokenCreated( address tokenAddress, string symbol);
     event BuyWithAUsd(address userAddress, uint amount, string accountId,
@@ -46,24 +49,20 @@ contract LiminalMarket is Initializable, PausableUpgradeable, AccessControlUpgra
         _grantRole(UPGRADER_ROLE, msg.sender);
     }
 
-
-
-
-    function setAddresses(aUSD _aUsdContract, KYC _kycContract) public onlyRole(DEFAULT_ADMIN_ROLE) {
+    function setAddresses(aUSD _aUsdContract, KYC _kycContract, MarketCalendar _marketCalendar) public onlyRole(DEFAULT_ADMIN_ROLE) {
         aUsdContract = _aUsdContract;
         kycContract =  _kycContract;
+        marketCalendar = _marketCalendar;
     }
 
 	function getSecurityToken(string memory symbol) public view returns (address) {
 		return securityTokens[symbol];
 	}
 
-
-
-
     function buyWithAUsd(address userAddress, address tokenAddress, uint256 amount) public whenNotPaused returns (bool) {
         uint256 ausdBalance = aUsdContract.balanceOf(userAddress);
         require(ausdBalance >= amount, "You don't have enough aUSD");
+        require(marketCalendar.isMarketOpen(), "Market is closed");
 
         string memory accountId = kycContract.isValid(userAddress);
 
@@ -86,6 +85,7 @@ console.log("Token address:", tokenAddress);
 
     function sellSecurityToken(address recipient, address sender, string memory symbol, uint amount)  public whenNotPaused {
         require(recipient == address(aUsdContract), "V0.1 doesn't support transfer");
+        require(marketCalendar.isMarketOpen(), "Market is closed");
 
         string memory accountId = kycContract.isValid(sender);
 

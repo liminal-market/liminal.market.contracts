@@ -21,7 +21,7 @@
     "handlebars": "^4.7.7",
     "hardhat": "^2.9.3",
     "hardhat-gas-reporter": "^1.0.8",
-    "jest": "^28.1.0",
+    "mocha": "^10.0.0",
     "solidity-coverage": "^0.7.20",
     "ts-node": "^10.7.0",
     "typechain": "^8.0.0",
@@ -34,10 +34,10 @@
     "hardhat-dependency-compiler": "^1.1.2"
   },
   "scripts": {
-    "tests": "ts-node --require ts-node/register test/**/*.ts",
-    "hardhat" : "npx hardhat node --network hardhat --verbose --show-stack-traces",
+    "tests": "ts-node --require ts-node/register tests/**/*.ts",
+    "hardhat": "npx hardhat node --network hardhat --verbose --show-stack-traces",
     "proxy": "moralis-admin-cli connect-local-devchain --c \"Hardhat\" --frpcPath \"C:\\blockchain\\frp_0.38.0\\frpc.exe\"",
-    "deploy-local" : "npx hardhat cd --network localhost --show-stack-traces",
-    "fund" : "npx hardhat getausd --network localhost --show-stack-traces"
+    "deploy-local": "npx hardhat cd --network localhost --show-stack-traces",
+    "fund": "npx hardhat getausd --network localhost --show-stack-traces"
   }
 }

@@ -1,6 +1,5 @@
-
 import * as dotenv from "dotenv";
-import { HardhatUserConfig, task } from "hardhat/config";
+import {HardhatUserConfig, task} from "hardhat/config";
 import "@nomiclabs/hardhat-etherscan";
 import "@nomiclabs/hardhat-waffle";
 import "@typechain/hardhat";
@@ -14,13 +13,13 @@ import {
     compileAndUpgradeKYC,
     compileAndUpgradeAUSD,
     compileAndUpgradeAll,
-    verifyContract, setRole
+    verifyContract, getContract, grantRoles, compile
 } from './scripts/deploy';
-import {fundAUSD } from './scripts/funding';
+import {fundAUSD} from './scripts/funding';
+import {getContractAt} from "@nomiclabs/hardhat-ethers/internal/helpers";
+import {getContractsByNetwork} from "./scripts/networks";
 
 const result = dotenv.config();
-
-
 
 
 // This is a sample Hardhat task. To learn how to create your own go to
@@ -38,17 +37,27 @@ task("d", "", async (taskArgs, hre) => {
     console.log(hre.network.name)
 
 });
-task('setRole', 'verifies', async (taskArgs, hre) => {
+task('grantRoles', 'verifies', async (taskArgs, hre) => {
     //how to find implementation address of contract. lookup contract address from web/src/contracts/*-address.ts
     //on block explorer. Click Contract, click More options. Click Is this proxy, click verify
-    await setRole(hre);
+
+    const contractInfo = getContractsByNetwork(hre);
+
+    await grantRoles(hre, contractInfo);
 
 });
 task('verifyContract', 'verifies', async (taskArgs, hre) => {
     //how to find implementation address of contract. lookup contract address from web/src/contracts/*-address.ts
     //on block explorer. Click Contract, click More options. Click Is this proxy, click verify
-    await verifyContract(hre,"0xfbaab9f394f1aa80182dd6ffb5187e48cafb9922");
+    const contractInfo = getContractsByNetwork(hre);
 
+    await verifyContract(hre, contractInfo.KYC_ADDRESS);
+    await verifyContract(hre, contractInfo.AUSD_ADDRESS);
+    await verifyContract(hre, contractInfo.LIMINAL_MARKET_ADDRESS);
+
+});
+task('c', 'compiles', async (taskArgs, hre) => {
+    await compile(hre);
 });
 task('cd', 'compiles and deploys', async (taskArgs, hre) => {
     await compileAndDeploy(hre);
@@ -68,7 +77,6 @@ task('cu-all', 'compiles and upgrade all contract', async (taskArgs, hre) => {
 task('getausd', 'gets USDC token', async (taskArgs, hre) => {
     await fundAUSD(hre)
 });
-
 
 
 // You need to export an object to set up your config
@@ -127,16 +135,23 @@ const config: HardhatUserConfig = {
         fuji: {
             url: 'https://api.avax-test.network/ext/bc/C/rpc',
             accounts: [process.env.PRIVATE_KEY ?? 'bla']
-        }
+        },
+        bsctest: {
+            url: 'https://data-seed-prebsc-1-s1.binance.org:8545/',
+            accounts: [process.env.PRIVATE_KEY ?? 'bla']
+        },
     },
     gasReporter: {
         enabled: process.env.REPORT_GAS !== undefined,
         currency: "USD",
     },
     etherscan: {
-        apiKey : {
+        apiKey: {
             rinkeby: process.env.ETHERSCAN_API_KEY,
-            polygonMumbai: process.env.POLYGON_API_KEY
+            polygonMumbai: process.env.POLYGON_API_KEY,
+            avalancheFujiTestnet: process.env.AvalancheFujiTestnet,
+
+            bscTestnet: process.env.bsc_api_key
         }
 
     }

@@ -1,9 +1,13 @@
 import ContractAddresses from "./ContractAddresses";
+import RelayerAddress from "./RelayerAddress";
 
-export default class fujiContractAddresses extends  ContractAddresses{
+export default class fujiContractAddresses extends ContractAddresses {
 
-	KYC_ADDRESS = "0xEBC688DaF0924D1A3b95B869717b987087A52156";
-	AUSD_ADDRESS = "0x8E32f274476CE23D64ae0037CE80CE8b8D670658";
-	LIMINAL_MARKET_ADDRESS = "0xe8C8C9Ff944c04318f43FE1479A1d51EBAf2EBD8";
-	USDC_ADDRESS = "0x4DBCdF9B62e891a7cec5A2568C3F4FAF9E8Abe2b";
+    KYC_ADDRESS = "0xc5C8ADea4d7b1E118198975A06dddEACDbFaEd0d";
+    AUSD_ADDRESS = "0x645607b0E581bFa320A0B6c0D770F34099623D25";
+    LIMINAL_MARKET_ADDRESS = "0x7125ECB12154bc238D91DF5bbee6FD26823307a6";
+
+    getRelayerAddress(): string {
+        return RelayerAddress.getAddress("fuji");
+    }
 }

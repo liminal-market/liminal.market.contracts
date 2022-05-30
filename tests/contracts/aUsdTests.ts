@@ -4,9 +4,8 @@ import chaiAsPromised from 'chai-as-promised';
 import { solidity } from "ethereum-waffle";
 
 import { Wallet } from 'ethers';
-import ContractJson from "../../artifacts/contracts/aUSD.sol/aUSD.json";
-import { AUSD }from '../../typechain-types/AUSD';
-import { deployContract } from 'ethereum-waffle';
+import hre, {upgrades} from "hardhat";
+import {AUSD} from "../../typechain-types";
 
 
 describe("aUsd", function () {
@@ -17,44 +16,65 @@ describe("aUsd", function () {
   chai.use(solidity);
 
   let owner : Wallet, wallet2 : Wallet, wallet3 : Wallet;
-  let contract: any;
+  let contract: AUSD;
 
 
-  before("compile", async function () {
-    hre.run('compile');
+  before("before running each test", async function () {
+    await hre.run('compile');
 
-    [owner, wallet2, wallet3] = await waffle.provider.getWallets();
+    [owner, wallet2, wallet3] = waffle.provider.getWallets();
 
     await redeployContract();
   })
 
   const redeployContract = async function() {
-    contract = await deployContract(owner, ContractJson);
+   // contract = await deployContract(owner, ContractJson);
+
+    const contractFactory = await hre.ethers.getContractFactory('aUSD');
+    contract = await upgrades.deployProxy(contractFactory) as AUSD;
   }
 
   it("Check balance of new deployment", async function () {
-    await redeployContract();
     let balanceOf = await contract.balanceOf(owner.address);
     expect(balanceOf).to.equal(0);
 
   });
 
   it("set balance to wallet", async function() {
-
-    await redeployContract();
     await contract.setBalance(wallet2.address, 199);
-
     await expect(await contract.balanceOf(wallet2.address)).to.be.equal(199);
   });
 
-  it("Try to set balance, should fail", async function() {
+  it("set different balances to wallet", async function() {
+    let amount1 = 199;
+    let amount2 = 3888;
+    let amount3 = 23;
+    await contract.setBalance(wallet2.address, amount1);
+    await expect(await contract.balanceOf(wallet2.address)).to.be.equal(amount1);
 
-    contract = await contract.connect(wallet3.address);
+    await contract.setBalance(wallet2.address, amount2);
+    await expect(await contract.balanceOf(wallet2.address)).to.be.equal(amount2);
+
+    await contract.setBalance(wallet2.address, amount3);
+    await expect(await contract.balanceOf(wallet2.address)).to.be.equal(amount3);
+
+  });
+
+  it("grant role, connect new wallet, set balance to wallet", async function() {
+    await contract.grantRoleForBalance(wallet3.address);
+    let amount = 235;
+
+    contract = await contract.connect(wallet3);
+    await contract.setBalance(wallet2.address, amount);
+    await expect(await contract.balanceOf(wallet2.address)).to.be.equal(amount);
+  });
+
+  it("Try to set balance with wallet that doesnt have permission, should fail", async function() {
+    contract = await contract.connect(wallet3);
     await expect(contract.setBalance(wallet2.address, 199)).to.be.rejected;
   });
 
   it("give role", async function() {
-    await redeployContract();
     await contract.grantRoleForBalance(wallet2.address);
   })
 

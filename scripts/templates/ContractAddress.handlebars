@@ -1,8 +1,13 @@
 import ContractAddresses from "./ContractAddresses";
+import RelayerAddress from "./RelayerAddress";
 
 export default class {{networkName}}ContractAddresses extends ContractAddresses {
 
     KYC_ADDRESS = "{{KYC_ADDRESS}}";
     AUSD_ADDRESS = "{{AUSD_ADDRESS}}";
     LIMINAL_MARKET_ADDRESS = "{{LIMINAL_MARKET_ADDRESS}}";
+
+    getRelayerAddress(): string {
+        return RelayerAddress.getAddress("{{networkName}}");
+    }
 }

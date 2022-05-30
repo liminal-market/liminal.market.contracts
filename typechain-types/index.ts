@@ -56,5 +56,7 @@ export type { KYC } from "./contracts/KYC";
 export { KYC__factory } from "./factories/contracts/KYC__factory";
 export type { LiminalMarket } from "./contracts/LiminalMarket";
 export { LiminalMarket__factory } from "./factories/contracts/LiminalMarket__factory";
+export type { MarketCalendar } from "./contracts/MarketCalendar";
+export { MarketCalendar__factory } from "./factories/contracts/MarketCalendar__factory";
 export type { SecurityToken } from "./contracts/SecurityToken";
 export { SecurityToken__factory } from "./factories/contracts/SecurityToken__factory";

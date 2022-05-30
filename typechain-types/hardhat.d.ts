@@ -113,6 +113,10 @@ declare module "hardhat/types/runtime" {
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.LiminalMarket__factory>;
     getContractFactory(
+      name: "MarketCalendar",
+      signerOrOptions?: ethers.Signer | FactoryOptions
+    ): Promise<Contracts.MarketCalendar__factory>;
+    getContractFactory(
       name: "SecurityToken",
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.SecurityToken__factory>;
@@ -242,6 +246,11 @@ declare module "hardhat/types/runtime" {
       address: string,
       signer?: ethers.Signer
     ): Promise<Contracts.LiminalMarket>;
+    getContractAt(
+      name: "MarketCalendar",
+      address: string,
+      signer?: ethers.Signer
+    ): Promise<Contracts.MarketCalendar>;
     getContractAt(
       name: "SecurityToken",
       address: string,
