@@ -1,3 +1,4 @@
+/*
 import chai, { should } from 'chai';
 import chaiAsPromised from 'chai-as-promised';
 import { solidity, MockProvider } from "ethereum-waffle";
@@ -47,10 +48,7 @@ describe("SecurityFactory", function () {
 
 	  const SecurityTokenContract = await smock.mock('SecurityToken');
 		securityTokenContract = await SecurityTokenContract.deploy(name, symbol, kycContract.address, aUsdContract.address);
-/*
-   aUsdContract = await smock.fake('aUSD');
-    securityTokenContract = await smock.fake('SecurityToken');
-*/
+
     contract = await deployContract(owner, ContractJson, [aUsdContract.address, kycContract.address]) as unknown as SecurityFactory;
     contract = await contract.connect(owner);
   }
@@ -118,3 +116,4 @@ console.log('token created');
 
 
 });
+*/

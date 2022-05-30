@@ -3,21 +3,16 @@ import chai from 'chai';
 import chaiAsPromised from 'chai-as-promised';
 import { solidity, MockProvider } from "ethereum-waffle";
 
-import ContractJson from "../artifacts/contracts/SecurityToken.sol/SecurityToken.json";
-import KYCContractJson from "../artifacts/contracts/KYC.sol/KYC.json";
-import AUSDContractJson from "../artifacts/contracts/AUSD.sol/aUSD.json";
-import SecurityFactoryContractJson from "../artifacts/contracts/SecurityFactory.sol/SecurityFactory.json";
-import { SecurityToken } from '../typechain-types/SecurityToken';
-import { KYC } from '../typechain-types/KYC';
-import { AUSD } from '../typechain-types/AUSD';
+import ContractJson from "../../artifacts/contracts/SecurityToken.sol/SecurityToken.json";
+import { SecurityToken } from '../../typechain-types/contracts/SecurityToken';
 import { Wallet } from 'ethers';
-import { FakeContract, smock } from '@defi-wonderland/smock';
+import { smock } from '@defi-wonderland/smock';
+import hre, {upgrades} from "hardhat";
 
 describe("SecurityToken", function () {
   const hre = require("hardhat");
   const waffle = hre.waffle;
-  const { deployContract, deployMockContract } = hre.waffle;
-  const [wallet] = new MockProvider().getWallets()
+  const { deployContract } = hre.waffle;
 
   const expect = chai.expect;
   chai.should();
@@ -32,30 +27,18 @@ describe("SecurityToken", function () {
   const name = "Apple Comp. Inc."
   const accountId: string = "aee548b2-b250-449c-8d0b-937b0b87ccef";
 
-  let kycContract: any;
-  let aUsdContract: any;
-  let securityFactoryContract: any;
-
   before("compile", async function () {
     await hre.run('compile');
-    [owner, wallet2, wallet3] = await waffle.provider.getWallets();
+    [owner, wallet2, wallet3] = waffle.provider.getWallets();
 
     await redeployContract();
   })
 
   const redeployContract = async function () {
-    kycContract = await smock.fake('KYC');
-    aUsdContract = await smock.fake('aUSD');
-
-    const securityFactoryFactory = await smock.mock('SecurityFactory');
-    securityFactoryContract = await securityFactoryFactory.deploy(kycContract.address, aUsdContract.address);
-
-    contract = await deployContract(owner, ContractJson,
-      [name, symbol, kycContract.address, securityFactoryContract.address]) as unknown as SecurityToken;
-    contract = await contract.connect(owner);
+    contract = await deployContract(owner, ContractJson) as unknown as SecurityToken;
   }
 
-
+/*
 
   it("mint 2 times to get balance from event", async function () {
     await redeployContract();
@@ -110,5 +93,5 @@ describe("SecurityToken", function () {
   it("transferFrom should be rejected", async function () {
 
     await expect(contract.transferFrom(owner.address, wallet2.address, 10)).to.be.reverted;
-  })
+  })*/
 });

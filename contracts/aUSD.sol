@@ -26,7 +26,6 @@ contract aUSD is Initializable, ERC20Upgradeable, PausableUpgradeable, AccessCon
 
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
-        console.log("constructor blelbala");
         _disableInitializers();
     }
 
@@ -35,7 +34,7 @@ contract aUSD is Initializable, ERC20Upgradeable, PausableUpgradeable, AccessCon
         __Pausable_init();
         __AccessControl_init();
         __UUPSUpgradeable_init();
-console.log("doing init");
+
         _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
         _grantRole(PAUSER_ROLE, msg.sender);
         _grantRole(UPGRADER_ROLE, msg.sender);
@@ -49,6 +48,10 @@ console.log("doing init");
 
     function grantRoleForBalance(address recipient) public onlyRole(DEFAULT_ADMIN_ROLE) {
         grantRole(SET_BALANCE, recipient);
+    }
+
+    function revokeRoleForBalance(address recipient) public onlyRole(DEFAULT_ADMIN_ROLE) {
+        revokeRole(SET_BALANCE, recipient);
     }
 
 	function setBalance(address recipient, uint256 amount) public onlyRole(SET_BALANCE) whenNotPaused returns (uint256) {
@@ -132,5 +135,7 @@ console.log("doing init");
     internal
     onlyRole(UPGRADER_ROLE)
     override
-    {}
+    {
+        _upgradeTo(newImplementation);
+    }
 }

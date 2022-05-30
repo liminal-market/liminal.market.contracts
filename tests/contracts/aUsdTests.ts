@@ -1,13 +1,11 @@
 
 import chai from 'chai';
 import chaiAsPromised from 'chai-as-promised';
-import {MockContract, solidity} from "ethereum-waffle";
-import LiminalMarketJson from '../../artifacts/contracts/LiminalMarket.sol/LiminalMarket.json';
+import { solidity} from "ethereum-waffle";
 import { Wallet } from 'ethers';
-import hre, {upgrades} from "hardhat";
+import {upgrades} from "hardhat";
 import {AUSD, LiminalMarket} from "../../typechain-types";
 import { FakeContract, smock } from '@defi-wonderland/smock';
-
 
 describe("aUsd", function () {
   const expect = chai.expect;
@@ -21,7 +19,6 @@ describe("aUsd", function () {
   let owner : Wallet, wallet2 : Wallet, wallet3 : Wallet;
   let contract: AUSD;
   let liminalMarketContract : FakeContract<LiminalMarket>;
-
 
   before("before running each test", async function () {
     await hre.run('compile');
@@ -59,22 +56,43 @@ describe("aUsd", function () {
   });
 
   it("set balance to wallet", async function() {
-    await contract.setBalance(wallet2.address, 199);
-    await expect(await contract.balanceOf(wallet2.address)).to.be.equal(199);
+    let amount = 199;
+    expect(await contract.setBalance(wallet2.address, amount))
+        .emit(contract, "BalanceSet").withArgs(wallet2.address, amount);
+    await expect(await contract.balanceOf(wallet2.address)).to.be.equal(amount);
+
   });
 
   it("set different balances to wallet", async function() {
+    await redeployContract();
+
     let amount1 = 199;
     let amount2 = 3888;
     let amount3 = 23;
-    await contract.setBalance(wallet2.address, amount1);
-    await expect(await contract.balanceOf(wallet2.address)).to.be.equal(amount1);
+    expect(await contract.setBalance(wallet2.address, amount1))
+        .to.emit(contract, "BalanceSet").withArgs(wallet2.address, amount1);
+    expect(await contract.balanceOf(wallet2.address)).to.be.equal(amount1);
 
-    await contract.setBalance(wallet2.address, amount2);
-    await expect(await contract.balanceOf(wallet2.address)).to.be.equal(amount2);
+    expect(await contract.setBalance(wallet2.address, amount2))
+        .to.emit(contract, "BalanceSet").withArgs(wallet2.address, amount2);
+    expect(await contract.balanceOf(wallet2.address)).to.be.equal(amount2);
 
-    await contract.setBalance(wallet2.address, amount3);
-    await expect(await contract.balanceOf(wallet2.address)).to.be.equal(amount3);
+    expect(await contract.setBalance(wallet2.address, amount3))
+        .to.emit(contract, "BalanceSet").withArgs(wallet2.address, amount3);
+    expect(await contract.balanceOf(wallet2.address)).to.be.equal(amount3);
+
+  });
+
+  it("set balance, then set same amount. It should test first if clause and not emit event", async function() {
+    await redeployContract();
+
+    let amount1 = 78936;
+    expect(await contract.setBalance(wallet2.address, amount1))
+        .to.emit(contract, "BalanceSet").withArgs(wallet2.address, amount1);
+    expect(await contract.balanceOf(wallet2.address)).to.be.equal(amount1);
+
+    expect(await contract.setBalance(wallet2.address, amount1))
+        .not.to.emit(contract, "BalanceSet");
 
   });
 
@@ -85,6 +103,24 @@ describe("aUsd", function () {
     let contractW3 = contract.connect(wallet3);
     await contractW3.setBalance(wallet2.address, amount);
     await expect(await contract.balanceOf(wallet2.address)).to.be.equal(amount);
+  });
+
+  it("grant role, connect new wallet, set balance to wallet, then remove role and try again, should be revered", async function() {
+    expect(await contract.grantRoleForBalance(wallet3.address))
+        .to.emit(contract, "RoleGranted")
+        .withArgs(contract.SET_BALANCE, wallet3.address, owner.address);
+
+    let amount = 235;
+
+    let contractW3 = contract.connect(wallet3);
+    await contractW3.setBalance(wallet2.address, amount);
+    await expect(await contract.balanceOf(wallet2.address)).to.be.equal(amount);
+
+    expect(await contract.revokeRoleForBalance(wallet3.address))
+        .to.emit(contract, "RoleRevoked")
+        .withArgs(contract.SET_BALANCE, wallet3.address, owner.address);
+
+    await expect(contractW3.setBalance(wallet2.address, 555)).to.be.rejected;
   });
 
   it("Try to set balance with wallet that doesnt have permission, should fail", async function() {
@@ -137,5 +173,12 @@ describe("aUsd", function () {
     await contract.transfer(tokenAddress, amount);
 
     expect(liminalMarketContract.buyWithAUsd).to.have.been.calledWith(owner.address, tokenAddress, amount);
+  });
+
+  it("Pause contract, try to execute on it, then unpause contract and execute again", async function () {
+    await redeployContract();
+
+    await contract.pause();
+    await expect(contract.setBalance(wallet2.address, 12)).to.be.reverted;
   });
 });

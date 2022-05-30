@@ -77,7 +77,11 @@ task('cu-all', 'compiles and upgrade all contract', async (taskArgs, hre) => {
 task('getausd', 'gets USDC token', async (taskArgs, hre) => {
     await fundAUSD(hre)
 });
+task('cov', 'code coverage', async (taskArgs, hre) => {
 
+
+
+});
 
 // You need to export an object to set up your config
 // Go to https://hardhat.org/config/ to learn more
@@ -121,7 +125,7 @@ const config: HardhatUserConfig = {
         hardhat: {
             forking: {
                 url: "https://polygon-mumbai.g.alchemy.com/v2/sCmg1qtO8dGxcgTZxjvcFazjkqUyHI6r",
-                //blockNumber: 9693973
+                blockNumber: 26529265
             }
         },
         rinkeby: {

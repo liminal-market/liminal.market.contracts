@@ -10,10 +10,12 @@ import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 
 
 contract MarketCalendar is Initializable, AccessControlUpgradeable, UUPSUpgradeable {
-    Calendar[] public calendar;
+    Calendar[] public s_calendar;
 
     bytes32 public constant UPGRADER_ROLE = keccak256("UPGRADER_ROLE");
     bytes32 public constant SET_CALENDAR_ROLE = keccak256("SET_CALENDAR_ROLE");
+
+    event CalendarSet(uint startTimestamp, uint endTimestamp);
 
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() initializer {}
@@ -28,24 +30,23 @@ contract MarketCalendar is Initializable, AccessControlUpgradeable, UUPSUpgradea
 
     }
 
-    function setCalendar(uint o0, uint c0, uint o1, uint c1, uint o2, uint c2, uint o3, uint c3, uint o4, uint c4)
-                public onlyRole(SET_CALENDAR_ROLE) {
-        calendar[0].opens = o0;
-        calendar[0].closes = c0;
-        calendar[1].opens = o1;
-        calendar[1].closes = c1;
-        calendar[2].opens = o2;
-        calendar[2].closes = c2;
-        calendar[3].opens = o3;
-        calendar[3].closes = c3;
-        calendar[4].opens = o4;
-        calendar[4].closes = c4;
+    function setCalendar(uint[] calldata opens, uint[] calldata closes) public onlyRole(SET_CALENDAR_ROLE) {
+        require(opens.length == closes.length, "Open & Close need to be same");
+        delete s_calendar;
+
+        for (uint i=0;i<opens.length;i++) {
+            s_calendar.push(Calendar(opens[i], closes[i]));
+        }
+
+        emit CalendarSet(opens[0], closes[closes.length-1]);
     }
 
     function isMarketOpen() public view returns (bool) {
         uint timestamp = block.timestamp;
-        for (uint i=0;i<calendar.length;i++) {
-            if (timestamp > calendar[i].opens && timestamp < calendar[i].closes) return true;
+        Calendar[] memory calArray = s_calendar;
+
+        for (uint i=0;i<calArray.length;i++) {
+            if (timestamp > calArray[i].opens && timestamp < calArray[i].closes) return true;
         }
 
         return false;
