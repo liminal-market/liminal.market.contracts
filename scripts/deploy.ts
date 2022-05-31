@@ -4,8 +4,7 @@ import "@openzeppelin/hardhat-upgrades";
 import {HardhatRuntimeEnvironment} from "hardhat/types";
 import "@nomiclabs/hardhat-etherscan";
 import { getImplementationAddress } from '@openzeppelin/upgrades-core';
-import {AUSD, KYC, LiminalMarket} from "../typechain-types";
-import ContractInfo from "./addresses/ContractInfo";
+import { KYC, LiminalMarket} from "../typechain-types";
 import ContractAddresses from "./addresses/ContractAddresses";
 
 export const compile = async function(hre: HardhatRuntimeEnvironment) {
@@ -85,8 +84,7 @@ const compileAndUpgrade = async function (href: HardhatRuntimeEnvironment, contr
 
 export const getContract = async function (href: HardhatRuntimeEnvironment, contractName: string, address: string) {
     const Contract = await href.ethers.getContractFactory(contractName);
-    let contract = await Contract.attach(address);
-    return contract;
+    return Contract.attach(address);
 }
 
 export async function grantRoles(hre: HardhatRuntimeEnvironment, contractInfo : ContractAddresses) {
@@ -123,7 +121,7 @@ const contractExistsOnChain = async function (hre: HardhatRuntimeEnvironment, co
 }
 
 const deployContract = async function (hre: HardhatRuntimeEnvironment, contractName: string,
-                                       preexistingAddress: string, conArgs?: any[]) {
+                                       preexistingAddress: string) {
 
     const Contract = await hre.ethers.getContractFactory(contractName);
 
