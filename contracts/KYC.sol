@@ -10,20 +10,20 @@ import "hardhat/console.sol";
 
 contract KYC is
     Initializable,
-    PausableUpgradeable,
     AccessControlUpgradeable,
     UUPSUpgradeable
 {
 
     bytes32 public constant SET_KYC = keccak256("SET_KYC");
-    bytes32 public constant PAUSER_ROLE = keccak256("PAUSER_ROLE");
     bytes32 public constant UPGRADER_ROLE = keccak256("UPGRADER_ROLE");
+
+    string public constant ADDRESS_NOT_VALID = "Address is not KYC valid";
+    string public constant INVALID_ACCOUNT_ID = "Looks like invalid accountId";
 
  	/// @custom:oz-upgrades-unsafe-allow constructor
 	constructor() initializer {}
 
  	function initialize() public initializer {
-        __Pausable_init();
         __AccessControl_init();
         __UUPSUpgradeable_init();
 
@@ -45,14 +45,17 @@ contract KYC is
         grantRole(SET_KYC, recipient);
     }
 
+    function revokeRoleForKyc(address recipient) public onlyRole(DEFAULT_ADMIN_ROLE) {
+        revokeRole(SET_KYC, recipient);
+    }
 
-    function invalidateAccount(address accountAddress)
+    function invalidateAccount(address userAddress)
         public
         onlyRole(SET_KYC)
     {
-        delete kycAccount[accountAddress];
+        delete kycAccount[userAddress];
 
-        emit AccountInvalidated(accountAddress);
+        emit AccountInvalidated(userAddress);
     }
 
     function validateAccount(string memory accountId, address userAddress)
@@ -60,14 +63,10 @@ contract KYC is
         onlyRole(SET_KYC)
         returns (bool)
     {
-        console.log("ValidateAccount called");
-
-        require(bytes(accountId).length == 36, "Looks like invalid accountId");
+        require(bytes(accountId).length == 36, INVALID_ACCOUNT_ID);
+        require(userAddress != address(0), "Address cannot be zero");
 
         kycAccount[userAddress] = AccountValidation(accountId, block.timestamp);
-        console.log("address to kycAccount", userAddress);
-        console.log("accountId", accountId);
-        console.log("kycAccount", kycAccount[userAddress].accountId);
 
         emit AccountValidated(accountId);
 
@@ -78,14 +77,12 @@ contract KYC is
         //TODO: Remove this, this is hardhat test wallet #1
         if (userAddress == 0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266)
             return "aee548b2-b250-449c-8d0b-937b0b87ccef";
-        if (userAddress == 0x93DA645082493BBd7116fC057c5b9aDfd5363912)
-            return "aee548b2-b250-449c-8d0b-937b0b87ccef";
-        console.log("KYC isValid is called");
+
         AccountValidation memory account = kycAccount[userAddress];
 
         require(
             bytes(account.accountId).length != 0,
-            "Address is not KYC valid"
+            ADDRESS_NOT_VALID
         );
 
         //TODO: lets skip this validation while in Sandbox version
@@ -99,23 +96,12 @@ contract KYC is
         view
         returns (string memory)
     {
-        console.log("userAddress:", userAddress);
-
         AccountValidation memory account = kycAccount[userAddress];
-        console.log("account:", account.accountId);
         require(
             bytes(account.accountId).length != 0,
-            "Address is not KYC valid"
+            ADDRESS_NOT_VALID
         );
         return account.accountId;
-    }
-
-    function pause() public onlyRole(PAUSER_ROLE) {
-        _pause();
-    }
-
-    function unpause() public onlyRole(PAUSER_ROLE) {
-        _unpause();
     }
 
     function _authorizeUpgrade(address newImplementation)

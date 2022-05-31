@@ -1,21 +1,20 @@
-import chai, { should } from 'chai';
+import chai, {expect} from 'chai';
 import chaiAsPromised from 'chai-as-promised';
-import { solidity, MockProvider } from "ethereum-waffle";
+import { solidity } from "ethereum-waffle";
 
-import { LiminalMarket } from '../../typechain-types/contracts/LiminalMarket';
-import { AUSD } from '../../typechain-types/contracts/AUSD';
-import { KYC } from '../../typechain-types/contracts/KYC';
-import { BigNumber, Wallet } from 'ethers';
-import { FakeContract, smock } from '@defi-wonderland/smock';
-import { text } from 'stream/consumers';
+import { LiminalMarket, AUSD, KYC } from '../../typechain-types';
+import { Wallet } from 'ethers';
+import {FakeContract, smock} from '@defi-wonderland/smock';
 import hre, {upgrades} from "hardhat";
+import {
+	MarketCalendar,
+	SecurityToken__factory
+} from "../../typechain-types";
+
 
 describe("LiminalMarket", function () {
 	const waffle = hre.waffle;
-	const { deployContract, deployMockContract } = hre.waffle;
-	const [wallet] = new MockProvider().getWallets()
 
-	const expect = chai.expect;
 	chai.should();
 	chai.use(chaiAsPromised);
 	chai.use(solidity);
@@ -23,104 +22,242 @@ describe("LiminalMarket", function () {
 
 	let owner: Wallet, wallet2: Wallet, wallet3: Wallet;
 	let contract: LiminalMarket;
+	let ownerContract : LiminalMarket;
 
-	let kycContract: KYC;
-	let aUsdContract: AUSD;
+	let kycContract: FakeContract<KYC>;
+	let aUsdContract: FakeContract<AUSD>;
+	let marketCalendarContract : FakeContract<MarketCalendar>;
 
-	const liminalWalletAddress = '0x70997970C51812dc3A010C7d01b50e0d17dc79C8';
-	const brokerAddress = '0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC';
-
-	const accountId: string = "aee548b2-b250-449c-8d0b-937b0b87ccef";
-	const symbol = "TST";
+	const AddressZero = "0x0000000000000000000000000000000000000000";
+	const userAddress = "0x90F79bf6EB2c4f870365E785982E1f101E93b906";
+	let salt = 123344;
 
 	before("compile", async function () {
 		await hre.run('compile');
-		[owner, wallet2, wallet3] = await waffle.provider.getWallets();
+		[owner, wallet2, wallet3] = waffle.provider.getWallets();
 
 		await redeployContract();
 	})
 
 	const redeployContract = async function () {
-
-		const kycContractFactory = await smock.mock('KYC');
-		kycContract = await smock.fake('KYC') as unknown as KYC; // await kycContractFactory.deploy() as unknown as KYC;
-
-		const aUsdContractFactory = await smock.mock('aUSD');
-		aUsdContract = await aUsdContractFactory.deploy() as unknown as AUSD;
-
 		const contractFactory = await hre.ethers.getContractFactory('LiminalMarket');
-		contract = await upgrades.deployProxy(contractFactory) as LiminalMarket;
+		ownerContract = await upgrades.deployProxy(contractFactory) as LiminalMarket;
 
+		await setAddresses();
+		//since owner will not normally interact with contract,
+		// we switch to wallet2 to simplify testing
+		contract = ownerContract.connect(wallet2);
 	}
 
-/*
-	it("buy but symbol is empty, throw error", async function () {
-		await expect(contract..buy("", 100)).to.be.reverted;
-	})
+	const setAddresses = async function() {
+		kycContract = await smock.fake<KYC>('KYC');
+		aUsdContract = await smock.fake<AUSD>('aUSD');
+		marketCalendarContract = await smock.fake<MarketCalendar>("MarketCalendar");
+		await ownerContract.setAddresses(aUsdContract.address, kycContract.address, marketCalendarContract.address);
+	}
 
-	it("buy but amount is 0, throw error", async function () {
-		await expect(contract.buy(symbol, 0)).to.be.reverted;
-	})
+	it("check valid addresses", async () => {
 
-	it("buy but balanceOf USDC is not enough, throw error", async function () {
-		let amount = 100;
+		let kycContractAddress = await contract.kycContract();
+		let aUsdContractAddress = await contract.aUsdContract();
+		let marketCalContractAddress = await contract.marketCalendarContract();
 
-		contract = await contract.connect(wallet2);
+		expect(kycContractAddress).to.be.equal(kycContract.address);
+		expect(aUsdContractAddress).to.be.equal(aUsdContract.address);
+		expect(marketCalContractAddress).to.be.equal(marketCalendarContract.address);
+	});
 
-		usdcContract.balanceOf(wallet2.address)
-		usdcContract.balanceOf.returns(0);
+	it("should try to get security token, but doesn't exist", async ()=> {
+		let token = await contract.getSecurityToken("BLe");
+		expect(token).to.be.equal(AddressZero);
+	});
 
-		await expect(contract.buy(symbol, 10)).to.be.reverted;
+	it("creates new token, then fetches it", async ()=> {
+		let symbol = "ABC";
+		let result = await contract.createToken(symbol, salt);
+		let token = await contract.getSecurityToken(symbol);
 
+		expect(token).to.be.not.equal(AddressZero);
+		expect(result).to.emit(contract, "TokenCreated").withArgs(token, symbol);
+	});
+
+	it("creates new token, symbol is empty, should revert", async ()=> {
+		let symbol = "";
+		expect(contract.createToken(symbol, salt)).to.be.revertedWith("Symbol cannot be empty");
+	});
+
+	it("creates new token, try to create same token, should revert", async ()=> {
+		await redeployContract();
+
+		let symbol = "ABC";
+		let result = await contract.createToken(symbol, salt);
+		let tokenAddress = await contract.getSecurityToken(symbol);
+
+		expect(tokenAddress).to.not.be.equal(AddressZero);
+		expect(result).to.emit(contract, "TokenCreated").withArgs(tokenAddress, symbol);
+
+		expect(contract.createToken(symbol, salt)).revertedWith("Security token already exists");
 	});
 
 
-	it("buy but allowance for USDC is not enough, throw error", async function () {
+
+
+
+	it("try to sell token, not aUSD address, will revert", async () => {
 		await redeployContract();
-		let amount = 100;
 
-		contract = await contract.connect(wallet2);
+		let symbol = "ABC";
+		let amount = 10;
 
-		usdcContract.balanceOf(wallet2.address)
-		usdcContract.balanceOf.returns(1000);
-
-		usdcContract.allowance(wallet2.address, owner.address);
-		usdcContract.allowance.returns(2);
-
-		await expect(contract.buy(symbol, 10)).to.be.reverted;
-
+		let reason = await contract.ONLY_SEND_TO_AUSD();
+		await expect(contract.sellSecurityToken(userAddress, userAddress, symbol, amount))
+			.revertedWith(reason);
 	});
 
-	it("buy", async function () {
+	it("try to sell token, market is closed, will revert", async () => {
+		await redeployContract();
+		let symbol = "ABC";
+		let amount = 10;
+		let reason = await contract.MARKET_CLOSED();
+
+		marketCalendarContract.isMarketOpen.returns(false);
+
+		await expect(contract.sellSecurityToken(aUsdContract.address, userAddress, symbol, amount))
+			.to.be.revertedWith(reason);
+	})
+
+	it("try to sell token, token address will be invalid, will revert", async () => {
+		await redeployContract();
+		let symbol = "ABC";
+		let amount = 10;
+		let reason = await contract.NOT_VALID_TOKEN_ADDRESS();
+
+		marketCalendarContract.isMarketOpen.returns(true);
+
+		await expect(contract.sellSecurityToken(aUsdContract.address, userAddress, symbol, amount))
+			.to.be.revertedWith(reason);
+	})
+
+	it("try to sell token, no solution yet to test it :(", async () => {
+		/*
+		const myContractFactory = await smock.mock<LiminalMarket__factory>('LiminalMarket');
+		const myContract = await myContractFactory.deploy()
+		await myContract.setAddresses(aUsdContract.address, kycContract.address, marketCalendarContract.address);
+
+
+		let symbol = "ABC";
+		let amount = 10;
+		let reason = await myContract.NOT_VALID_TOKEN_ADDRESS();
+		await myContract.setVariable('securityTokens', {
+			0 : wallet2.address,
+			1 : symbol
+		});
+
+		marketCalendarContract.isMarketOpen.returns(true);
+
+		await myContract.sellSecurityToken(aUsdContract.address, userAddress, symbol, amount);
+
+		 */
+	})
+
+	it("should grant mint and burn role", async () => {
 		await redeployContract();
 
-		let amount = 10000;
-		let amountAfterFee = 9950;
-		let fee = 50;
-		let accountId = "abc";
-		let securityTokenAddress = "0xFABB0ac9d68B0B445fB7357272Ff202C5651694a";
+		await ownerContract.grantMintAndBurnRole(wallet2.address);
 
-		contract = await contract.connect(wallet2);
+		let reason = await contract.ADDRESS_CANNOT_BE_ZERO();
 
-		await usdcContract.balanceOf(wallet2.address)
-		await usdcContract.balanceOf.returns(amount);
+		await expect(contract.orderExecuted(AddressZero, "", 0, 0, 0, "buy", 0, 0, 0))
+			.to.revertedWith(reason);
 
-		await usdcContract.allowance(wallet2.address, owner.address);
-		await usdcContract.allowance.returns(amount);
+	})
 
-		await kycContract.isValid(wallet2.address);
-		await kycContract.isValid.returns(accountId);
+	it("should grant mint and burn role, then remove it and revert when trying to execute order", async () => {
+		await redeployContract();
 
-		await securityFactory.getSecurityToken(symbol);
-		await securityFactory.getSecurityToken.returns(securityTokenAddress);
+		await ownerContract.grantMintAndBurnRole(wallet2.address);
 
-		await expect(contract.buy(symbol, amount))
-			.to.emit(contract, "Bought")
-			.withArgs(amountAfterFee, accountId, symbol, fee, securityTokenAddress)
+		let reason = await contract.ADDRESS_CANNOT_BE_ZERO();
 
-		await expect(usdcContract.transferFrom).to.have.been.calledWith(wallet2.address, contract.address, amount);
-		await expect(usdcContract.transfer).to.have.been.calledWith(brokerAddress, amountAfterFee);
-		await expect(usdcContract.transfer).to.have.been.calledWith(liminalWalletAddress, fee);
+		await expect(contract.orderExecuted(AddressZero, "", 0, 0, 0, "buy", 0, 0, 0))
+			.to.revertedWith(reason);
 
-	});*/
+		await ownerContract.revokeMintAndBurnRole(wallet2.address);
+
+		await expect(contract.orderExecuted(AddressZero, "", 0, 0, 0, "buy", 0, 0, 0))
+			.to.not.be.revertedWith(reason);
+
+
+	})
+
+	it("try to execute order, but symbol is address zero, should be rejected", async () => {
+		await redeployContract();
+
+		let reason = await contract.ADDRESS_CANNOT_BE_ZERO();
+
+		await expect(ownerContract.orderExecuted(userAddress, "ble", 0, 0, 0, "buy", 0, 0, 0))
+			.to.revertedWith(reason);
+
+
+	})
+
+	it("Order executed", async () => {
+		await redeployContract();
+
+		let recipient = userAddress;
+		let symbol = "ABC";
+		let qty = 1000;
+		let filledQty = 900;
+		let filledAvgPrice = 95;
+		let side = 'buy';
+		let filledAt = new Date().getTime();
+		let commission = 1;
+		let aUsdBalance = 1000;
+
+		await contract.createToken(symbol, salt);
+		let result = await ownerContract.orderExecuted(recipient, symbol, qty, filledQty, filledAvgPrice, side, filledAt, commission, aUsdBalance)
+
+		let symbolAddress = await contract.getSecurityToken(symbol);
+		let securityToken = SecurityToken__factory.connect(symbolAddress, wallet2);
+
+		expect(await securityToken.balanceOf(recipient)).to.be.equal(qty);
+
+		expect(aUsdContract.setBalance).to.be.calledWith(recipient, aUsdBalance);
+		expect(result).to.emit(contract, "OrderExecuted")
+			.withArgs(recipient, symbol, qty, filledQty, filledAvgPrice, side, filledAt, commission, aUsdBalance);
+
+	})
+
+	it("pause contract", async () => {
+		await redeployContract();
+
+		await ownerContract.pause();
+		let reason = "Pausable: paused";
+		await expect(contract.orderExecuted(AddressZero, "", 0, 0, 0, "buy", 0, 0, 0))
+			.to.revertedWith(reason);
+
+		await expect(contract.createToken("abc", salt))
+			.to.revertedWith(reason);
+
+		await expect(contract.buyWithAUsd(userAddress, userAddress, 1))
+			.to.revertedWith(reason);
+
+		await expect(contract.sellSecurityToken(aUsdContract.address, userAddress, "abc", 1))
+			.to.revertedWith(reason);
+	})
+
+	it("pause & unpause contract", async () => {
+		await redeployContract();
+
+		await ownerContract.pause();
+		let reason = "Pausable: paused";
+
+		await expect(contract.createToken("abc", salt))
+			.to.revertedWith(reason);
+
+		await ownerContract.unpause();
+
+		expect(await contract.createToken("abc", salt))
+			.to.emit(contract, "TokenCreated");
+	})
 });

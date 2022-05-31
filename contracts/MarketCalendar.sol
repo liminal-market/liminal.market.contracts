@@ -31,7 +31,7 @@ contract MarketCalendar is Initializable, AccessControlUpgradeable, UUPSUpgradea
     }
 
     function setCalendar(uint[] calldata opens, uint[] calldata closes) public onlyRole(SET_CALENDAR_ROLE) {
-        require(opens.length == closes.length, "Open & Close need to be same");
+        require(opens.length == closes.length, "opens & closes need to be same length");
         delete s_calendar;
 
         for (uint i=0;i<opens.length;i++) {

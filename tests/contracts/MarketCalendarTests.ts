@@ -1,5 +1,5 @@
 import chai from "chai";
-import hre, {upgrades} from "hardhat";
+import {upgrades} from "hardhat";
 import chaiAsPromised from "chai-as-promised";
 import {solidity} from "ethereum-waffle";
 import {smock} from "@defi-wonderland/smock";
@@ -11,6 +11,7 @@ describe("Test market calendar", () => {
     const expect = chai.expect;
     const hre = require("hardhat");
     const waffle = hre.waffle;
+
     chai.should();
     chai.use(chaiAsPromised);
     chai.use(solidity);
@@ -31,6 +32,7 @@ describe("Test market calendar", () => {
         const contractFactory = await hre.ethers.getContractFactory('MarketCalendar');
         contract = await upgrades.deployProxy(contractFactory) as MarketCalendar;
     }
+
     it("should have different open and close array length and revert", async () => {
         let opens = [];
         let closes = [];
@@ -40,7 +42,7 @@ describe("Test market calendar", () => {
 
         opens[1] = new Date(calendarEntries[1].date + "T" + calendarEntries[1].open + "-05:00").getTime() / 1000;
 
-        await expect(contract.setCalendar(opens, closes)).to.be.reverted;
+        await expect(contract.setCalendar(opens, closes)).to.be.revertedWith("opens & closes need to be same length");
     });
 
 
@@ -84,6 +86,7 @@ describe("Test market calendar", () => {
     })
 
     it("should set permission, then remove permission", async () => {
+        await redeployContract();
 
         expect(await contract.setCalendarRole(wallet2.address))
             .to.emit(contract, "RoleGranted")

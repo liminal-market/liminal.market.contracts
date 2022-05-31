@@ -62,10 +62,8 @@ contract aUSD is Initializable, ERC20Upgradeable, PausableUpgradeable, AccessCon
         } else {
             _burn(recipient, balance - amount);
         }
-        console.log("aUsd - amount:", amount);
-        console.log("aUsd - balanceBefore:", balance);
         uint balanceAfter = balanceOf(recipient);
-        console.log("aUsd - balanceAfter:", balanceAfter);
+        require(balanceAfter == amount, "Wrong calculation");
 
         emit BalanceSet(recipient, amount);
 		return balanceAfter;

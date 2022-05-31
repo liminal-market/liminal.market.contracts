@@ -4,7 +4,13 @@ import chaiAsPromised from 'chai-as-promised';
 import { solidity} from "ethereum-waffle";
 import { Wallet } from 'ethers';
 import {upgrades} from "hardhat";
-import {AUSD, LiminalMarket} from "../../typechain-types";
+import {
+  AUSD,
+  KYC,
+  LiminalMarket,
+  MarketCalendar,
+  SecurityToken__factory
+} from "../../typechain-types";
 import { FakeContract, smock } from '@defi-wonderland/smock';
 
 describe("aUsd", function () {
@@ -19,6 +25,13 @@ describe("aUsd", function () {
   let owner : Wallet, wallet2 : Wallet, wallet3 : Wallet;
   let contract: AUSD;
   let liminalMarketContract : FakeContract<LiminalMarket>;
+  let kycContract: FakeContract<KYC>;
+  let marketCalendarContract : FakeContract<MarketCalendar>;
+
+
+  const userAddress = "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266";
+  const brokerAccountId = "aee548b2-b250-449c-8d0b-937b0b87ccef";
+  let salt = 123344;
 
   before("before running each test", async function () {
     await hre.run('compile');
@@ -31,6 +44,13 @@ describe("aUsd", function () {
   const redeployContract = async function() {
     const contractFactory = await hre.ethers.getContractFactory('aUSD');
     contract = await upgrades.deployProxy(contractFactory) as AUSD;
+
+    await initFakeContracts();
+  }
+
+  const initFakeContracts = async function() {
+    kycContract = await smock.fake<KYC>('KYC');
+    marketCalendarContract = await smock.fake<MarketCalendar>("MarketCalendar");
   }
 
   it('Call transfer method, should call buyWithAUsd on LiminalMarket contract', async function() {
@@ -48,6 +68,104 @@ describe("aUsd", function () {
 
     expect(liminalMarketContract.buyWithAUsd).to.have.been.calledWith(wallet2.address, tokenAddress, amount);
   })
+
+  it("should buy with aUSD", async () => {
+    await redeployContract();
+
+    let symbol = "ABC";
+    const contractFactory = await hre.ethers.getContractFactory('LiminalMarket');
+    let liminalContract = await upgrades.deployProxy(contractFactory) as LiminalMarket;
+    await liminalContract.setAddresses(contract.address, kycContract.address, marketCalendarContract.address);
+
+    await contract.setLiminalMarketAddress(liminalContract.address);
+    await contract.grantRoleForBalance(liminalContract.address);
+
+    await liminalContract.createToken(symbol, salt);
+    let tokenAddress = await liminalContract.getSecurityToken(symbol);
+
+    let amount = 100;
+    let aUsdContractBalance = 1000;
+    marketCalendarContract.isMarketOpen.returns(true);
+    kycContract.isValid.returns(brokerAccountId);
+    await contract.setBalance(wallet2.address, aUsdContractBalance);
+
+    let contractW2 = contract.connect(wallet2);
+    expect(await contractW2.transfer(tokenAddress, amount))
+        .to.emit(liminalContract, "BuyWithAUsd")
+        .withArgs(wallet2.address, amount, brokerAccountId, symbol, tokenAddress);
+
+  })
+
+  it("try to buy with aUSD, but token address is NOT liminal.market token, should revert", async () => {
+    await redeployContract();
+
+    let symbol = "ABC";
+
+    const contractFactory = await hre.ethers.getContractFactory('LiminalMarket');
+    let liminalContract = await upgrades.deployProxy(contractFactory) as LiminalMarket;
+    await liminalContract.setAddresses(contract.address, kycContract.address, marketCalendarContract.address);
+
+    await contract.setLiminalMarketAddress(liminalContract.address);
+    await contract.grantRoleForBalance(liminalContract.address);
+
+    let securityTokenFactory = await smock.mock<SecurityToken__factory>('SecurityToken');
+    let securityToken = await securityTokenFactory.deploy(symbol, symbol);
+
+    let tokenAddress = securityToken.address;
+
+    let amount = 100;
+    let aUsdContractBalance = 1000;
+    marketCalendarContract.isMarketOpen.returns(true);
+    kycContract.isValid.returns(brokerAccountId);
+    await contract.setBalance(wallet2.address, aUsdContractBalance);
+
+    let contractW2 = contract.connect(wallet2);
+    await expect(contractW2.transfer(tokenAddress, amount))
+        .to.revertedWith("This is not valid token address")
+
+  })
+
+  it("try to buy, but doesn't have enough aUSD, should revert", async () => {
+    await redeployContract();
+
+    const contractFactory = await hre.ethers.getContractFactory('LiminalMarket');
+    let liminalContract = await upgrades.deployProxy(contractFactory) as LiminalMarket;
+    await liminalContract.setAddresses(contract.address, kycContract.address, marketCalendarContract.address);
+
+    await contract.setLiminalMarketAddress(liminalContract.address);
+    await contract.grantRoleForBalance(liminalContract.address);
+
+    let tokenAddress = userAddress;
+    let amount = 100;
+    let aUsdContractBalance = 1;
+    marketCalendarContract.isMarketOpen.returns(true);
+    kycContract.isValid.returns(brokerAccountId);
+    await contract.setBalance(wallet2.address, aUsdContractBalance);
+
+    let contractW2 = contract.connect(wallet2);
+    await expect(contractW2.transfer(tokenAddress, amount))
+        .to.be.revertedWith("You don't have enough aUSD");
+  })
+
+  it("try to buy, market is closed, should revert", async () => {
+
+    const contractFactory = await hre.ethers.getContractFactory('LiminalMarket');
+    let liminalContract = await upgrades.deployProxy(contractFactory) as LiminalMarket;
+    await liminalContract.setAddresses(contract.address, kycContract.address, marketCalendarContract.address);
+
+    await contract.setLiminalMarketAddress(liminalContract.address);
+    await contract.grantRoleForBalance(liminalContract.address);
+
+    let tokenAddress = userAddress;
+    let amount = 100;
+    marketCalendarContract.isMarketOpen.returns(false);
+
+    let contractW2 = contract.connect(wallet2);
+    let reason = await liminalContract.MARKET_CLOSED();
+    await expect(contractW2.transfer(tokenAddress, amount))
+        .to.be.revertedWith(reason);
+  })
+
 
   it("Check balance of new deployment", async function () {
     let balanceOf = await contract.balanceOf(owner.address);
@@ -106,6 +224,8 @@ describe("aUsd", function () {
   });
 
   it("grant role, connect new wallet, set balance to wallet, then remove role and try again, should be revered", async function() {
+    await redeployContract();
+
     expect(await contract.grantRoleForBalance(wallet3.address))
         .to.emit(contract, "RoleGranted")
         .withArgs(contract.SET_BALANCE, wallet3.address, owner.address);
@@ -134,10 +254,12 @@ describe("aUsd", function () {
     await contract.grantRoleForBalance(wallet2.address);
   })
 
+  it("allowance should be rejected", async function () {
+    expect(contract.allowance(owner.address, wallet2.address)).to.be.reverted;
+  });
   it("Transfer should be rejected", async function () {
     expect(contract.transfer(owner.address, 10)).to.be.reverted;
   });
-
 
   it("allowance should be rejected", async function () {
     expect(contract.allowance(owner.address, wallet2.address)).to.be.reverted;

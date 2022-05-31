@@ -7,6 +7,7 @@ import "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
+import "@openzeppelin/contracts/utils/Create2.sol";
 
 import "./SecurityToken.sol";
 import "./aUSD.sol";
@@ -23,7 +24,15 @@ contract LiminalMarket is Initializable, PausableUpgradeable, AccessControlUpgra
     bytes32 public constant MINTER_ROLE = keccak256("MINTER_ROLE");
     bytes32 public constant UPGRADER_ROLE = keccak256("UPGRADER_ROLE");
 
-    MarketCalendar public marketCalendar;
+    string public constant MARKET_CLOSED = "Market is closed";
+    string public constant NOT_ENOUGH_AUSD = "You don't have enough aUSD";
+    string public constant ONLY_SEND_TO_AUSD = "You can only send to aUSD token";
+    string public constant NOT_VALID_TOKEN_ADDRESS = "This is not valid token address";
+    string public constant QUANTITY_MORE_THEN_BALANCE = "Quantity cannot be larger then balance";
+    string public constant ADDRESS_CANNOT_BE_ZERO = "Address cannot be zero";
+    string public constant ONLY_AUSD_CAN_CALL_ME = "Only aUSD contract can call me";
+
+    MarketCalendar public marketCalendarContract;
 
     event TokenCreated( address tokenAddress, string symbol);
     event BuyWithAUsd(address userAddress, uint amount, string accountId,
@@ -49,10 +58,10 @@ contract LiminalMarket is Initializable, PausableUpgradeable, AccessControlUpgra
         _grantRole(UPGRADER_ROLE, msg.sender);
     }
 
-    function setAddresses(aUSD _aUsdContract, KYC _kycContract, MarketCalendar _marketCalendar) public onlyRole(DEFAULT_ADMIN_ROLE) {
+    function setAddresses(aUSD _aUsdContract, KYC _kycContract, MarketCalendar _marketCalendarContract) public onlyRole(DEFAULT_ADMIN_ROLE) {
         aUsdContract = _aUsdContract;
         kycContract =  _kycContract;
-        marketCalendar = _marketCalendar;
+        marketCalendarContract = _marketCalendarContract;
     }
 
 	function getSecurityToken(string memory symbol) public view returns (address) {
@@ -60,15 +69,19 @@ contract LiminalMarket is Initializable, PausableUpgradeable, AccessControlUpgra
 	}
 
     function buyWithAUsd(address userAddress, address tokenAddress, uint256 amount) public whenNotPaused returns (bool) {
+        require(msg.sender == address(aUsdContract), ONLY_AUSD_CAN_CALL_ME);
+        require(marketCalendarContract.isMarketOpen(), MARKET_CLOSED);
+
         uint256 ausdBalance = aUsdContract.balanceOf(userAddress);
-        require(ausdBalance >= amount, "You don't have enough aUSD");
-        require(marketCalendar.isMarketOpen(), "Market is closed");
+        require(ausdBalance >= amount, NOT_ENOUGH_AUSD);
 
         string memory accountId = kycContract.isValid(userAddress);
 
         aUsdContract.setBalance(userAddress, ausdBalance - amount);
-console.log("Token address:", tokenAddress);
+
         SecurityToken securityToken = SecurityToken(tokenAddress);
+        require(securityToken.owner() == address(this), "This is not valid token address");
+
         string memory symbol = securityToken.symbol();
 
         emit BuyWithAUsd(
@@ -83,55 +96,50 @@ console.log("Token address:", tokenAddress);
 
     }
 
-    function sellSecurityToken(address recipient, address sender, string memory symbol, uint amount)  public whenNotPaused {
-        require(recipient == address(aUsdContract), "V0.1 doesn't support transfer");
-        require(marketCalendar.isMarketOpen(), "Market is closed");
+    function sellSecurityToken(address aUsdAddress, address userAddress, string memory symbol, uint quantity)  public whenNotPaused {
+        require(aUsdAddress == address(aUsdContract), ONLY_SEND_TO_AUSD);
+        require(marketCalendarContract.isMarketOpen(), MARKET_CLOSED);
+        require(getSecurityToken(symbol) == msg.sender, NOT_VALID_TOKEN_ADDRESS);
 
-        string memory accountId = kycContract.isValid(sender);
+        string memory accountId = kycContract.isValid(userAddress);
 
         SecurityToken token = SecurityToken(msg.sender);
-        token.burn(sender, amount);
+        uint balance = token.balanceOf(userAddress);
+        require(balance >= quantity, QUANTITY_MORE_THEN_BALANCE);
 
-        emit SellSecurityToken(accountId, recipient, sender, symbol, amount);
+        token.setQuantity(userAddress, balance - quantity);
+        emit SellSecurityToken(accountId, aUsdAddress, userAddress, symbol, quantity);
     }
 
     function grantMintAndBurnRole(address recipient) public onlyRole(DEFAULT_ADMIN_ROLE) {
         grantRole(MINTER_ROLE, recipient);
     }
 
+    function revokeMintAndBurnRole(address recipient) public onlyRole(DEFAULT_ADMIN_ROLE) {
+        revokeRole(MINTER_ROLE, recipient);
+    }
+
     function orderExecuted(address recipient, string memory symbol,
             uint qty, uint filledQty, uint filledAvgPrice, string memory side,
             uint filledAt, uint commission, uint aUsdBalance)
                             public whenNotPaused onlyRole(MINTER_ROLE) {
-        require(recipient != address(0), "Address cannot be zero");
+        require(recipient != address(0), ADDRESS_CANNOT_BE_ZERO);
 
-        console.log("SecurityFactory - qty:", qty);
-        console.log("SecurityFactory - recipient:", recipient);
-        console.log("SecurityFactory - symbol:", symbol);
-        console.log("SecurityFactory - aUsdBalance:", aUsdBalance);
+        address tokenAddress = securityTokens[symbol];
+        require(tokenAddress != address(0), ADDRESS_CANNOT_BE_ZERO);
 
-        if (qty != 0) {
-            address tokenAddress = securityTokens[symbol];
-            require(tokenAddress != address(0), "Couldn't find symbol address");
-    console.log("SecurityToken address:", tokenAddress);
-
-            SecurityToken st = SecurityToken(tokenAddress);
-            st.setQuantity(recipient, qty);
-        }
+        SecurityToken st = SecurityToken(tokenAddress);
+        st.setQuantity(recipient, qty);
 
         aUsdContract.setBalance(recipient, aUsdBalance);
-console.log("DONE, doing emit");
         emit OrderExecuted(recipient, symbol, qty, filledQty, filledAvgPrice, side, filledAt, commission, aUsdBalance);
     }
 
-
-
-    function createToken(string memory symbol) external payable whenNotPaused returns (address) {
+    function createToken(string memory symbol, uint salt) external payable whenNotPaused returns (address) {
         require(bytes(symbol).length != 0, "Symbol cannot be empty");
         require(securityTokens[symbol] == address(0), "Security token already exists");
 
 		bytes memory byteCode = getBytecode("Liminal.market symbol", symbol, address(this));
-		uint256 salt = 7895324854327894;
 
         address token = getAddress(byteCode, salt);
 		deploy(byteCode, salt);

@@ -13,13 +13,12 @@ import {
     compileAndUpgradeKYC,
     compileAndUpgradeAUSD,
     compileAndUpgradeAll,
-    verifyContract, getContract, grantRoles, compile
+    verifyContract, grantRoles, compile
 } from './scripts/deploy';
 import {fundAUSD} from './scripts/funding';
-import {getContractAt} from "@nomiclabs/hardhat-ethers/internal/helpers";
 import {getContractsByNetwork} from "./scripts/networks";
 
-const result = dotenv.config();
+dotenv.config();
 
 
 // This is a sample Hardhat task. To learn how to create your own go to
@@ -77,11 +76,7 @@ task('cu-all', 'compiles and upgrade all contract', async (taskArgs, hre) => {
 task('getausd', 'gets USDC token', async (taskArgs, hre) => {
     await fundAUSD(hre)
 });
-task('cov', 'code coverage', async (taskArgs, hre) => {
 
-
-
-});
 
 // You need to export an object to set up your config
 // Go to https://hardhat.org/config/ to learn more

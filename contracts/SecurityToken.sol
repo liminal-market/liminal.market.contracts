@@ -43,29 +43,10 @@ contract SecurityToken is Ownable, ERC20 {
         } else {
             _burn(recipient, balance - qty);
         }
-        console.log("token - qty:", qty);
-        console.log("token - balanceBefore:", balance);
         uint256 balanceAfter = balanceOf(recipient);
-        console.log("token - balanceAfter:", balanceAfter);
+        require(balanceAfter == qty, "Wrong calculation");
 
         emit BalanceSet(recipient, qty);
-    }
-
-    function mint(address recipient, uint256 amount) public onlyOwner {
-        _mint(recipient, amount);
-
-        emit Mint(recipient, amount, symbol(), balanceOf(recipient));
-    }
-      //should be called by Chainlink
-    function burn(/*bytes32,*/ address account, uint256 amount) public onlyOwner {
-        uint balance = balanceOf(account);
-console.log("amount:", amount);
-console.log("balance", balance);
-
-        if (balance < amount) amount = balance;
-console.log("burning:", amount);
-
-        _burn(account, amount);
     }
 
     function transfer(address recipient, uint256 amount)
@@ -75,39 +56,46 @@ console.log("burning:", amount);
         returns (bool)
     {
         liminalMarketContract.sellSecurityToken(recipient, msg.sender, symbol(), amount);
-
         return true;
     }
 
-    function allowance(address owner, address spender)
+    function allowance(address /*owner*/, address /*spender*/)
         public
         view
         virtual
         override
         returns (uint256)
     {
-        return super.allowance(owner, spender);
+        require(false, "Not supported");
+        return 0;
+        //return super.allowance(owner, spender);
     }
 
-    function approve(address spender, uint256 amount)
+    function approve(address /*spender*/, uint256 /*amount*/)
         public
         virtual
         override
         returns (bool)
     {
-        return super.approve(spender, amount);
+        require(false, "Not supported");
+        return false;
+        //return super.approve(spender, amount);
     }
 
     function transferFrom(
-        address from,
-        address to ,
-        uint256 amount
+        address /*from*/,
+        address /*to */,
+        uint256 /*amount*/
     ) public virtual override returns (bool) {
+        require(false, "Not supported");
+        return false;
+        /*
         address spender = _msgSender();
         _spendAllowance(from, spender, amount);
 
         liminalMarketContract.sellSecurityToken(to, from, symbol(), amount);
         return true;
+        */
     }
 
 }
