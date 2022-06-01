@@ -1,11 +1,9 @@
 {
-  "ignore-compile" : true,
-  "node-version" : "16.15.0",
-  "sarif" : "result.sarif",
+  "ignore_compile" : true,
+  "node_version" : "16.15.0",
   "exclude_informational": false,
   "exclude_low": false,
   "exclude_medium": false,
   "exclude_high": false,
-  "disable_color": false,
-  "filter_paths": "aUSD.sol,KYC.sol,LiminalMarket.sol,MarketCalendar.sol,SecurityToken.sol"
+  "disable_color": false
 }

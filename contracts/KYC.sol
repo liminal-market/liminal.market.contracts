@@ -23,7 +23,7 @@ contract KYC is
  	/// @custom:oz-upgrades-unsafe-allow constructor
 	constructor() initializer {}
 
- 	function initialize() public initializer {
+ 	function initialize() public onlyRole(DEFAULT_ADMIN_ROLE) initializer {
         __AccessControl_init();
         __UUPSUpgradeable_init();
 

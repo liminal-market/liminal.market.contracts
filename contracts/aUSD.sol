@@ -29,7 +29,7 @@ contract aUSD is Initializable, ERC20Upgradeable, PausableUpgradeable, AccessCon
         _disableInitializers();
     }
 
-    function initialize() initializer public {
+    function initialize() public onlyRole(DEFAULT_ADMIN_ROLE) initializer  {
         __ERC20_init("USD at Broker", "aUSD");
         __Pausable_init();
         __AccessControl_init();

@@ -47,7 +47,7 @@ contract LiminalMarket is Initializable, PausableUpgradeable, AccessControlUpgra
  	/// @custom:oz-upgrades-unsafe-allow constructor
     constructor() initializer {}
 
-    function initialize() public initializer  {
+    function initialize() public onlyRole(DEFAULT_ADMIN_ROLE) initializer  {
         __Pausable_init();
         __AccessControl_init();
         __UUPSUpgradeable_init();
