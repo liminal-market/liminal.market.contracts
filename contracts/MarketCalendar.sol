@@ -60,7 +60,7 @@ contract MarketCalendar is Initializable, AccessControlUpgradeable, UUPSUpgradea
         _revokeRole(SET_CALENDAR_ROLE, addr);
     }
 
-    function _authorizeUpgrade(address newImplementation) internal onlyRole(UPGRADER_ROLE) override
+    function _authorizeUpgrade(address newImplementation) internal onlyRole(UPGRADER_ROLE) onlyProxy override
     {
         _upgradeTo(newImplementation);
     }

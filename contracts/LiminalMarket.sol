@@ -47,7 +47,7 @@ contract LiminalMarket is Initializable, PausableUpgradeable, AccessControlUpgra
  	/// @custom:oz-upgrades-unsafe-allow constructor
     constructor() initializer {}
 
-    function initialize() public onlyRole(DEFAULT_ADMIN_ROLE) initializer  {
+    function initialize() external initializer  {
         __Pausable_init();
         __AccessControl_init();
         __UUPSUpgradeable_init();
@@ -58,7 +58,7 @@ contract LiminalMarket is Initializable, PausableUpgradeable, AccessControlUpgra
         _grantRole(UPGRADER_ROLE, msg.sender);
     }
 
-    function setAddresses(aUSD _aUsdContract, KYC _kycContract, MarketCalendar _marketCalendarContract) public onlyRole(DEFAULT_ADMIN_ROLE) {
+    function setAddresses(aUSD _aUsdContract, KYC _kycContract, MarketCalendar _marketCalendarContract) external onlyRole(DEFAULT_ADMIN_ROLE) {
         aUsdContract = _aUsdContract;
         kycContract =  _kycContract;
         marketCalendarContract = _marketCalendarContract;
@@ -68,7 +68,7 @@ contract LiminalMarket is Initializable, PausableUpgradeable, AccessControlUpgra
 		return securityTokens[symbol];
 	}
 
-    function buyWithAUsd(address userAddress, address tokenAddress, uint256 amount) public whenNotPaused returns (bool) {
+    function buyWithAUsd(address userAddress, address tokenAddress, uint256 amount) external whenNotPaused returns (bool) {
         require(msg.sender == address(aUsdContract), ONLY_AUSD_CAN_CALL_ME);
         require(marketCalendarContract.isMarketOpen(), MARKET_CLOSED);
 
@@ -97,7 +97,7 @@ contract LiminalMarket is Initializable, PausableUpgradeable, AccessControlUpgra
 
     }
 
-    function sellSecurityToken(address aUsdAddress, address userAddress, string memory symbol, uint quantity)  public whenNotPaused {
+    function sellSecurityToken(address aUsdAddress, address userAddress, string memory symbol, uint quantity)  external whenNotPaused {
         require(aUsdAddress == address(aUsdContract), ONLY_SEND_TO_AUSD);
         require(marketCalendarContract.isMarketOpen(), MARKET_CLOSED);
         require(getSecurityToken(symbol) == msg.sender, NOT_VALID_TOKEN_ADDRESS);
@@ -112,11 +112,11 @@ contract LiminalMarket is Initializable, PausableUpgradeable, AccessControlUpgra
         emit SellSecurityToken(accountId, aUsdAddress, userAddress, symbol, quantity);
     }
 
-    function grantMintAndBurnRole(address recipient) public onlyRole(DEFAULT_ADMIN_ROLE) {
+    function grantMintAndBurnRole(address recipient) external onlyRole(DEFAULT_ADMIN_ROLE) {
         grantRole(MINTER_ROLE, recipient);
     }
 
-    function revokeMintAndBurnRole(address recipient) public onlyRole(DEFAULT_ADMIN_ROLE) {
+    function revokeMintAndBurnRole(address recipient) external onlyRole(DEFAULT_ADMIN_ROLE) {
         revokeRole(MINTER_ROLE, recipient);
     }
 
@@ -210,17 +210,18 @@ contract LiminalMarket is Initializable, PausableUpgradeable, AccessControlUpgra
     }
 
 
-    function pause() public onlyRole(PAUSER_ROLE) {
+    function pause() external onlyRole(PAUSER_ROLE) {
         _pause();
     }
 
-    function unpause() public onlyRole(PAUSER_ROLE) {
+    function unpause() external onlyRole(PAUSER_ROLE) {
         _unpause();
     }
 
     function _authorizeUpgrade(address newImplementation)
     internal
     onlyRole(UPGRADER_ROLE)
+    onlyProxy
     override
     {
         _upgradeTo(newImplementation);

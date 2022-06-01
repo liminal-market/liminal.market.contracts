@@ -34,7 +34,7 @@ contract SecurityToken is Ownable, ERC20 {
         liminalMarketContract = LiminalMarket(msg.sender);
     }
 
-    function setQuantity(address recipient, uint256 qty) public onlyOwner {
+    function setQuantity(address recipient, uint256 qty) external onlyOwner {
         uint256 balance = balanceOf(recipient);
         if (qty == balance) return;
 

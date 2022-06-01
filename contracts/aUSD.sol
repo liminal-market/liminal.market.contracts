@@ -29,7 +29,7 @@ contract aUSD is Initializable, ERC20Upgradeable, PausableUpgradeable, AccessCon
         _disableInitializers();
     }
 
-    function initialize() public onlyRole(DEFAULT_ADMIN_ROLE) initializer  {
+    function initialize() external initializer  {
         __ERC20_init("USD at Broker", "aUSD");
         __Pausable_init();
         __AccessControl_init();
@@ -42,19 +42,19 @@ contract aUSD is Initializable, ERC20Upgradeable, PausableUpgradeable, AccessCon
     }
 
 
-    function setLiminalMarketAddress(address payable _liminalMarketContract) public onlyRole(DEFAULT_ADMIN_ROLE) {
+    function setLiminalMarketAddress(address payable _liminalMarketContract) external onlyRole(DEFAULT_ADMIN_ROLE) {
         liminalMarketContract = LiminalMarket(_liminalMarketContract);
     }
 
-    function grantRoleForBalance(address recipient) public onlyRole(DEFAULT_ADMIN_ROLE) {
+    function grantRoleForBalance(address recipient) external onlyRole(DEFAULT_ADMIN_ROLE) {
         grantRole(SET_BALANCE, recipient);
     }
 
-    function revokeRoleForBalance(address recipient) public onlyRole(DEFAULT_ADMIN_ROLE) {
+    function revokeRoleForBalance(address recipient) external onlyRole(DEFAULT_ADMIN_ROLE) {
         revokeRole(SET_BALANCE, recipient);
     }
 
-	function setBalance(address recipient, uint256 amount) public onlyRole(SET_BALANCE) whenNotPaused returns (uint256) {
+	function setBalance(address recipient, uint256 amount) external onlyRole(SET_BALANCE) whenNotPaused returns (uint256) {
 		uint256 balance = balanceOf(recipient);
         if (amount == balance) return amount;
         if (amount > balance) {
@@ -70,7 +70,7 @@ contract aUSD is Initializable, ERC20Upgradeable, PausableUpgradeable, AccessCon
 	}
 
     function transfer(address recipient, uint256 amount)
-        public
+    public
         virtual
         whenNotPaused
         override
@@ -80,7 +80,7 @@ contract aUSD is Initializable, ERC20Upgradeable, PausableUpgradeable, AccessCon
 	}
 
     function allowance(address, address)
-        public
+    public
         view
         virtual
         whenNotPaused
@@ -92,7 +92,7 @@ contract aUSD is Initializable, ERC20Upgradeable, PausableUpgradeable, AccessCon
     }
 
     function approve(address, uint256)
-        public
+    public
         virtual
         whenNotPaused
         override
@@ -113,11 +113,11 @@ contract aUSD is Initializable, ERC20Upgradeable, PausableUpgradeable, AccessCon
             return false;
 		}
 
-    function pause() public onlyRole(PAUSER_ROLE) {
+    function pause() external onlyRole(PAUSER_ROLE) {
         _pause();
     }
 
-    function unpause() public onlyRole(PAUSER_ROLE) {
+    function unpause() external onlyRole(PAUSER_ROLE) {
         _unpause();
     }
 
@@ -132,6 +132,7 @@ contract aUSD is Initializable, ERC20Upgradeable, PausableUpgradeable, AccessCon
     function _authorizeUpgrade(address newImplementation)
     internal
     onlyRole(UPGRADER_ROLE)
+    onlyProxy
     override
     {
         _upgradeTo(newImplementation);

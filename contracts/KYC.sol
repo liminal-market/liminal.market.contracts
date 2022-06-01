@@ -23,7 +23,7 @@ contract KYC is
  	/// @custom:oz-upgrades-unsafe-allow constructor
 	constructor() initializer {}
 
- 	function initialize() public onlyRole(DEFAULT_ADMIN_ROLE) initializer {
+ 	function initialize() external initializer {
         __AccessControl_init();
         __UUPSUpgradeable_init();
 
@@ -41,16 +41,16 @@ contract KYC is
     event AccountValidated(string accountId);
     event AccountInvalidated(address accountAddress);
 
-    function grantRoleForKyc(address recipient) public onlyRole(DEFAULT_ADMIN_ROLE) {
+    function grantRoleForKyc(address recipient) external onlyRole(DEFAULT_ADMIN_ROLE) {
         grantRole(SET_KYC, recipient);
     }
 
-    function revokeRoleForKyc(address recipient) public onlyRole(DEFAULT_ADMIN_ROLE) {
+    function revokeRoleForKyc(address recipient) external onlyRole(DEFAULT_ADMIN_ROLE) {
         revokeRole(SET_KYC, recipient);
     }
 
     function invalidateAccount(address userAddress)
-        public
+    external
         onlyRole(SET_KYC)
     {
         delete kycAccount[userAddress];
@@ -59,7 +59,7 @@ contract KYC is
     }
 
     function validateAccount(string memory accountId, address userAddress)
-        public
+    external
         onlyRole(SET_KYC)
         returns (bool)
     {
@@ -73,7 +73,7 @@ contract KYC is
         return true;
     }
 
-    function isValid(address userAddress) public view returns (string memory) {
+    function isValid(address userAddress) external view returns (string memory) {
         //TODO: Remove this, this is hardhat test wallet #1
         if (userAddress == 0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266)
             return "aee548b2-b250-449c-8d0b-937b0b87ccef";
@@ -92,7 +92,7 @@ contract KYC is
     }
 
     function getAccountId(address userAddress)
-        public
+    external
         view
         returns (string memory)
     {
@@ -107,6 +107,7 @@ contract KYC is
     function _authorizeUpgrade(address newImplementation)
     internal
     onlyRole(DEFAULT_ADMIN_ROLE)
+    onlyProxy
     override
     {
         _upgradeTo(newImplementation);
