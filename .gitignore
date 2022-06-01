@@ -9,3 +9,5 @@ typechain
 cache
 artifacts
 typechain-types
+/.idea/
+/.nyc_output

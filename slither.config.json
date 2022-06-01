@@ -1,0 +1,9 @@
+{
+  "ignore_compile" : true,
+  "node_version" : "16.15.0",
+  "exclude_informational": false,
+  "exclude_low": false,
+  "exclude_medium": false,
+  "exclude_high": false,
+  "disable_color": false
+}

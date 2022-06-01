@@ -1,5 +1,5 @@
 //SPDX-License-Identifier: Business Source License 1.1
-pragma solidity ^0.8.9;
+pragma solidity ^0.8.7;
 
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
@@ -28,13 +28,13 @@ contract SecurityToken is Ownable, ERC20 {
     LiminalMarket private liminalMarketContract;
 
     constructor(
-        string memory name,
-        string memory symbol
-    ) ERC20(name, symbol) {
+        string memory tokenName,
+        string memory tokeSymbol
+    ) ERC20(tokenName, tokeSymbol) {
         liminalMarketContract = LiminalMarket(msg.sender);
     }
 
-    function setQuantity(address recipient, uint256 qty) public onlyOwner {
+    function setQuantity(address recipient, uint256 qty) external onlyOwner {
         uint256 balance = balanceOf(recipient);
         if (qty == balance) return;
 

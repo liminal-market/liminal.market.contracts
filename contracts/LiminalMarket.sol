@@ -1,5 +1,5 @@
 //SPDX-License-Identifier: Business Source License 1.1
-pragma solidity ^0.8.9;
+pragma solidity ^0.8.7;
 
 import "hardhat/console.sol";
 
@@ -47,7 +47,7 @@ contract LiminalMarket is Initializable, PausableUpgradeable, AccessControlUpgra
  	/// @custom:oz-upgrades-unsafe-allow constructor
     constructor() initializer {}
 
-    function initialize() public initializer  {
+    function initialize() external initializer  {
         __Pausable_init();
         __AccessControl_init();
         __UUPSUpgradeable_init();
@@ -58,17 +58,17 @@ contract LiminalMarket is Initializable, PausableUpgradeable, AccessControlUpgra
         _grantRole(UPGRADER_ROLE, msg.sender);
     }
 
-    function setAddresses(aUSD _aUsdContract, KYC _kycContract, MarketCalendar _marketCalendarContract) public onlyRole(DEFAULT_ADMIN_ROLE) {
-        aUsdContract = _aUsdContract;
-        kycContract =  _kycContract;
-        marketCalendarContract = _marketCalendarContract;
+    function setAddresses(aUSD aUsdAddress, KYC kycAddress, MarketCalendar marketCalendarAddress) external onlyRole(DEFAULT_ADMIN_ROLE) {
+        aUsdContract = aUsdAddress;
+        kycContract =  kycAddress;
+        marketCalendarContract = marketCalendarAddress;
     }
 
 	function getSecurityToken(string memory symbol) public view returns (address) {
 		return securityTokens[symbol];
 	}
 
-    function buyWithAUsd(address userAddress, address tokenAddress, uint256 amount) public whenNotPaused returns (bool) {
+    function buyWithAUsd(address userAddress, address tokenAddress, uint256 amount) external whenNotPaused returns (bool) {
         require(msg.sender == address(aUsdContract), ONLY_AUSD_CAN_CALL_ME);
         require(marketCalendarContract.isMarketOpen(), MARKET_CLOSED);
 
@@ -77,7 +77,6 @@ contract LiminalMarket is Initializable, PausableUpgradeable, AccessControlUpgra
 
         string memory accountId = kycContract.isValid(userAddress);
 
-        aUsdContract.setBalance(userAddress, ausdBalance - amount);
 
         SecurityToken securityToken = SecurityToken(tokenAddress);
         require(securityToken.owner() == address(this), "This is not valid token address");
@@ -92,11 +91,13 @@ contract LiminalMarket is Initializable, PausableUpgradeable, AccessControlUpgra
             tokenAddress
         );
 
+        aUsdContract.setBalance(userAddress, ausdBalance - amount);
+
         return true;
 
     }
 
-    function sellSecurityToken(address aUsdAddress, address userAddress, string memory symbol, uint quantity)  public whenNotPaused {
+    function sellSecurityToken(address aUsdAddress, address userAddress, string memory symbol, uint quantity)  external whenNotPaused {
         require(aUsdAddress == address(aUsdContract), ONLY_SEND_TO_AUSD);
         require(marketCalendarContract.isMarketOpen(), MARKET_CLOSED);
         require(getSecurityToken(symbol) == msg.sender, NOT_VALID_TOKEN_ADDRESS);
@@ -107,32 +108,34 @@ contract LiminalMarket is Initializable, PausableUpgradeable, AccessControlUpgra
         uint balance = token.balanceOf(userAddress);
         require(balance >= quantity, QUANTITY_MORE_THEN_BALANCE);
 
-        token.setQuantity(userAddress, balance - quantity);
         emit SellSecurityToken(accountId, aUsdAddress, userAddress, symbol, quantity);
+
+        token.setQuantity(userAddress, balance - quantity);
     }
 
-    function grantMintAndBurnRole(address recipient) public onlyRole(DEFAULT_ADMIN_ROLE) {
+    function grantMintAndBurnRole(address recipient) external onlyRole(DEFAULT_ADMIN_ROLE) {
         grantRole(MINTER_ROLE, recipient);
     }
 
-    function revokeMintAndBurnRole(address recipient) public onlyRole(DEFAULT_ADMIN_ROLE) {
+    function revokeMintAndBurnRole(address recipient) external onlyRole(DEFAULT_ADMIN_ROLE) {
         revokeRole(MINTER_ROLE, recipient);
     }
 
     function orderExecuted(address recipient, string memory symbol,
             uint qty, uint filledQty, uint filledAvgPrice, string memory side,
             uint filledAt, uint commission, uint aUsdBalance)
-                            public whenNotPaused onlyRole(MINTER_ROLE) {
+                            external whenNotPaused onlyRole(MINTER_ROLE) {
         require(recipient != address(0), ADDRESS_CANNOT_BE_ZERO);
 
         address tokenAddress = securityTokens[symbol];
         require(tokenAddress != address(0), ADDRESS_CANNOT_BE_ZERO);
 
+        emit OrderExecuted(recipient, symbol, qty, filledQty, filledAvgPrice, side, filledAt, commission, aUsdBalance);
+
         SecurityToken st = SecurityToken(tokenAddress);
         st.setQuantity(recipient, qty);
 
         aUsdContract.setBalance(recipient, aUsdBalance);
-        emit OrderExecuted(recipient, symbol, qty, filledQty, filledAvgPrice, side, filledAt, commission, aUsdBalance);
     }
 
     function createToken(string memory symbol, uint salt) external payable whenNotPaused returns (address) {
@@ -161,13 +164,13 @@ contract LiminalMarket is Initializable, PausableUpgradeable, AccessControlUpgra
 
     // 2. Compute the address of the contract to be deployed
     // NOTE: _salt is a random number used to create an address
-    function getAddress(bytes memory bytecode, uint _salt)
+    function getAddress(bytes memory bytecode, uint salt)
         private
         view
         returns (address)
     {
         bytes32 hash = keccak256(
-            abi.encodePacked(bytes1(0xff), address(this), _salt, keccak256(bytecode))
+            abi.encodePacked(bytes1(0xff), address(this), salt, keccak256(bytecode))
         );
 
         // NOTE: cast last 20 bytes of hash to address
@@ -178,7 +181,7 @@ contract LiminalMarket is Initializable, PausableUpgradeable, AccessControlUpgra
     // NOTE:
     // Check the event log Deployed which contains the address of the deployed TestContract.
     // The address in the log should equal the address computed from above.
-    function deploy(bytes memory bytecode, uint _salt) private {
+    function deploy(bytes memory bytecode, uint salt) private {
         address addr;
 
         /*
@@ -197,7 +200,7 @@ contract LiminalMarket is Initializable, PausableUpgradeable, AccessControlUpgra
                 // Actual code starts after skipping the first 32 bytes
                 add(bytecode, 0x20),
                 mload(bytecode), // Load the size of code contained in the first 32 bytes
-                _salt // Salt from function arguments
+                salt // Salt from function arguments
             )
 
             if iszero(extcodesize(addr)) {
@@ -205,21 +208,22 @@ contract LiminalMarket is Initializable, PausableUpgradeable, AccessControlUpgra
             }
         }
 
-        emit Deployed(addr, _salt);
+        emit Deployed(addr, salt);
     }
 
 
-    function pause() public onlyRole(PAUSER_ROLE) {
+    function pause() external onlyRole(PAUSER_ROLE) {
         _pause();
     }
 
-    function unpause() public onlyRole(PAUSER_ROLE) {
+    function unpause() external onlyRole(PAUSER_ROLE) {
         _unpause();
     }
 
     function _authorizeUpgrade(address newImplementation)
     internal
     onlyRole(UPGRADER_ROLE)
+    onlyProxy
     override
     {
         _upgradeTo(newImplementation);
