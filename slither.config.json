@@ -1,4 +1,7 @@
 {
+  "ignore-compile" : true,
+  "node-version" : "16.15.0",
+  "sarif" : "result.sarif",
   "exclude_informational": false,
   "exclude_low": false,
   "exclude_medium": false,

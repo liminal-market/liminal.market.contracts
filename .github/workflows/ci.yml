@@ -20,10 +20,16 @@ jobs:
     - run: npm run compile
     - run: npm run test
     - run: npm run coverage
-    - name: slither-action
+    - name: Run Slither
       uses: crytic/slither-action@v0.1.1
-    - name: slither-static-analysis
-      uses: luisfontes19/slither-static-analysis-action@v0.3.4 
+      continue-on-error: true
+    - name: Run slither-static-analysis
+      uses: luisfontes19/slither-static-analysis-action@v0.3.4
+      continue-on-error: true
+    - name: Upload SARIF file
+      uses: github/codeql-action/upload-sarif@v2
+      with:
+        sarif_file: ${{ steps.slither.outputs.sarif }}
     - name: Codecov
       uses: codecov/codecov-action@v3.1.0
       with:
