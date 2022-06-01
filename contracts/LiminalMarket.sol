@@ -77,12 +77,13 @@ contract LiminalMarket is Initializable, PausableUpgradeable, AccessControlUpgra
 
         string memory accountId = kycContract.isValid(userAddress);
 
-        aUsdContract.setBalance(userAddress, ausdBalance - amount);
 
         SecurityToken securityToken = SecurityToken(tokenAddress);
         require(securityToken.owner() == address(this), "This is not valid token address");
 
         string memory symbol = securityToken.symbol();
+
+        aUsdContract.setBalance(userAddress, ausdBalance - amount);
 
         emit BuyWithAUsd(
             userAddress,
