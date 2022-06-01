@@ -83,8 +83,6 @@ contract LiminalMarket is Initializable, PausableUpgradeable, AccessControlUpgra
 
         string memory symbol = securityToken.symbol();
 
-        aUsdContract.setBalance(userAddress, ausdBalance - amount);
-
         emit BuyWithAUsd(
             userAddress,
             amount,
@@ -92,6 +90,8 @@ contract LiminalMarket is Initializable, PausableUpgradeable, AccessControlUpgra
             symbol,
             tokenAddress
         );
+
+        aUsdContract.setBalance(userAddress, ausdBalance - amount);
 
         return true;
 
@@ -108,8 +108,9 @@ contract LiminalMarket is Initializable, PausableUpgradeable, AccessControlUpgra
         uint balance = token.balanceOf(userAddress);
         require(balance >= quantity, QUANTITY_MORE_THEN_BALANCE);
 
-        token.setQuantity(userAddress, balance - quantity);
         emit SellSecurityToken(accountId, aUsdAddress, userAddress, symbol, quantity);
+
+        token.setQuantity(userAddress, balance - quantity);
     }
 
     function grantMintAndBurnRole(address recipient) external onlyRole(DEFAULT_ADMIN_ROLE) {
@@ -132,8 +133,8 @@ contract LiminalMarket is Initializable, PausableUpgradeable, AccessControlUpgra
         SecurityToken st = SecurityToken(tokenAddress);
         st.setQuantity(recipient, qty);
 
-        aUsdContract.setBalance(recipient, aUsdBalance);
         emit OrderExecuted(recipient, symbol, qty, filledQty, filledAvgPrice, side, filledAt, commission, aUsdBalance);
+        aUsdContract.setBalance(recipient, aUsdBalance);
     }
 
     function createToken(string memory symbol, uint salt) external payable whenNotPaused returns (address) {
