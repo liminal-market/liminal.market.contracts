@@ -15,17 +15,18 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
-    - name: Use Node.js ${{ matrix.node-version }}
+    - name: Use Node.js
       uses: actions/setup-node@v3      
       with:
         node-version: 16.15.0
         cache: 'npm'
     - run: npm ci
-    - run: npm run compile --if-present
     - run: npm test
     
     - name: Codecov
-      # You may pin to the exact commit or the version.
-      # uses: codecov/codecov-action@81cd2dc8148241f03f5839d295e000b8f761e378
       uses: codecov/codecov-action@v3.1.0
+      with:
+        token: '87488867-2bea-4232-9deb-43a5626452a5'
+        file: '/coverage/coverage-final.json'
+
       
