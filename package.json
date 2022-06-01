@@ -35,7 +35,7 @@
     "hardhat-dependency-compiler": "^1.1.2"
   },
   "scripts": {
-    "test": "nyc --reporter=lcov mocha --recursive \"./tests/**/*.ts\" && codecov",
+    "test": "nyc --reporter=lcov mocha --recursive \"./tests/**/*.ts\"",
     "hardhat": "npx hardhat node --network hardhat --verbose --show-stack-traces",
     "proxy": "moralis-admin-cli connect-local-devchain --c \"Hardhat\" --frpcPath \"C:\\blockchain\\frp_0.38.0\\frpc.exe\"",
     "deploy-local": "npx hardhat cd --network localhost --show-stack-traces",
