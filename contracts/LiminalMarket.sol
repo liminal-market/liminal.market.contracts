@@ -130,10 +130,11 @@ contract LiminalMarket is Initializable, PausableUpgradeable, AccessControlUpgra
         address tokenAddress = securityTokens[symbol];
         require(tokenAddress != address(0), ADDRESS_CANNOT_BE_ZERO);
 
+        emit OrderExecuted(recipient, symbol, qty, filledQty, filledAvgPrice, side, filledAt, commission, aUsdBalance);
+
         SecurityToken st = SecurityToken(tokenAddress);
         st.setQuantity(recipient, qty);
 
-        emit OrderExecuted(recipient, symbol, qty, filledQty, filledAvgPrice, side, filledAt, commission, aUsdBalance);
         aUsdContract.setBalance(recipient, aUsdBalance);
     }
 

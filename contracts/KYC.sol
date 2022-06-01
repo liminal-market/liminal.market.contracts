@@ -63,7 +63,8 @@ contract KYC is
         onlyRole(SET_KYC)
         returns (bool)
     {
-        require(bytes(accountId).length == 36, INVALID_ACCOUNT_ID);
+        bytes memory byteAccountId = bytes(accountId);
+        require(byteAccountId.length == 36, INVALID_ACCOUNT_ID);
         require(userAddress != address(0), "Address cannot be zero");
 
         kycAccount[userAddress] = AccountValidation(accountId, block.timestamp);
@@ -80,13 +81,11 @@ contract KYC is
 
         AccountValidation memory account = kycAccount[userAddress];
 
+        bytes memory emptyAccountId = bytes(account.accountId);
         require(
-            bytes(account.accountId).length != 0,
+            emptyAccountId.length != 0,
             ADDRESS_NOT_VALID
         );
-
-        //TODO: lets skip this validation while in Sandbox version
-        //require(account.validationDate < block.timestamp - (2 days * 365 days), "KYC expired, please renew");
 
         return account.accountId;
     }

@@ -105,13 +105,19 @@ describe("KYC", function () {
         .to.be.revertedWith("Address cannot be zero");
   });
 
+  it("isValid account for hardhat wallet, should always be valid", async () => {
+    await redeployContract();
+    let address = "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266";
+    let brokerId = "aee548b2-b250-449c-8d0b-937b0b87ccef";
+
+    await expect(await contract.isValid(address)).to.be.equal(brokerId);
+  })
   it("isValid account, should be valid", async () => {
     await redeployContract();
 
     await contract.validateAccount(brokerAccountId, userAddress);
     await expect(await contract.isValid(userAddress)).to.be.equal(brokerAccountId);
   })
-
   it("check is address has valid kyc, should be invalid, revert", async () => {
     await redeployContract();
 
