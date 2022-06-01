@@ -24,7 +24,7 @@ jobs:
     - name: Codecov
       uses: codecov/codecov-action@v3.1.0
       with:
-        token: '87488867-2bea-4232-9deb-43a5626452a5'
+        token: ${{ secret.CODECOVUPLOADTOKEN }}
         file: '/coverage/coverage-final.json'
 
       
