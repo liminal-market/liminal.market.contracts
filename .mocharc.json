@@ -1,16 +1,18 @@
 {
 	"diff": true,
-	"extension": ["ts", "js", "cjs", "mjs"],
+	"extension": ["ts"],
 	"package": "./package.json",
 	"reporter": "spec",
-	"slow": "75",
-	"timeout": "20000",
+	"slow": 75,
+	"timeout": 20000,
+	"recursive": true,
 	"ui": "bdd",
-	"watch-files": ["lib/**/*.js", "test/**/*.js", "test/**/*.ts", "test/*.ts"],
+	"watch-files": ["tests/**/*.ts", "tests/contracts/*.ts"],
 	"watch-ignore": ["lib/vendor"],
 	"require": ["ts-node/register", "hardhat/register"],
-	"files": ["test/**/*.ts", "test/*.ts"],
+	"files": ["tests/**/*.ts", "tests/contracts/*.ts"],
 	"scripts": {
-		"tests": "ts-node --require ts-node/register test/**/*.ts"
-	}
+		"tests": "ts-node --require ts-node/register tests/**/*.ts"
+	},
+	"report-coverage": "codecov"
 }

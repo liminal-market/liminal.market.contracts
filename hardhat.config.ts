@@ -125,19 +125,19 @@ const config: HardhatUserConfig = {
         },
         rinkeby: {
             url: 'https://eth-rinkeby.alchemyapi.io/v2/bxdMzB7jGUwlLyPQP_ftyikfBD5PIdkJ',
-            accounts: [process.env.PRIVATE_KEY ?? 'ble']
+            accounts: [process.env.PRIVATE_KEY ?? '0x47e179ec197488593b187f80a00eb0da91f1b9d0b13f8733639f19c30a34926a']
         },
         mumbai: {
             url: 'https://polygon-mumbai.g.alchemy.com/v2/sCmg1qtO8dGxcgTZxjvcFazjkqUyHI6r',
-            accounts: [process.env.PRIVATE_KEY ?? 'bla']
+            accounts: [process.env.PRIVATE_KEY ?? '0x47e179ec197488593b187f80a00eb0da91f1b9d0b13f8733639f19c30a34926a']
         },
         fuji: {
             url: 'https://api.avax-test.network/ext/bc/C/rpc',
-            accounts: [process.env.PRIVATE_KEY ?? 'bla']
+            accounts: [process.env.PRIVATE_KEY ?? '0x47e179ec197488593b187f80a00eb0da91f1b9d0b13f8733639f19c30a34926a']
         },
         bsctest: {
             url: 'https://data-seed-prebsc-1-s1.binance.org:8545/',
-            accounts: [process.env.PRIVATE_KEY ?? 'bla']
+            accounts: [process.env.PRIVATE_KEY ?? '0x47e179ec197488593b187f80a00eb0da91f1b9d0b13f8733639f19c30a34926a']
         },
     },
     gasReporter: {

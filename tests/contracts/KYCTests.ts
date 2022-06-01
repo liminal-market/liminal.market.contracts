@@ -8,7 +8,7 @@ import {KYC} from "../../typechain-types";
 describe("KYC", function () {
   const hre = require('hardhat');
   const expect = chai.expect;
-  const [wallet2] = hre.waffle.provider.getWallets();
+  const [owner, wallet2] = hre.waffle.provider.getWallets();
 
   chai.use(chaiAsPromised);
   chai.use(solidity);
@@ -52,8 +52,11 @@ describe("KYC", function () {
   });
 
   it("should grant role", async () => {
+    await redeployContract();
+
     expect(await contract.grantRoleForKyc(wallet2.address))
-        .to.emit(contract, "RoleGranted");
+        .to.emit(contract, "RoleGranted")
+        .withArgs(contract.SET_KYC, wallet2.address, owner.address);
 
     let contractW2 = contract.connect(wallet2);
 
@@ -80,6 +83,8 @@ describe("KYC", function () {
   })
 
   it("should invalidate account", async () => {
+    await redeployContract();
+
     await contract.validateAccount(brokerAccountId, userAddress);
     let accountId = await contract.getAccountId(userAddress);
     expect(accountId).to.be.equal(brokerAccountId);
@@ -94,6 +99,8 @@ describe("KYC", function () {
   })
 
   it("try to validate with zero address, should revert", async () => {
+    await redeployContract();
+
     await expect(contract.validateAccount(brokerAccountId, AddressZero))
         .to.be.revertedWith("Address cannot be zero");
   });
