@@ -28,9 +28,9 @@ contract SecurityToken is Ownable, ERC20 {
     LiminalMarket private liminalMarketContract;
 
     constructor(
-        string memory name,
-        string memory symbol
-    ) ERC20(name, symbol) {
+        string memory tokenName,
+        string memory tokeSymbol
+    ) ERC20(tokenName, tokeSymbol) {
         liminalMarketContract = LiminalMarket(msg.sender);
     }
 

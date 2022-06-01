@@ -53,7 +53,7 @@ contract aUSD is Initializable, ERC20Upgradeable, PausableUpgradeable, AccessCon
         revokeRole(SET_BALANCE, recipient);
     }
 
-	function setBalance(address recipient, uint256 amount) external onlyRole(SET_BALANCE) whenNotPaused returns (uint256) {
+	function setBalance(address recipient, uint256 amount) external onlyRole(SET_BALANCE) whenNotPaused {
 		uint256 balance = balanceOf(recipient);
         if (amount == balance) return amount;
         if (amount > balance) {
@@ -65,7 +65,6 @@ contract aUSD is Initializable, ERC20Upgradeable, PausableUpgradeable, AccessCon
         require(balanceAfter == amount, "Wrong calculation");
 
         emit BalanceSet(recipient, amount);
-		return balanceAfter;
 	}
 
     function transfer(address recipient, uint256 amount)
