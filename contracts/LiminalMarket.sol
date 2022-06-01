@@ -1,5 +1,5 @@
 //SPDX-License-Identifier: Business Source License 1.1
-pragma solidity ^0.8.9;
+pragma solidity ^0.8.7;
 
 import "hardhat/console.sol";
 
@@ -58,10 +58,10 @@ contract LiminalMarket is Initializable, PausableUpgradeable, AccessControlUpgra
         _grantRole(UPGRADER_ROLE, msg.sender);
     }
 
-    function setAddresses(aUSD _aUsdContract, KYC _kycContract, MarketCalendar _marketCalendarContract) external onlyRole(DEFAULT_ADMIN_ROLE) {
-        aUsdContract = _aUsdContract;
-        kycContract =  _kycContract;
-        marketCalendarContract = _marketCalendarContract;
+    function setAddresses(aUSD aUsdAddress, KYC kycAddress, MarketCalendar marketCalendarAddress) external onlyRole(DEFAULT_ADMIN_ROLE) {
+        aUsdContract = aUsdAddress;
+        kycContract =  kycAddress;
+        marketCalendarContract = marketCalendarAddress;
     }
 
 	function getSecurityToken(string memory symbol) public view returns (address) {
@@ -123,7 +123,7 @@ contract LiminalMarket is Initializable, PausableUpgradeable, AccessControlUpgra
     function orderExecuted(address recipient, string memory symbol,
             uint qty, uint filledQty, uint filledAvgPrice, string memory side,
             uint filledAt, uint commission, uint aUsdBalance)
-                            public whenNotPaused onlyRole(MINTER_ROLE) {
+                            external whenNotPaused onlyRole(MINTER_ROLE) {
         require(recipient != address(0), ADDRESS_CANNOT_BE_ZERO);
 
         address tokenAddress = securityTokens[symbol];
@@ -162,13 +162,13 @@ contract LiminalMarket is Initializable, PausableUpgradeable, AccessControlUpgra
 
     // 2. Compute the address of the contract to be deployed
     // NOTE: _salt is a random number used to create an address
-    function getAddress(bytes memory bytecode, uint _salt)
+    function getAddress(bytes memory bytecode, uint salt)
         private
         view
         returns (address)
     {
         bytes32 hash = keccak256(
-            abi.encodePacked(bytes1(0xff), address(this), _salt, keccak256(bytecode))
+            abi.encodePacked(bytes1(0xff), address(this), salt, keccak256(bytecode))
         );
 
         // NOTE: cast last 20 bytes of hash to address
@@ -179,7 +179,7 @@ contract LiminalMarket is Initializable, PausableUpgradeable, AccessControlUpgra
     // NOTE:
     // Check the event log Deployed which contains the address of the deployed TestContract.
     // The address in the log should equal the address computed from above.
-    function deploy(bytes memory bytecode, uint _salt) private {
+    function deploy(bytes memory bytecode, uint salt) private {
         address addr;
 
         /*
@@ -198,7 +198,7 @@ contract LiminalMarket is Initializable, PausableUpgradeable, AccessControlUpgra
                 // Actual code starts after skipping the first 32 bytes
                 add(bytecode, 0x20),
                 mload(bytecode), // Load the size of code contained in the first 32 bytes
-                _salt // Salt from function arguments
+                salt // Salt from function arguments
             )
 
             if iszero(extcodesize(addr)) {
@@ -206,7 +206,7 @@ contract LiminalMarket is Initializable, PausableUpgradeable, AccessControlUpgra
             }
         }
 
-        emit Deployed(addr, _salt);
+        emit Deployed(addr, salt);
     }
 
 

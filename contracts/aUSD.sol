@@ -1,5 +1,5 @@
 //SPDX-License-Identifier: Business Source License 1.1
-pragma solidity ^0.8.9;
+pragma solidity ^0.8.7;
 
 import "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
@@ -42,8 +42,8 @@ contract aUSD is Initializable, ERC20Upgradeable, PausableUpgradeable, AccessCon
     }
 
 
-    function setLiminalMarketAddress(address payable _liminalMarketContract) external onlyRole(DEFAULT_ADMIN_ROLE) {
-        liminalMarketContract = LiminalMarket(_liminalMarketContract);
+    function setLiminalMarketAddress(address liminalMarketAddress) external onlyRole(DEFAULT_ADMIN_ROLE) {
+        liminalMarketContract = LiminalMarket(liminalMarketAddress);
     }
 
     function grantRoleForBalance(address recipient) external onlyRole(DEFAULT_ADMIN_ROLE) {

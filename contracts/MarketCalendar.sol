@@ -1,5 +1,5 @@
 //SPDX-License-Identifier: Business Source License 1.1
-pragma solidity ^0.8.9;
+pragma solidity ^0.8.7;
 
 import "hardhat/console.sol";
 
@@ -20,7 +20,7 @@ contract MarketCalendar is Initializable, AccessControlUpgradeable, UUPSUpgradea
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() initializer {}
 
-    function initialize() public initializer  {
+    function initialize() external initializer  {
         __AccessControl_init();
         __UUPSUpgradeable_init();
 
@@ -30,7 +30,7 @@ contract MarketCalendar is Initializable, AccessControlUpgradeable, UUPSUpgradea
 
     }
 
-    function setCalendar(uint[] calldata opens, uint[] calldata closes) public onlyRole(SET_CALENDAR_ROLE) {
+    function setCalendar(uint[] calldata opens, uint[] calldata closes) external onlyRole(SET_CALENDAR_ROLE) {
         require(opens.length == closes.length, "opens & closes need to be same length");
         delete s_calendar;
 
@@ -41,7 +41,7 @@ contract MarketCalendar is Initializable, AccessControlUpgradeable, UUPSUpgradea
         emit CalendarSet(opens[0], closes[closes.length-1]);
     }
 
-    function isMarketOpen() public view returns (bool) {
+    function isMarketOpen() external view returns (bool) {
         uint timestamp = block.timestamp;
         Calendar[] memory calArray = s_calendar;
 
@@ -52,11 +52,11 @@ contract MarketCalendar is Initializable, AccessControlUpgradeable, UUPSUpgradea
         return false;
     }
 
-    function setCalendarRole(address newAddress) public onlyRole(DEFAULT_ADMIN_ROLE) {
+    function setCalendarRole(address newAddress) external onlyRole(DEFAULT_ADMIN_ROLE) {
         _grantRole(SET_CALENDAR_ROLE, newAddress);
     }
 
-    function removeCalendarRole(address addr) public onlyRole(DEFAULT_ADMIN_ROLE) {
+    function removeCalendarRole(address addr) external onlyRole(DEFAULT_ADMIN_ROLE) {
         _revokeRole(SET_CALENDAR_ROLE, addr);
     }
 
