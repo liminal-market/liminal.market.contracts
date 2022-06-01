@@ -55,7 +55,7 @@ contract aUSD is Initializable, ERC20Upgradeable, PausableUpgradeable, AccessCon
 
 	function setBalance(address recipient, uint256 amount) external onlyRole(SET_BALANCE) whenNotPaused {
 		uint256 balance = balanceOf(recipient);
-        if (amount == balance) return amount;
+        if (amount == balance) return;
         if (amount > balance) {
             _mint(recipient, amount - balance);
         } else {
