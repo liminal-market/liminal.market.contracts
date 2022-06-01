@@ -21,7 +21,7 @@ jobs:
         node-version: 16.15.0
         cache: 'npm'
     - run: npm ci
-    - run: npm compile
+    - run: npm run compile
     - run: npm test
     
     - name: Codecov
