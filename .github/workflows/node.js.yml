@@ -3,11 +3,7 @@
 
 name: Node.js CI
 
-on:
-  push:
-    branches: [ main ]
-  pull_request:
-    branches: [ main ]
+on: [push, pull_request]
 
 jobs:
   build:
@@ -21,8 +17,9 @@ jobs:
         node-version: 16.15.0
         cache: 'npm'
     - run: npm ci
-    - run: npm compile
-    - run: npm test
+    - run: npm run compile
+    - run: npm run test
+    - run: npm run coverage
     
     - name: Codecov
       uses: codecov/codecov-action@v3.1.0

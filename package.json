@@ -35,12 +35,12 @@
     "hardhat-dependency-compiler": "^1.1.2"
   },
   "scripts": {
-    "test": "nyc --reporter=json mocha --recursive \"./tests/**/*.ts\"",
+    "test": "nyc --reporter=json mocha --recursive \"test/scripts/**/*.ts\"",
     "hardhat": "npx hardhat node --network hardhat --verbose --show-stack-traces",
     "proxy": "moralis-admin-cli connect-local-devchain --c \"Hardhat\" --frpcPath \"C:\\blockchain\\frp_0.38.0\\frpc.exe\"",
     "deploy-local": "npx hardhat cd --network localhost --show-stack-traces",
     "fund": "npx hardhat getausd --network localhost --show-stack-traces",
     "compile": "npx hardhat compile",
-    "coverage": "npx hardhat coverage --testfiles \\\\\\\"tests/contracts/*.ts\\\\\\\""
+    "coverage": "npx hardhat coverage"
   }
 }
