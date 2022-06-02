@@ -34,30 +34,7 @@ describe("Test Deployment script", () => {
         expect(status).to.be.equal(Deployment.Deployed);
     })
 
-    async function deployContract(contractName: string) {
-        let deployment = new Deployment(hre);
-        let [contract, status] = await deployment.deployOrUpgradeContract(contractName, "");
-        expect(status).to.be.equal(Deployment.Deployed);
-        let implementationAddress = await getImplementationAddress(hre.ethers.provider, contract.address);
-        expect(implementationAddress).not.to.be.equal(contract.address);
-        return {deployment, contract, implementationAddress};
-    }
 
-    async function modifyContractBuildAndValidate(contractName: string, deployment: Deployment, contract: Contract, implementationAddress: string) {
-        await modifyContractForNewSignature(contractName);
-        await hre.run('compile');
-
-        let [contractV2, statusV2] = await deployment.deployOrUpgradeContract(contractName, contract.address);
-        expect(statusV2).to.be.equal(Deployment.Upgraded);
-        expect(contractV2.address).to.be.equal(contract.address);
-
-        let implementationAddressV2 = await getImplementationAddress(hre.ethers.provider, contractV2.address);
-        expect(implementationAddressV2).not.to.be.equal(contract.address);
-        expect(implementationAddressV2).not.to.be.equal(implementationAddress);
-        console.log('old impl. address:', implementationAddress);
-        console.log('new impl. address:', implementationAddressV2);
-        return contractV2;
-    }
 
     it("KYC - Deploy and update contract", async () => {
 
@@ -164,7 +141,36 @@ describe("Test Deployment script", () => {
         expect(liminalMarketContract.setAddresses).to.been.calledWith(contractInfo.AUSD_ADDRESS, contractInfo.KYC_ADDRESS, contractInfo.MARKET_CALENDAR_ADDRESS);
         expect(aUsdContract.setBalance).to.been.calledWith(contractInfo.LIMINAL_MARKET_ADDRESS);
 */
-    })
+    });
+
+    async function deployContract(contractName: string) {
+        let deployment = new Deployment(hre);
+        let [contract, status] = await deployment.deployOrUpgradeContract(contractName, "");
+        expect(status).to.be.equal(Deployment.Deployed);
+        let implementationAddress = await getImplementationAddress(hre.ethers.provider, contract.address);
+        expect(implementationAddress).not.to.be.equal(contract.address);
+        console.log('proxy address:', contract.address + ' | impl. address:' + implementationAddress);
+
+        return {deployment, contract, implementationAddress};
+    }
+
+    async function modifyContractBuildAndValidate(contractName: string, deployment: Deployment, contract: Contract, implementationAddress: string) {
+        await modifyContractForNewSignature(contractName);
+        await hre.run('compile');
+
+        let [contractV2, statusV2] = await deployment.deployOrUpgradeContract(contractName, contract.address);
+        expect(statusV2).to.be.equal(Deployment.Upgraded);
+        expect(contractV2.address).to.be.equal(contract.address);
+
+        let implementationAddressV2 = await getImplementationAddress(hre.ethers.provider, contractV2.address);
+        console.log('old impl. address:', implementationAddress);
+        console.log('new impl. address:', implementationAddressV2);
+        expect(implementationAddressV2).not.to.be.equal(contract.address);
+        expect(implementationAddressV2).not.to.be.equal(implementationAddress);
+
+        return contractV2;
+    }
+
     const tempFunction = 'function ble() public pure returns(bool) {return true;}';
 
     const modifyContractForNewSignature = async function (contractName: string) {
@@ -177,7 +183,7 @@ describe("Test Deployment script", () => {
                 let idx = contents.lastIndexOf("}");
                 let replaced = contents.substring(0, idx);
                 replaced += tempFunction + '}';
-
+                console.log('changing ' + contractName + ' to have new functions');
                 fs.writeFile('./contracts/' + contractName + '.sol', replaced, 'utf-8', function (err) {
                     if (err) console.log(err);
                 });
@@ -194,6 +200,7 @@ describe("Test Deployment script", () => {
 
                 //const replaced = contents.replace('contract ' + newContractName, 'contract ' + contractName);
                 let replaced = contents.replace(tempFunction, '');
+                console.log('remove temp func from ' + contractName);
                 fs.writeFile('./contracts/' + contractName + '.sol', replaced, 'utf-8', function (err) {
                     if (err) console.log(err);
                 });
