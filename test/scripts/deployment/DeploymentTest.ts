@@ -178,7 +178,7 @@ describe("Test Deployment script", () => {
         expect(result).to.be.false;
     });
 
-    it("NOT Implemented - hould set addresses on contracts", async () => {
+    it("NOT Implemented - should set addresses on contracts", async () => {
         /*
         let aUsdContract = await smock.fake<AUSD>('aUSD');
         let liminalMarketContract = await smock.fake<LiminalMarket>('LiminalMarket');
