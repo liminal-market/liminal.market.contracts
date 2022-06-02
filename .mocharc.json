@@ -7,11 +7,6 @@
 	"timeout": 20000,
 	"recursive": true,
 	"ui": "bdd",
-	"watch-files": ["test/**/*.ts"],
-	"watch-ignore": ["lib/vendor"],
 	"require": ["ts-node/register", "hardhat/register"],
-	"scripts": {
-		"tests": "ts-node --require ts-node/register tests/**/*.ts"
-	},
 	"report-coverage": "codecov"
 }

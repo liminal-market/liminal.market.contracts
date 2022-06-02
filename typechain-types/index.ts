@@ -54,6 +54,8 @@ export type { AUSD } from "./contracts/AUSD";
 export { AUSD__factory } from "./factories/contracts/AUSD__factory";
 export type { KYC } from "./contracts/KYC";
 export { KYC__factory } from "./factories/contracts/KYC__factory";
+export type { KYCv2 } from "./contracts/KYCv2";
+export { KYCv2__factory } from "./factories/contracts/KYCv2__factory";
 export type { LiminalMarket } from "./contracts/LiminalMarket";
 export { LiminalMarket__factory } from "./factories/contracts/LiminalMarket__factory";
 export type { MarketCalendar } from "./contracts/MarketCalendar";
