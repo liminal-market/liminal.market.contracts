@@ -39,10 +39,10 @@ describe("Test market calendar", () => {
 
         opens[0] = new Date(calendarEntries[0].date + "T" + calendarEntries[0].open + "-05:00").getTime() / 1000;
         closes[0] = new Date(calendarEntries[0].date + "T" + calendarEntries[0].close + "-05:00").getTime() / 1000;
-
         opens[1] = new Date(calendarEntries[1].date + "T" + calendarEntries[1].open + "-05:00").getTime() / 1000;
 
-        await expect(contract.setCalendar(opens, closes)).to.be.revertedWith("opens & closes need to be same length");
+        await expect(contract.setCalendar(opens, closes))
+            .to.be.revertedWith("opens & closes need to be same length");
     });
 
 
@@ -102,7 +102,7 @@ describe("Test market calendar", () => {
             .to.emit(contract, "RoleRevoked")
             .withArgs(contract.SET_CALENDAR_ROLE, wallet2.address, owner.address);
 
-        expect(contractW2.setCalendar(opens, closes)).to.be.reverted;
+        await expect(contractW2.setCalendar(opens, closes)).to.be.reverted;
     })
 
 

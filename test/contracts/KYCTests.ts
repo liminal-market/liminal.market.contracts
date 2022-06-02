@@ -118,6 +118,17 @@ describe("KYC", function () {
     await contract.validateAccount(brokerAccountId, userAddress);
     await expect(await contract.isValid(userAddress)).to.be.equal(brokerAccountId);
   })
+
+  it("isValid check, accountId is not valid, should revert", async () => {
+    await expect(contract.validateAccount("abc", userAddress))
+        .to.revertedWith(await contract.INVALID_ACCOUNT_ID());
+  })
+
+  it("isValid check, userAddress is not valid, should revert", async () => {
+    await expect(contract.validateAccount(brokerAccountId, AddressZero))
+        .to.revertedWith("Address cannot be zero");
+  })
+
   it("check is address has valid kyc, should be invalid, revert", async () => {
     await redeployContract();
 
