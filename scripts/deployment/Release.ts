@@ -5,6 +5,7 @@ import Deployment from "./Deployment";
 import Roles from "./Roles";
 import {AUSD, KYC, LiminalMarket, MarketCalendar} from "../../typechain-types";
 import Verify from "./Verify";
+import ContractAddresses from "../addresses/ContractAddresses";
 
 export default class Release {
     hre : HardhatRuntimeEnvironment;
@@ -13,9 +14,12 @@ export default class Release {
     }
 
     public async Execute() {
-        await this.hre.run('compile');
-
         const contractInfo = ContractInfo.getContractInfo(this.hre.network.name);
+        if (contractInfo.NetworkName != 'localhost') {
+            this.ExecutePublicNetworkDeploy(contractInfo)
+            return;
+        }
+        await this.hre.run('compile');
 
         console.log('starting to deploy or upgrade contracts');
         let deployment = new Deployment(this.hre);
@@ -48,5 +52,9 @@ export default class Release {
         await verify.verifyContract(marketCalendarContract.address);
 
         console.log('done:' + new Date());
+    }
+
+    public ExecutePublicNetworkDeploy(contractInfo: ContractAddresses) {
+
     }
 }
