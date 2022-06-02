@@ -15,8 +15,6 @@ import ContractInfo from "./scripts/addresses/ContractInfo";
 dotenv.config();
 
 
-// This is a sample Hardhat task. To learn how to create your own go to
-// https://hardhat.org/guides/create-task.html
 task("accounts", "Prints the list of accounts", async (taskArgs, hre) => {
     const accounts = await hre.ethers.getSigners();
     console.log(hre.network)
@@ -34,25 +32,23 @@ task('verifyContract', 'verifies', async (taskArgs, hre) => {
     await verify.verifyContract(contractInfo.KYC_ADDRESS);
     await verify.verifyContract(contractInfo.AUSD_ADDRESS);
     await verify.verifyContract(contractInfo.LIMINAL_MARKET_ADDRESS);
+    await verify.verifyContract(contractInfo.MARKET_CALENDAR_ADDRESS);
 
 });
+
 task('c', 'compiles', async (taskArgs, hre) => {
     await hre.run('compile');
 });
-task('cd', 'compiles and deploys', async (taskArgs, hre) => {
+
+task('release', 'compiles, deploys & create release data', async (taskArgs, hre) => {
     let release = new Release(hre);
     await release.Execute();
 });
 
-task('getausd', 'gets USDC token', async (taskArgs, hre) => {
+task('getAusd', 'gets aUSD token', async (taskArgs, hre) => {
     let funding = new Funding(hre);
     await funding.fundAUSD();
 });
-
-
-// You need to export an object to set up your config
-// Go to https://hardhat.org/config/ to learn more
-
 
 const config: HardhatUserConfig = {
     solidity: {
@@ -70,45 +66,31 @@ const config: HardhatUserConfig = {
                         }
                     }
                 }
-            }/*,
-            {
-                version: "0.6.6",
-                settings: {
-                    optimizer: {
-                        enabled: true,
-                        runs: 1000,
-                    },
-                    outputSelection: {
-                        "*": {
-                            "*": ["storageLayout"]
-                        }
-                    }
-                }
-            },*/
+            }
         ]
     },
     defaultNetwork: "hardhat",
     networks: {
         hardhat: {
             forking: {
-                url: "https://polygon-mumbai.g.alchemy.com/v2/sCmg1qtO8dGxcgTZxjvcFazjkqUyHI6r",
+                url: process.env.mumbaiUrl ?? '',
                 blockNumber: 26529265
             }
         },
         rinkeby: {
-            url: 'https://eth-rinkeby.alchemyapi.io/v2/bxdMzB7jGUwlLyPQP_ftyikfBD5PIdkJ',
+            url: process.env.rinkebyUrl ?? '',
             accounts: [process.env.PRIVATE_KEY ?? '0x47e179ec197488593b187f80a00eb0da91f1b9d0b13f8733639f19c30a34926a']
         },
         mumbai: {
-            url: 'https://polygon-mumbai.g.alchemy.com/v2/sCmg1qtO8dGxcgTZxjvcFazjkqUyHI6r',
+            url: process.env.mumbaiUrl ?? '',
             accounts: [process.env.PRIVATE_KEY ?? '0x47e179ec197488593b187f80a00eb0da91f1b9d0b13f8733639f19c30a34926a']
         },
         fuji: {
-            url: 'https://api.avax-test.network/ext/bc/C/rpc',
+            url: process.env.fujiUrl ?? '',
             accounts: [process.env.PRIVATE_KEY ?? '0x47e179ec197488593b187f80a00eb0da91f1b9d0b13f8733639f19c30a34926a']
         },
         bsctest: {
-            url: 'https://data-seed-prebsc-1-s1.binance.org:8545/',
+            url: process.env.bsctest ?? '',
             accounts: [process.env.PRIVATE_KEY ?? '0x47e179ec197488593b187f80a00eb0da91f1b9d0b13f8733639f19c30a34926a']
         },
     },
@@ -121,7 +103,6 @@ const config: HardhatUserConfig = {
             rinkeby: process.env.ETHERSCAN_API_KEY,
             polygonMumbai: process.env.POLYGON_API_KEY,
             avalancheFujiTestnet: process.env.AvalancheFujiTestnet,
-
             bscTestnet: process.env.bsc_api_key
         }
 
