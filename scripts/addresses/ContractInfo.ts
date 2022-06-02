@@ -11,6 +11,8 @@ import rinkebyContractAddresses from './rinkeby-contract-addresses';
 import mumbaiContractAddresses from './mumbai-contract-addresses';
 import fujiContractAddresses from './fuji-contract-addresses';
 import ContractAddresses from "./ContractAddresses";
+import bsctestContractAddresses from "./bsctest-contract-addresses";
+import {HardhatRuntimeEnvironment} from "hardhat/types";
 
 
 export default class ContractInfo {
@@ -19,11 +21,17 @@ export default class ContractInfo {
     public static getContractInfo(networkName?: string): ContractAddresses {
         let contractInfos: any = {
             localhostContractAddresses, rinkebyContractAddresses,
-            mumbaiContractAddresses, fujiContractAddresses
+            mumbaiContractAddresses, fujiContractAddresses, bsctestContractAddresses
         };
+        if (networkName == 'hardhat') networkName = 'localhost';
 
         const contractInfoType = contractInfos[networkName + 'ContractAddresses'];
         return new contractInfoType();
+    }
+
+    public static async getContract(hre : HardhatRuntimeEnvironment, contractName : string, address: string) {
+        const Contract = await hre.ethers.getContractFactory(contractName);
+        return Contract.attach(address);
     }
 
 

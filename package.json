@@ -12,16 +12,20 @@
     "@typechain/hardhat": "^6.0.0",
     "@types/chai": "^4.3.1",
     "@types/chai-as-promised": "^7.1.4",
+    "@types/chai-spies": "^1.0.3",
     "@types/mocha": "^9.1.1",
+    "@types/mock-fs": "^4.13.1",
     "@types/node": "^17.0.32",
     "chai": "^4.3.6",
     "chai-as-promised": "^7.1.1",
+    "chai-spies": "^1.0.0",
     "ethereum-waffle": "^3.4.4",
     "ethers": "^5.6.5",
     "handlebars": "^4.7.7",
     "hardhat": "^2.9.3",
     "hardhat-gas-reporter": "^1.0.8",
     "mocha": "^10.0.0",
+    "mock-fs": "^5.1.2",
     "nyc": "^15.1.0",
     "solidity-coverage": "^0.7.20",
     "ts-node": "^10.7.0",
@@ -35,12 +39,12 @@
     "hardhat-dependency-compiler": "^1.1.2"
   },
   "scripts": {
-    "test": "nyc --reporter=json mocha --recursive \"test/scripts/**/*.ts\"",
+    "test": "nyc --reporter=text --reporter=html --reporter=lcov mocha --recursive \"test/scripts/**/*.ts\"",
     "hardhat": "npx hardhat node --network hardhat --verbose --show-stack-traces",
     "proxy": "moralis-admin-cli connect-local-devchain --c \"Hardhat\" --frpcPath \"C:\\blockchain\\frp_0.38.0\\frpc.exe\"",
     "deploy-local": "npx hardhat cd --network localhost --show-stack-traces",
     "fund": "npx hardhat getausd --network localhost --show-stack-traces",
     "compile": "npx hardhat compile",
-    "coverage": "npx hardhat coverage"
+    "coverage": "npx hardhat coverage --testfiles \"test/contracts/*.ts\""
   }
 }

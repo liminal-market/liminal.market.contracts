@@ -100,7 +100,13 @@ describe("LiminalMarket", function () {
 	});
 
 
+	it("try to buy with aUSD, this is now allowed since it's not coming from aUSD contract, will revert", async () => {
 
+		await redeployContract();
+
+		await expect(contract.buyWithAUsd(userAddress, userAddress, 100))
+			.to.be.revertedWith(await contract.ONLY_AUSD_CAN_CALL_ME());
+	})
 
 
 	it("try to sell token, not aUSD address, will revert", async () => {

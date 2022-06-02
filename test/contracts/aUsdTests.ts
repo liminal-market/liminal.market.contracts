@@ -255,22 +255,22 @@ describe("aUsd", function () {
   })
 
   it("allowance should be rejected", async function () {
-    expect(contract.allowance(owner.address, wallet2.address)).to.be.reverted;
+    await expect(contract.allowance(owner.address, wallet2.address)).to.be.reverted;
   });
   it("Transfer should be rejected", async function () {
-    expect(contract.transfer(owner.address, 10)).to.be.reverted;
+    await expect(contract.transfer(owner.address, 10)).to.be.reverted;
   });
 
   it("allowance should be rejected", async function () {
-    expect(contract.allowance(owner.address, wallet2.address)).to.be.reverted;
+    await expect(contract.allowance(owner.address, wallet2.address)).to.be.reverted;
   })
 
   it("approve should be rejected", async function () {
-    expect(contract.approve(owner.address, 10)).to.be.rejected;
+    await expect(contract.approve(owner.address, 10)).to.be.rejected;
   })
 
   it("transferFrom should be rejected", async function () {
-    expect(contract.transferFrom(owner.address, wallet2.address, 10)).to.be.reverted;
+    await expect(contract.transferFrom(owner.address, wallet2.address, 10)).to.be.reverted;
   })
 
 

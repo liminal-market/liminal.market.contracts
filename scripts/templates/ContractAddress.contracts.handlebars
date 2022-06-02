@@ -1,13 +1,15 @@
 import ContractAddresses from "./ContractAddresses";
 import RelayerAddress from "./RelayerAddress";
 
-export default class {{networkName}}ContractAddresses extends ContractAddresses {
+export default class {{NetworkName}}ContractAddresses implements ContractAddresses {
 
+    NetworkName = "{{NetworkName}}"
     KYC_ADDRESS = "{{KYC_ADDRESS}}";
     AUSD_ADDRESS = "{{AUSD_ADDRESS}}";
     LIMINAL_MARKET_ADDRESS = "{{LIMINAL_MARKET_ADDRESS}}";
+    MARKET_CALENDAR_ADDRESS = "{{MARKET_CALENDAR_ADDRESS}}";
 
     getRelayerAddress(): string {
-        return RelayerAddress.getAddress("{{networkName}}");
+        return RelayerAddress.getAddress(this.NetworkName);
     }
 }
