@@ -1,4 +1,4 @@
 module.exports = {
-    testfiles : 'tests/contracts/*.ts',
+    test_files  : 'tests/**/*.ts',
     istanbulReporter: ['html', 'json']
 };

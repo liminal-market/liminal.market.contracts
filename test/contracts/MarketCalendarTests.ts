@@ -76,7 +76,7 @@ describe("Test market calendar", () => {
     })
 
     it("should set role, then set calendar", async () => {
-        await contract.setCalendarRole(wallet2.address);
+        await contract.grantCalendarRole(wallet2.address);
 
         let contractW2 = contract.connect(wallet2);
         let [opens, closes] = getCalendarWithMarketOpen();
@@ -88,7 +88,7 @@ describe("Test market calendar", () => {
     it("should set permission, then remove permission", async () => {
         await redeployContract();
 
-        expect(await contract.setCalendarRole(wallet2.address))
+        expect(await contract.grantCalendarRole(wallet2.address))
             .to.emit(contract, "RoleGranted")
             .withArgs(contract.SET_CALENDAR_ROLE, wallet2.address, owner.address);
 
@@ -98,7 +98,7 @@ describe("Test market calendar", () => {
         expect(await contractW2.setCalendar(opens, closes))
             .to.emit(contractW2, "CalendarSet").withArgs(opens[0], closes[closes.length-1]);
 
-        expect(await contract.removeCalendarRole(wallet2.address))
+        expect(await contract.revokeCalendarRole(wallet2.address))
             .to.emit(contract, "RoleRevoked")
             .withArgs(contract.SET_CALENDAR_ROLE, wallet2.address, owner.address);
 

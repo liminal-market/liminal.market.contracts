@@ -1,8 +1,9 @@
 
-export default abstract class ContractAddresses {
-
-    KYC_ADDRESS = "0xEBC688DaF0924D1A3b95B869717b987087A52156";
-    AUSD_ADDRESS = "0x8E32f274476CE23D64ae0037CE80CE8b8D670658";
-    LIMINAL_MARKET_ADDRESS = "0xe8C8C9Ff944c04318f43FE1479A1d51EBAf2EBD8";
-    abstract getRelayerAddress() : string;
+export default interface ContractAddresses {
+    NetworkName : string;
+    KYC_ADDRESS :string;
+    AUSD_ADDRESS : string;
+    LIMINAL_MARKET_ADDRESS :string;
+    MARKET_CALENDAR_ADDRESS : string;
+    getRelayerAddress() : string;
 }

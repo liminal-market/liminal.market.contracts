@@ -12,4 +12,9 @@ describe("Tests ContractInfo class", () => {
             expect(contractAddress.LIMINAL_MARKET_ADDRESS).to.contain('0x');
         }
     })
+
+    it("should convert hardhat network name to localhost", () => {
+        let contractInfo = ContractInfo.getContractInfo("hardhat");
+        expect(contractInfo.NetworkName).to.be.equal("localhost");
+    })
 })

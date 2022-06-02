@@ -52,11 +52,11 @@ contract MarketCalendar is Initializable, AccessControlUpgradeable, UUPSUpgradea
         return false;
     }
 
-    function setCalendarRole(address newAddress) external onlyRole(DEFAULT_ADMIN_ROLE) {
+    function grantCalendarRole(address newAddress) external onlyRole(DEFAULT_ADMIN_ROLE) {
         _grantRole(SET_CALENDAR_ROLE, newAddress);
     }
 
-    function removeCalendarRole(address addr) external onlyRole(DEFAULT_ADMIN_ROLE) {
+    function revokeCalendarRole(address addr) external onlyRole(DEFAULT_ADMIN_ROLE) {
         _revokeRole(SET_CALENDAR_ROLE, addr);
     }
 

@@ -7,16 +7,10 @@ import "hardhat-gas-reporter";
 import "solidity-coverage";
 import '@openzeppelin/hardhat-upgrades';
 
-import {
-    compileAndDeploy,
-    compileAndUpgradeLiminalMarket,
-    compileAndUpgradeKYC,
-    compileAndUpgradeAUSD,
-    compileAndUpgradeAll,
-    verifyContract, grantRoles, compile
-} from './scripts/deploy';
-import {fundAUSD} from './scripts/funding';
-import {getContractsByNetwork} from "./scripts/networks";
+import Funding from './scripts/funding';
+import Release from "./scripts/deployment/Release";
+import Verify from "./scripts/deployment/Verify";
+import ContractInfo from "./scripts/addresses/ContractInfo";
 
 dotenv.config();
 
@@ -31,50 +25,28 @@ task("accounts", "Prints the list of accounts", async (taskArgs, hre) => {
     }
 });
 
-task("d", "", async (taskArgs, hre) => {
-
-    console.log(hre.network.name)
-
-});
-task('grantRoles', 'verifies', async (taskArgs, hre) => {
-    //how to find implementation address of contract. lookup contract address from web/src/contracts/*-address.ts
-    //on block explorer. Click Contract, click More options. Click Is this proxy, click verify
-
-    const contractInfo = getContractsByNetwork(hre);
-
-    await grantRoles(hre, contractInfo);
-
-});
 task('verifyContract', 'verifies', async (taskArgs, hre) => {
     //how to find implementation address of contract. lookup contract address from web/src/contracts/*-address.ts
     //on block explorer. Click Contract, click More options. Click Is this proxy, click verify
-    const contractInfo = getContractsByNetwork(hre);
+    const contractInfo = ContractInfo.getContractInfo(hre.network.name);
 
-    await verifyContract(hre, contractInfo.KYC_ADDRESS);
-    await verifyContract(hre, contractInfo.AUSD_ADDRESS);
-    await verifyContract(hre, contractInfo.LIMINAL_MARKET_ADDRESS);
+    let verify = new Verify(hre);
+    await verify.verifyContract(contractInfo.KYC_ADDRESS);
+    await verify.verifyContract(contractInfo.AUSD_ADDRESS);
+    await verify.verifyContract(contractInfo.LIMINAL_MARKET_ADDRESS);
 
 });
 task('c', 'compiles', async (taskArgs, hre) => {
-    await compile(hre);
+    await hre.run('compile');
 });
 task('cd', 'compiles and deploys', async (taskArgs, hre) => {
-    await compileAndDeploy(hre);
+    let release = new Release(hre);
+    await release.Execute();
 });
-task('cu-liminal', 'compiles and upgrade Liminal.market contract', async (taskArgs, hre) => {
-    await compileAndUpgradeLiminalMarket(hre);
-});
-task('cu-kyc', 'compiles and upgrade KYC contract', async (taskArgs, hre) => {
-    await compileAndUpgradeKYC(hre);
-});
-task('cu-ausd', 'compiles and upgrade aUSD contract', async (taskArgs, hre) => {
-    await compileAndUpgradeAUSD(hre);
-});
-task('cu-all', 'compiles and upgrade all contract', async (taskArgs, hre) => {
-    await compileAndUpgradeAll(hre);
-});
+
 task('getausd', 'gets USDC token', async (taskArgs, hre) => {
-    await fundAUSD(hre)
+    let funding = new Funding(hre);
+    await funding.fundAUSD();
 });
 
 
