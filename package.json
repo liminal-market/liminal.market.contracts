@@ -45,6 +45,6 @@
     "deploy-local": "npx hardhat cd --network localhost --show-stack-traces",
     "fund": "npx hardhat getausd --network localhost --show-stack-traces",
     "compile": "npx hardhat compile",
-    "coverage": "npx hardhat coverage"
+    "coverage": "npx hardhat coverage --testfiles \"test/contracts/*.ts\""
   }
 }
