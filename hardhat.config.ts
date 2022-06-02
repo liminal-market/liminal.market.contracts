@@ -47,10 +47,14 @@ task('release', 'compiles, deploys & create release data', async (taskArgs, hre)
 
 task('getAusd', 'gets aUSD token', async (taskArgs, hre) => {
     let funding = new Funding(hre);
-    await funding.fundAUSD();
+    let contractInfo = ContractInfo.getContractInfo(hre.network.name);
+    await funding.fundAUSD(contractInfo.AUSD_ADDRESS);
 });
 
 const config: HardhatUserConfig = {
+    paths : {
+      sources:'./contracts/'
+    },
     solidity: {
         compilers: [
             {

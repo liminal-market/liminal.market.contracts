@@ -1,6 +1,5 @@
 
 import {HardhatRuntimeEnvironment} from "hardhat/types";
-import ContractInfo from "./addresses/ContractInfo";
 
 export default class Funding {
     hre : HardhatRuntimeEnvironment;
@@ -8,10 +7,10 @@ export default class Funding {
         this.hre = hre;
     }
 
-    public async fundAUSD(amount = 1000, userWallet = "0x93da645082493bbd7116fc057c5b9adfd5363912") {
-        const addresses = ContractInfo.getContractInfo(this.hre.network.name)
-        const contract = await this.hre.ethers.getContractAt("aUSD", addresses.AUSD_ADDRESS);
-        await contract.setBalance(userWallet, amount.toString() + "0".repeat(18))
+    public async fundAUSD(contractAddress : string, amount = "1000000000000000000000", userWallet = "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266") {
+
+        const contract = await this.hre.ethers.getContractAt("aUSD", contractAddress);
+        await contract.setBalance(userWallet, amount)
         console.log('Funded ' + amount + ' to wallet ' + userWallet);
     }
 }

@@ -1,22 +1,19 @@
 import ContractAddresses from "../addresses/ContractAddresses";
-import {HardhatRuntimeEnvironment} from "hardhat/types";
 import {AUSD, KYC, LiminalMarket, MarketCalendar} from "../../typechain-types";
 import {FakeContract} from "@defi-wonderland/smock";
 
 export default class Roles {
 
-    hre : HardhatRuntimeEnvironment;
     liminalMarket : LiminalMarket | FakeContract<LiminalMarket>;
     aUSD : AUSD | FakeContract<AUSD>;
     kyc : KYC | FakeContract<KYC>;
     marketCalendar : MarketCalendar | FakeContract<MarketCalendar>;
 
-    constructor(hre : HardhatRuntimeEnvironment,
+    constructor(
                 liminalMarket : LiminalMarket | FakeContract<LiminalMarket>,
                 aUSD : AUSD | FakeContract<AUSD>,
                 kyc : KYC | FakeContract<KYC>,
                 marketCalendar : MarketCalendar | FakeContract<MarketCalendar>) {
-        this.hre = hre;
         this.liminalMarket = liminalMarket;
         this.aUSD = aUSD
         this.kyc = kyc;

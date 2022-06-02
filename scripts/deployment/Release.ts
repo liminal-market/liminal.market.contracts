@@ -36,7 +36,7 @@ export default class Release {
         await fileHelper.writeContractAddressesToJs(contractInfo);
 
         console.log('setAddresses');
-        let roles = new Roles(this.hre, liminalMarketContract as LiminalMarket,
+        let roles = new Roles(liminalMarketContract as LiminalMarket,
             aUsdContract as AUSD, kycContract as KYC, marketCalendarContract as MarketCalendar);
         await roles.grantRoles(contractInfo);
 

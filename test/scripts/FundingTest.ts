@@ -7,6 +7,7 @@ import Deployment from "../../scripts/deployment/Deployment";
 import {Wallet} from "ethers";
 import {AUSD} from "../../typechain-types";
 
+
 describe("Test funding", () => {
     const expect = chai.expect;
     const waffle = hre.waffle;
@@ -19,12 +20,12 @@ describe("Test funding", () => {
 
 
     it("Fund account", async () => {
-        let amount = 100;
+        let amount = "100" + "0".repeat(18);
         let deployment = new Deployment(hre);
         let [contract,] = await deployment.deployOrUpgradeContract('aUSD', "");
 
         let fund = new Funding(hre);
-        await fund.fundAUSD(amount, wallet2.address);
+        await fund.fundAUSD(contract.address, amount, wallet2.address);
 
         let balance = await (contract as AUSD).balanceOf(wallet2.address)
         expect(balance).to.be.equal(amount);

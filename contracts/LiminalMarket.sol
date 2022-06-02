@@ -228,6 +228,4 @@ contract LiminalMarket is Initializable, PausableUpgradeable, AccessControlUpgra
     {
         _upgradeTo(newImplementation);
     }
-
-
 }
