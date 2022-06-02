@@ -7,7 +7,7 @@ import "hardhat-gas-reporter";
 import "solidity-coverage";
 import '@openzeppelin/hardhat-upgrades';
 
-import Funding from './scripts/funding';
+import Funding from './scripts/Funding';
 import Release from "./scripts/deployment/Release";
 import Verify from "./scripts/deployment/Verify";
 import ContractInfo from "./scripts/addresses/ContractInfo";
