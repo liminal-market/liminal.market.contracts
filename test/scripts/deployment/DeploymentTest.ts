@@ -1,5 +1,5 @@
 import chai from "chai";
-import hre, {waffle} from "hardhat";
+import hre from "hardhat";
 import chaiAsPromised from "chai-as-promised";
 import {solidity} from "ethereum-waffle";
 import {smock} from "@defi-wonderland/smock";
@@ -8,6 +8,7 @@ import * as fs from "fs";
 import ContractInfo from "../../../scripts/addresses/ContractInfo";
 import {getImplementationAddress} from "@openzeppelin/upgrades-core";
 import {AUSD, KYC, LiminalMarket, MarketCalendar} from "../../../typechain-types";
+import {Contract} from "ethers";
 
 
 describe("Test Deployment script", () => {
@@ -19,11 +20,10 @@ describe("Test Deployment script", () => {
 
 
     after("cleanup files", async () => {
-        await removeGeneratedFiles("aUSD", "aUSD_V2");
-        await removeGeneratedFiles("KYC", "KYC_V2");
-        await removeGeneratedFiles("LiminalMarket", "LiminalMarket_V2");
-        await removeGeneratedFiles("MarketCalendar", "MarketCalendar_V2");
-
+        await resetContractToOriginalSignature("aUSD");
+        await resetContractToOriginalSignature("KYC");
+        await resetContractToOriginalSignature("LiminalMarket");
+        await resetContractToOriginalSignature("MarketCalendar");
 
         await hre.run('compile', '--force');
     })
@@ -34,24 +34,17 @@ describe("Test Deployment script", () => {
         expect(status).to.be.equal(Deployment.Deployed);
     })
 
-    it("KYC - Deploy and update contract", async () => {
-
-        let contractName = "KYC";
-        let newContractName = contractName + "_V2";
-
+    async function deployContract(contractName: string) {
         let deployment = new Deployment(hre);
         let [contract, status] = await deployment.deployOrUpgradeContract(contractName, "");
         expect(status).to.be.equal(Deployment.Deployed);
         let implementationAddress = await getImplementationAddress(hre.ethers.provider, contract.address);
         expect(implementationAddress).not.to.be.equal(contract.address);
+        return {deployment, contract, implementationAddress};
+    }
 
-        //set some data to contract
-        const brokerAccountId: string = "aee548b2-b250-449c-8d0b-937b0b87ccef";
-        const userAddress = "0x90F79bf6EB2c4f870365E785982E1f101E93b906";
-
-        await (contract as KYC).validateAccount(brokerAccountId, userAddress);
-
-        await copyContractCodeFakeV2(contractName, newContractName);
+    async function modifyContractBuildAndValidate(contractName: string, deployment: Deployment, contract: Contract, implementationAddress: string) {
+        await modifyContractForNewSignature(contractName);
         await hre.run('compile');
 
         let [contractV2, statusV2] = await deployment.deployOrUpgradeContract(contractName, contract.address);
@@ -60,6 +53,24 @@ describe("Test Deployment script", () => {
 
         let implementationAddressV2 = await getImplementationAddress(hre.ethers.provider, contractV2.address);
         expect(implementationAddressV2).not.to.be.equal(contract.address);
+        expect(implementationAddressV2).not.to.be.equal(implementationAddress);
+        console.log('old impl. address:', implementationAddress);
+        console.log('new impl. address:', implementationAddressV2);
+        return contractV2;
+    }
+
+    it("KYC - Deploy and update contract", async () => {
+
+        let contractName = "KYC";
+
+        let {deployment, contract, implementationAddress} = await deployContract(contractName);
+
+        //set some data to contract
+        const brokerAccountId: string = "aee548b2-b250-449c-8d0b-937b0b87ccef";
+        const userAddress = "0x90F79bf6EB2c4f870365E785982E1f101E93b906";
+
+        await (contract as KYC).validateAccount(brokerAccountId, userAddress);
+        let contractV2 = await modifyContractBuildAndValidate(contractName, deployment, contract, implementationAddress);
 
         let isValid = await (contractV2 as KYC).isValid(userAddress);
         expect(isValid).to.be.equal(brokerAccountId);
@@ -69,13 +80,8 @@ describe("Test Deployment script", () => {
     it("aUSD - Deploy and update contract", async () => {
 
         let contractName = "aUSD";
-        let newContractName = contractName + "_V2";
 
-        let deployment = new Deployment(hre);
-        let [contract, status] = await deployment.deployOrUpgradeContract(contractName, "");
-        expect(status).to.be.equal(Deployment.Deployed);
-        let implementationAddress = await getImplementationAddress(hre.ethers.provider, contract.address);
-        expect(implementationAddress).not.to.be.equal(contract.address);
+        let {deployment, contract,implementationAddress} = await deployContract(contractName);
 
         //set some data to contract
         const amount = 1000;
@@ -83,16 +89,7 @@ describe("Test Deployment script", () => {
 
         await (contract as AUSD).setBalance(userAddress, amount);
 
-        await copyContractCodeFakeV2(contractName, newContractName);
-        await hre.run('compile');
-
-        let [contractV2, statusV2] = await deployment.deployOrUpgradeContract(contractName, contract.address);
-        expect(statusV2).to.be.equal(Deployment.Upgraded);
-        expect(contractV2.address).to.be.equal(contract.address);
-
-        let implementationAddressV2 = await getImplementationAddress(hre.ethers.provider, contractV2.address);
-        expect(implementationAddressV2).not.to.be.equal(contract.address);
-        expect(implementationAddressV2).not.to.be.equal(implementationAddress);
+        let contractV2 = await modifyContractBuildAndValidate(contractName, deployment, contract, implementationAddress);
 
         let balance = await (contractV2 as AUSD).balanceOf(userAddress);
         expect(balance).to.be.equal(amount);
@@ -102,28 +99,14 @@ describe("Test Deployment script", () => {
     it("LiminalMarket - Deploy and update contract", async () => {
 
         let contractName = "LiminalMarket";
-        let newContractName = contractName + "_V2";
 
-        let deployment = new Deployment(hre);
-        let [contract, status] = await deployment.deployOrUpgradeContract(contractName, "");
-        expect(status).to.be.equal(Deployment.Deployed);
-        let implementationAddress = await getImplementationAddress(hre.ethers.provider, contract.address);
-        expect(implementationAddress).not.to.be.equal(contract.address);
+        let {deployment, contract,implementationAddress} = await deployContract(contractName);
 
         //set some data to contract
         const userAddress = "0x90F79bf6EB2c4f870365E785982E1f101E93b906";
         await (contract as LiminalMarket).grantMintAndBurnRole(userAddress);
 
-        await copyContractCodeFakeV2(contractName, newContractName);
-        await hre.run('compile');
-
-        let [contractV2, statusV2] = await deployment.deployOrUpgradeContract(contractName, contract.address);
-        expect(statusV2).to.be.equal(Deployment.Upgraded);
-        expect(contractV2.address).to.be.equal(contract.address);
-
-        let implementationAddressV2 = await getImplementationAddress(hre.ethers.provider, contractV2.address);
-        expect(implementationAddressV2).not.to.be.equal(contract.address);
-        expect(implementationAddressV2).not.to.be.equal(implementationAddress);
+        let contractV2 = await modifyContractBuildAndValidate(contractName, deployment, contract, implementationAddress);
 
         let hasRole = await (contractV2 as LiminalMarket).hasRole(await (contractV2 as LiminalMarket).MINTER_ROLE(), userAddress);
         expect(hasRole).to.be.true;
@@ -133,28 +116,14 @@ describe("Test Deployment script", () => {
     it("MarketCalendar - Deploy and update contract", async () => {
 
         let contractName = "MarketCalendar";
-        let newContractName = contractName + "_V2";
 
-        let deployment = new Deployment(hre);
-        let [contract, status] = await deployment.deployOrUpgradeContract(contractName, "");
-        expect(status).to.be.equal(Deployment.Deployed);
-        let implementationAddress = await getImplementationAddress(hre.ethers.provider, contract.address);
-        expect(implementationAddress).not.to.be.equal(contract.address);
+        let {deployment, contract, implementationAddress} = await deployContract(contractName);
 
         //set some data to contract
         const userAddress = "0x90F79bf6EB2c4f870365E785982E1f101E93b906";
         await (contract as MarketCalendar).grantCalendarRole(userAddress);
 
-        await copyContractCodeFakeV2(contractName, newContractName);
-        await hre.run('compile');
-
-        let [contractV2, statusV2] = await deployment.deployOrUpgradeContract(contractName, contract.address);
-        expect(statusV2).to.be.equal(Deployment.Upgraded);
-        expect(contractV2.address).to.be.equal(contract.address);
-
-        let implementationAddressV2 = await getImplementationAddress(hre.ethers.provider, contractV2.address);
-        expect(implementationAddressV2).not.to.be.equal(contract.address);
-        expect(implementationAddressV2).not.to.be.equal(implementationAddress);
+        let contractV2 = await modifyContractBuildAndValidate(contractName, deployment, contract, implementationAddress);
 
         let hasRole = await (contractV2 as MarketCalendar).hasRole(await (contractV2 as MarketCalendar).SET_CALENDAR_ROLE(), userAddress);
         expect(hasRole).to.be.true;
@@ -198,7 +167,7 @@ describe("Test Deployment script", () => {
     })
     const tempFunction = 'function ble() public pure returns(bool) {return true;}';
 
-    const copyContractCodeFakeV2 = async function (contractName: string, newContractName: string) {
+    const modifyContractForNewSignature = async function (contractName: string) {
         await fs.readFile('./contracts/' + contractName + '.sol', 'utf-8',
             function (err, contents) {
                 if (err) {
@@ -208,15 +177,14 @@ describe("Test Deployment script", () => {
                 let idx = contents.lastIndexOf("}");
                 let replaced = contents.substring(0, idx);
                 replaced += tempFunction + '}';
-                //const replaced = contents.replace('contract ' + contractName, 'contract ' + newContractName);
 
                 fs.writeFile('./contracts/' + contractName + '.sol', replaced, 'utf-8', function (err) {
-                    console.log(err);
+                    if (err) console.log(err);
                 });
             });
     }
 
-    const removeGeneratedFiles = async function (contractName : string, newContractName: string) {
+    const resetContractToOriginalSignature = async function (contractName: string) {
         await fs.readFile('./contracts/' + contractName + '.sol', 'utf-8',
             function (err, contents) {
                 if (err) {
@@ -227,7 +195,7 @@ describe("Test Deployment script", () => {
                 //const replaced = contents.replace('contract ' + newContractName, 'contract ' + contractName);
                 let replaced = contents.replace(tempFunction, '');
                 fs.writeFile('./contracts/' + contractName + '.sol', replaced, 'utf-8', function (err) {
-                    console.log(err);
+                    if (err) console.log(err);
                 });
             });
 
