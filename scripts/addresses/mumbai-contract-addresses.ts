@@ -4,10 +4,10 @@ import RelayerAddress from "./RelayerAddress";
 export default class mumbaiContractAddresses implements ContractAddresses {
 
     NetworkName = "mumbai"
-    KYC_ADDRESS = "0x0B263ab693FAB0CaA06EbbF33395eD90b6b0bCec";
-    AUSD_ADDRESS = "0xD1FCCdC474a3708B44C2F4F5C7De8C34328cD203";
-    LIMINAL_MARKET_ADDRESS = "0xcD5FD1e5A49F474d26c535962C0eb2a680250904";
-    MARKET_CALENDAR_ADDRESS = "";
+    KYC_ADDRESS = "0x23c2d25Ba4E8dD2d465348A7039c8D5aaaa72c5B";
+    AUSD_ADDRESS = "0xe65Fb29C8CeB720755D456233c971DDb11fcbb8d";
+    LIMINAL_MARKET_ADDRESS = "0x2BFb0207BC88BA9e2Ac74F19c9e88EdCcdBbC2a9";
+    MARKET_CALENDAR_ADDRESS = "0xcf979d53DF610944cA73CfEfe2F8AFdB9d42e88D";
     public getRelayerAddress() : string {
         return RelayerAddress.getAddress(this.NetworkName);
     }

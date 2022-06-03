@@ -1,8 +1,10 @@
 {
   "name": "liminal.market.contracts",
   "devDependencies": {
+    "@anders-t/ethers-ledger": "^1.0.4",
     "@defi-wonderland/smock": "^2.0.7",
     "@ethereum-waffle/provider": "^3.4.4",
+    "@ledgerhq/hw-transport-node-hid": "^6.27.1",
     "@nomiclabs/buidler": "^1.4.8",
     "@nomiclabs/hardhat-ethers": "^2.0.5",
     "@nomiclabs/hardhat-etherscan": "^3.0.3",
@@ -41,10 +43,14 @@
   "scripts": {
     "test": "nyc --reporter=text --reporter=html --reporter=lcov mocha --recursive \"test/scripts/**/*.ts\"",
     "hardhat": "npx hardhat node --network hardhat --verbose --show-stack-traces",
-    "proxy": "moralis-admin-cli connect-local-devchain --c \"Hardhat\" --frpcPath \"C:\\blockchain\\frp_0.38.0\\frpc.exe\"",
-    "deploy-local": "npx hardhat cd --network localhost --show-stack-traces",
-    "fund": "npx hardhat getausd --network localhost --show-stack-traces",
+    "proxy": "moralis-admin-cli connect-local-devchain --frpcPath \"C:\\blockchain\\frp_0.43.0\\frpc.exe\"",
+    "deploy-local": "npx hardhat release --network localhost --show-stack-traces",
+    "deploy-mumbai": "npx hardhat release --network mumbai --show-stack-traces",
+    "fund": "npx hardhat getAusd --network localhost --show-stack-traces",
+    "cal": "npx hardhat setCalendar --network localhost --show-stack-traces",
     "compile": "npx hardhat compile",
-    "coverage": "npx hardhat coverage --testfiles \"test/contracts/*.ts\""
+    "coverage": "npx hardhat coverage --testfiles \"test/contracts/*.ts\"",
+    "setup-test" : "npx hardhat setupTest --network localhost --show-stack-traces",
+    "set-values" : "npx hardhat setValues --network mumbai --show-stack-traces"
   }
 }

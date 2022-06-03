@@ -13,6 +13,7 @@ import fujiContractAddresses from './fuji-contract-addresses';
 import ContractAddresses from "./ContractAddresses";
 import bsctestContractAddresses from "./bsctest-contract-addresses";
 import {HardhatRuntimeEnvironment} from "hardhat/types";
+import {BaseContract} from "ethers";
 
 
 export default class ContractInfo {
@@ -29,9 +30,9 @@ export default class ContractInfo {
         return new contractInfoType();
     }
 
-    public static async getContract(hre : HardhatRuntimeEnvironment, contractName : string, address: string) {
+    public static async getContract<T extends BaseContract>(hre : HardhatRuntimeEnvironment, contractName : string, address: string) {
         const Contract = await hre.ethers.getContractFactory(contractName);
-        return Contract.attach(address);
+        return Contract.attach(address) as T;
     }
 
 

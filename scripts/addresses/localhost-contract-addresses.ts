@@ -1,12 +1,15 @@
 import ContractAddresses from "./ContractAddresses";
+import RelayerAddress from "./RelayerAddress";
 
 export default class localhostContractAddresses implements ContractAddresses {
-    NetworkName = "localhost";
-    KYC_ADDRESS = "0xe2688b3e95BbeAF105CDEEAac84E93861CecB3f2";
-    AUSD_ADDRESS = "0x91554B9C8C64DA9220A9EF8FCc00EF4A0a941685";
-    LIMINAL_MARKET_ADDRESS = "0x0008F6880a591c70C4A308f12F61CC96a830d1e3";
-    MARKET_CALENDAR_ADDRESS = "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266";
+
+    NetworkName = "localhost"
+    KYC_ADDRESS = "0x5407C97F6991E52206e039C0353141db5239cd1d";
+    AUSD_ADDRESS = "0x9aD101eabDc5dEc6AF911Bc131694D0AC62b742a";
+    LIMINAL_MARKET_ADDRESS = "0x28f44D2e4254cB80603Aed7e98AcDCE6F52A4387";
+    MARKET_CALENDAR_ADDRESS = "0xA9fAB3a875B346E69689489d67d51C9aa05910E6";
+
     getRelayerAddress(): string {
-        return "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266";
+        return RelayerAddress.getAddress(this.NetworkName);
     }
 }

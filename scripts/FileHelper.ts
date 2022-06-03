@@ -11,10 +11,10 @@ export default class FileHelper {
 	}
 
 	public async writeContractAddressesToJs(addresses : ContractAddresses) {
-		let constantFile = this.getConstantFile('web', addresses)
+		let constantFile = this.getConstantFile('contracts', addresses)
 		await fs.writeFileSync('./scripts/addresses/' + addresses.NetworkName + '-contract-addresses.ts', constantFile, {encoding:'utf-8'});
 
-		constantFile = this.getConstantFile('contracts', addresses)
+		constantFile = this.getConstantFile('web', addresses)
 		await fs.writeFileSync('../liminal.market.web/src/contracts/' + addresses.NetworkName + '-contract-addresses.ts', constantFile, 'utf-8');
 
 		await this.copyAbiFile('LiminalMarket');
