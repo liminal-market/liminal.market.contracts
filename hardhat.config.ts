@@ -7,10 +7,10 @@ import "hardhat-gas-reporter";
 import "solidity-coverage";
 import '@openzeppelin/hardhat-upgrades';
 
-import Funding from './scripts/Funding';
 import Release from "./scripts/deployment/Release";
 import Verify from "./scripts/deployment/Verify";
 import ContractInfo from "./scripts/addresses/ContractInfo";
+import TaskHelper from "./scripts/TaskHelper";
 
 dotenv.config();
 
@@ -41,14 +41,30 @@ task('c', 'compiles', async (taskArgs, hre) => {
 });
 
 task('release', 'compiles, deploys & create release data', async (taskArgs, hre) => {
+   console.log('Running release on network ' + hre.network.name);
     let release = new Release(hre);
     await release.Execute();
 });
-
+task('setValues', 'compiles, deploys & create release data', async (taskArgs, hre) => {
+    console.log('Running release on network ' + hre.network.name);
+    let release = new Release(hre);
+    await release.setValuesAndVerify();
+});
 task('getAusd', 'gets aUSD token', async (taskArgs, hre) => {
-    let funding = new Funding(hre);
+    let taskHelper = new TaskHelper(hre);
     let contractInfo = ContractInfo.getContractInfo(hre.network.name);
-    await funding.fundAUSD(contractInfo.AUSD_ADDRESS);
+    await taskHelper.fundAUSD(contractInfo.AUSD_ADDRESS);
+});
+task('setCalendar', 'gets aUSD token', async (taskArgs, hre) => {
+    let taskHelper = new TaskHelper(hre);
+    let contractInfo = ContractInfo.getContractInfo(hre.network.name);
+    await taskHelper.setMarketCalendarAsOpen(contractInfo.MARKET_CALENDAR_ADDRESS);
+});
+
+task('setupTest', 'give default values for dev environment', async (taskArgs, hre) => {
+    await hre.run('release');
+    await hre.run('getAusd');
+    await hre.run('setCalendar');
 });
 
 const config: HardhatUserConfig = {
@@ -75,10 +91,11 @@ const config: HardhatUserConfig = {
     },
     defaultNetwork: "hardhat",
     networks: {
+
         hardhat: {
             forking: {
                 url: process.env.mumbaiUrl ?? '',
-                blockNumber: 26529265
+               blockNumber: 26529265
             }
         },
         rinkeby: {
@@ -87,7 +104,7 @@ const config: HardhatUserConfig = {
         },
         mumbai: {
             url: process.env.mumbaiUrl ?? '',
-            accounts: [process.env.PRIVATE_KEY ?? '0x47e179ec197488593b187f80a00eb0da91f1b9d0b13f8733639f19c30a34926a']
+            chainId : 80001,
         },
         fuji: {
             url: process.env.fujiUrl ?? '',
