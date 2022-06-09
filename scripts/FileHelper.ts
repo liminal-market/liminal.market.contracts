@@ -15,7 +15,10 @@ export default class FileHelper {
 		await fs.writeFileSync('./scripts/addresses/' + addresses.NetworkName + '-contract-addresses.ts', constantFile, {encoding:'utf-8'});
 
 		constantFile = this.getConstantFile('web', addresses)
-		await fs.writeFileSync('../liminal.market.web/src/contracts/' + addresses.NetworkName + '-contract-addresses.ts', constantFile, 'utf-8');
+		await fs.writeFileSync('../liminal.market.app/src/contracts/' + addresses.NetworkName + '-contract-addresses.ts', constantFile, 'utf-8');
+
+		constantFile = this.getConstantFile('cloud', addresses)
+		await fs.writeFileSync('../liminal.market.app/src/networks/' + addresses.NetworkName + '.ts', constantFile, 'utf-8');
 
 		await this.copyAbiFile('LiminalMarket');
 		await this.copyAbiFile('aUSD');
@@ -31,7 +34,7 @@ export default class FileHelper {
 
 	public async copyAbiFile(name: string) {
 		let abiFrom = './artifacts/contracts/' + name + '.sol/' + name + '.json';
-		let abiTo = '../liminal.market.web/app/abi/' + name + '.json';
+		let abiTo = '../liminal.market.app/app/abi/' + name + '.json';
 		await fs.copyFile(abiFrom, abiTo, (err: any) => {
 			if (err) throw err;
 			console.log(abiFrom + ' was copied to ' + abiTo);
