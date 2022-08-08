@@ -53,6 +53,7 @@ export default class Deployment {
     public async contractExistsOnChain (contractName: string, address: string) : Promise<boolean> {
 
         let contract = await this.contractFactory?.attach(address) as BaseContract // ContractInfo.getContract(this.hre, contractName, address);
+        if (!contract) return false;
         try {
             await contract.deployed();
             return true;

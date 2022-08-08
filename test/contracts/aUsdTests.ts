@@ -182,7 +182,7 @@ describe("aUsd", function () {
   });
 
   it("set balance to wallet, balance and amount is same so not emit should be made", async function() {
-    let amount = 199;
+    let amount = 205;
     expect(await contract.setBalance(wallet2.address, amount))
         .emit(contract, "BalanceSet").withArgs(wallet2.address, amount);
     await expect(await contract.balanceOf(wallet2.address)).to.be.equal(amount);
