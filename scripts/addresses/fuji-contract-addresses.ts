@@ -2,6 +2,7 @@ import ContractAddresses from "./ContractAddresses";
 import RelayerAddress from "./RelayerAddress";
 
 export default class fujiContractAddresses implements ContractAddresses {
+    ChainId = "43113";
     NetworkName = "fuji"
     KYC_ADDRESS = "0xc5C8ADea4d7b1E118198975A06dddEACDbFaEd0d";
     AUSD_ADDRESS = "0x645607b0E581bFa320A0B6c0D770F34099623D25";

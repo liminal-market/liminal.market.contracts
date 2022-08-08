@@ -65,6 +65,7 @@ describe("LiminalMarket", function () {
 		expect(kycContractAddress).to.be.equal(kycContract.address);
 		expect(aUsdContractAddress).to.be.equal(aUsdContract.address);
 		expect(marketCalContractAddress).to.be.equal(marketCalendarContract.address);
+
 	});
 
 	it("should try to get security token, but doesn't exist", async ()=> {
@@ -216,7 +217,7 @@ describe("LiminalMarket", function () {
 		let filledQty = 900;
 		let filledAvgPrice = 95;
 		let side = 'buy';
-		let filledAt = new Date().getTime();
+		let filledAt = new Date('2022-08-04T12:23').getTime();
 		let commission = 1;
 		let aUsdBalance = 1000;
 

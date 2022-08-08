@@ -120,7 +120,7 @@ describe("Test Deployment script", () => {
         let contractInfo = ContractInfo.getContractInfo(hre.network.name);
 
         let deployment = new Deployment(hre);
-        let result = await deployment.contractExistsOnChain("aUSD", contractInfo.LIMINAL_MARKET_ADDRESS);
+        let result = await deployment.contractExistsOnChain("aUSD", contractInfo.AUSD_ADDRESS);
         expect(result).to.be.false;
     });
 

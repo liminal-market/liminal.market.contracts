@@ -39,9 +39,10 @@ contract LiminalMarket is Initializable, PausableUpgradeable, AccessControlUpgra
             string symbol, address tokenAddress);
     event SellSecurityToken(string accountId, address recipient,
             address sender, string symbol, uint amount);
-    event OrderExecuted(address recipient, string symbol, uint qty,
+    event OrderExecuted(address recipient, string symbol, uint tsl,
             uint filledQty, uint filledAvgPrice, string side, uint filledAt,
             uint commission, uint aUsdBalance);
+    event OrderFailed(address recipient, string symbol, uint buyingPower, uint cost, string message);
     event Deployed(address addr, uint salt);
 
  	/// @custom:oz-upgrades-unsafe-allow constructor
@@ -76,7 +77,6 @@ contract LiminalMarket is Initializable, PausableUpgradeable, AccessControlUpgra
         require(ausdBalance >= amount, NOT_ENOUGH_AUSD);
 
         string memory accountId = kycContract.isValid(userAddress);
-
 
         SecurityToken securityToken = SecurityToken(tokenAddress);
         require(securityToken.owner() == address(this), "This is not valid token address");
@@ -122,7 +122,7 @@ contract LiminalMarket is Initializable, PausableUpgradeable, AccessControlUpgra
     }
 
     function orderExecuted(address recipient, string memory symbol,
-            uint qty, uint filledQty, uint filledAvgPrice, string memory side,
+            uint tsl, uint filledQty, uint filledAvgPrice, string memory side,
             uint filledAt, uint commission, uint aUsdBalance)
                             external whenNotPaused onlyRole(MINTER_ROLE) {
         require(recipient != address(0), ADDRESS_CANNOT_BE_ZERO);
@@ -130,12 +130,16 @@ contract LiminalMarket is Initializable, PausableUpgradeable, AccessControlUpgra
         address tokenAddress = securityTokens[symbol];
         require(tokenAddress != address(0), ADDRESS_CANNOT_BE_ZERO);
 
-        emit OrderExecuted(recipient, symbol, qty, filledQty, filledAvgPrice, side, filledAt, commission, aUsdBalance);
-
         SecurityToken st = SecurityToken(tokenAddress);
-        st.setQuantity(recipient, qty);
+        st.setQuantity(recipient, tsl);
 
         aUsdContract.setBalance(recipient, aUsdBalance);
+
+        emit OrderExecuted(recipient, symbol, tsl, filledQty, filledAvgPrice, side, filledAt, commission, aUsdBalance);
+    }
+
+    function orderFailed(address recipient, string memory symbol, uint buyingPower, uint cost, string memory message) external whenNotPaused onlyRole(MINTER_ROLE) {
+        emit OrderFailed(recipient, symbol, buyingPower, cost, message);
     }
 
     function createToken(string memory symbol, uint salt) external payable whenNotPaused returns (address) {

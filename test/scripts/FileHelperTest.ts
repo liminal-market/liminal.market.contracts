@@ -19,11 +19,13 @@ describe("Test FileHelper", () => {
         mock({
             './scripts/templates/': {
                 'ContractAddress.web.handlebars': '',
-                'ContractAddress.contracts.handlebars': ''
+                'ContractAddress.contracts.handlebars': '',
+                'ContractAddress.cloud.handlebars' : ''
             },
-            '../liminal.market.web/src/contracts/': {
+            '../liminal.market.app/src/contracts/': {
                 'localhost-contract-addresses.ts' : ''
             },
+            '../liminal.market.app/src/networks/localhost.ts' : '',
             './scripts/addresses/' : {},
             './artifacts/contracts/LiminalMarket.sol/' : {
                 'LiminalMarket.json' : ''
@@ -40,7 +42,7 @@ describe("Test FileHelper", () => {
             './artifacts/contracts/MarketCalendar.sol/' : {
                 'MarketCalendar.json' : ''
             },
-            '../liminal.market.web/app/abi/' : {}
+            '../liminal.market.app/app/abi/' : {}
         });
         let contractInfo = ContractInfo.getContractInfo(hre.network.name);
         let fileHelper = new FileHelper(hre);
