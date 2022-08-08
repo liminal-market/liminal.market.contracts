@@ -19,9 +19,9 @@ export default class TaskHelper {
         console.log('retrieved balance:' + balance)
     }
 
-    public async setMarketCalendarAsOpen(contractAddress : string) {
-        let opens = [new Date(((new Date().getTime() - (10 * 24 * 60 * 60 * 1000))/1000)).getTime(), new Date('Mar-20-2022').getTime()];
-        let closes = [new Date(((new Date().getTime() + (10 * 24 * 60 * 60 * 1000))/1000)).getTime(), new Date('May-30-2022').getTime()];
+    public async setMarketCalendarAsOpen(contractAddress: string) {
+        let opens = [new Date(((new Date().getTime() - (10 * 24 * 60 * 60 * 1000)) / 1000)).getTime(), new Date('Mar-20-2022').getTime()];
+        let closes = [new Date(((new Date().getTime() + (10 * 24 * 60 * 60 * 1000)) / 1000)).getTime(), new Date('May-30-2022').getTime()];
         console.log('opens:' + new Date(opens[0]).getTime());
         console.log('closes:' + new Date(closes[0]).getTime());
         const contract = await this.hre.ethers.getContractAt("MarketCalendar", contractAddress) as MarketCalendar;
@@ -29,7 +29,11 @@ export default class TaskHelper {
     }
 
     static GetSigner(hre: HardhatRuntimeEnvironment) {
-        if (hre.network.name == 'localhost') return hre.ethers.provider.getSigner();
-        return new LedgerSigner(hre.ethers.provider);
+
+        if (hre.network.name == 'localhost' || hre.network.name == 'hardhat') return hre.ethers.provider.getSigner();
+        let signer = new LedgerSigner(hre.ethers.provider);
+console.log(signer.path);
+        return signer;
+
     }
 }

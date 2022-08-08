@@ -121,10 +121,10 @@ const config: HardhatUserConfig = {
     },
     etherscan: {
         apiKey: {
-            rinkeby: process.env.ETHERSCAN_API_KEY,
-            polygonMumbai: process.env.POLYGON_API_KEY,
-            avalancheFujiTestnet: process.env.AvalancheFujiTestnet,
-            bscTestnet: process.env.bsc_api_key
+            rinkeby: process.env.ETHERSCAN_API_KEY ?? '',
+            polygonMumbai: process.env.POLYGON_API_KEY ?? '',
+            avalancheFujiTestnet: process.env.AvalancheFujiTestnet ?? '',
+            bscTestnet: process.env.bsc_api_key ?? ''
         }
 
     }

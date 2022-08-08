@@ -1,6 +1,5 @@
 import {HardhatRuntimeEnvironment} from "hardhat/types";
-import ContractInfo from "../addresses/ContractInfo";
-import { Contract, Signer} from "ethers";
+import {BaseContract, Contract, ContractFactory, Signer} from "ethers";
 import ContractAddresses from "../addresses/ContractAddresses";
 import {AUSD, LiminalMarket} from "../../typechain-types";
 import {FakeContract} from "@defi-wonderland/smock";
@@ -10,6 +9,7 @@ export default class Deployment {
 
     hre : HardhatRuntimeEnvironment;
     signer : Signer;
+    contractFactory? : ContractFactory;
     static Deployed = 'deployed';
     static Upgraded = 'upgraded';
 
@@ -22,23 +22,23 @@ export default class Deployment {
     public async deployOrUpgradeContract(contractName: string,
                                          preexistingAddress: string) : Promise<[Contract, string]> {
 
-        let Contract = await this.hre.ethers.getContractFactory(contractName);
+        this.contractFactory = await this.hre.ethers.getContractFactory(contractName);
         console.log('deployment for contractName:' + contractName + ' | preexistingAddress:' + preexistingAddress);
         if (this.hre.network.name == 'hardhat') {
-            throw new Error("Should not deploy on hardhat. Did you forget to set --network localhost?")
+            //throw new Error("Should not deploy on hardhat. Did you forget to set --network localhost?")
         }
 
-        Contract.connect(this.signer);
-
+        this.contractFactory = this.contractFactory.connect(this.signer);
         let contract;
         let status = Deployment.Deployed;
+
         let upgrade = (preexistingAddress == '') ? false : await this.contractExistsOnChain(contractName, preexistingAddress);
         console.log('upgrade:', upgrade);
         if (upgrade) {
-            contract = await this.hre.upgrades.upgradeProxy(preexistingAddress, Contract);
+            contract = await this.hre.upgrades.upgradeProxy(preexistingAddress, this.contractFactory,{timeout:0});
             status = Deployment.Upgraded;
         } else {
-            contract = await this.hre.upgrades.deployProxy(Contract);
+            contract = await this.hre.upgrades.deployProxy(this.contractFactory, undefined, {timeout:0});
         }
 
         await contract.deployed();
@@ -51,13 +51,16 @@ export default class Deployment {
     }
 
     public async contractExistsOnChain (contractName: string, address: string) : Promise<boolean> {
-        let contract = await ContractInfo.getContract(this.hre, contractName, address);
+
+        let contract = await this.contractFactory?.attach(address) as BaseContract // ContractInfo.getContract(this.hre, contractName, address);
         try {
-            let result = await contract.deployed();
-            console.log(result);
+            await contract.deployed();
             return true;
         } catch (e: any) {
-            return false;
+            if (e.toString().indexOf('contract not deployed') != -1) {
+                return  false;
+            }
+            throw e;
         }
     }
 

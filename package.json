@@ -51,6 +51,6 @@
     "compile": "npx hardhat compile",
     "coverage": "npx hardhat coverage --testfiles \"test/contracts/*.ts\"",
     "setup-test" : "npx hardhat setupTest --network localhost --show-stack-traces",
-    "set-values" : "npx hardhat setValues --network mumbai --show-stack-traces"
+    "set-values" : "npx hardhat setValues --network [networkName] --show-stack-traces"
   }
 }
