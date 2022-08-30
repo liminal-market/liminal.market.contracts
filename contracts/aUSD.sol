@@ -23,6 +23,7 @@ contract aUSD is Initializable, ERC20Upgradeable, PausableUpgradeable, AccessCon
     bytes32 public constant UPGRADER_ROLE = keccak256("UPGRADER_ROLE");
 
     event BalanceSet(address recipient, uint256 amount);
+    mapping(address => uint256) private _cashFlow;
 
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() initializer {

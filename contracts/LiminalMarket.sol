@@ -34,6 +34,11 @@ contract LiminalMarket is Initializable, PausableUpgradeable, AccessControlUpgra
 
     MarketCalendar public marketCalendarContract;
 
+    string public constant QUANTITY_CANT_BE_ZERO = "Quantity needs to be larger then 0";
+
+    uint32 _freeCashFlow;
+    bytes32 public constant SET_COMMISSION_ROLE = keccak256("SET_COMMISSION_ROLE");
+
     event TokenCreated( address tokenAddress, string symbol);
     event BuyWithAUsd(address userAddress, uint amount, string accountId,
             string symbol, address tokenAddress);
@@ -44,6 +49,7 @@ contract LiminalMarket is Initializable, PausableUpgradeable, AccessControlUpgra
             uint commission, uint aUsdBalance);
     event OrderFailed(address recipient, string symbol, uint buyingPower, uint cost, string message);
     event Deployed(address addr, uint salt);
+    event FreeCashFlowChanged(uint amount);
 
  	/// @custom:oz-upgrades-unsafe-allow constructor
     constructor() initializer {}
@@ -57,6 +63,7 @@ contract LiminalMarket is Initializable, PausableUpgradeable, AccessControlUpgra
         _grantRole(PAUSER_ROLE, msg.sender);
         _grantRole(MINTER_ROLE, msg.sender);
         _grantRole(UPGRADER_ROLE, msg.sender);
+        _freeCashFlow = 0;
     }
 
     function setAddresses(aUSD aUsdAddress, KYC kycAddress, MarketCalendar marketCalendarAddress) external onlyRole(DEFAULT_ADMIN_ROLE) {
@@ -101,6 +108,7 @@ contract LiminalMarket is Initializable, PausableUpgradeable, AccessControlUpgra
         require(aUsdAddress == address(aUsdContract), ONLY_SEND_TO_AUSD);
         require(marketCalendarContract.isMarketOpen(), MARKET_CLOSED);
         require(getSecurityToken(symbol) == msg.sender, NOT_VALID_TOKEN_ADDRESS);
+        require(quantity > 0, QUANTITY_CANT_BE_ZERO);
 
         string memory accountId = kycContract.isValid(userAddress);
 
