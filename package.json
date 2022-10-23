@@ -38,6 +38,7 @@
   "dependencies": {
     "@openzeppelin/contracts": "^4.6.0",
     "@openzeppelin/contracts-upgradeable": "^4.6.0",
+    "@solidity-parser/parser": "^0.14.3",
     "dotenv": "^16.0.1",
     "hardhat-dependency-compiler": "^1.1.2"
   },

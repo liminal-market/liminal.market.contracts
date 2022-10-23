@@ -51,6 +51,11 @@ contract KYC is Initializable, AccessControlUpgradeable, UUPSUpgradeable {
     }
 
     function invalidateAccount(address userAddress) external onlyRole(SET_KYC) validAddress(userAddress) {
+        AccountValidation memory account = kycAccount[userAddress];
+
+        bytes memory emptyAccountId = bytes(account.accountId);
+        require(emptyAccountId.length != 0, ADDRESS_NOT_VALID);
+
         delete kycAccount[userAddress];
         emit AccountInvalidated(userAddress);
     }

@@ -30,6 +30,9 @@ describe("KYC", () => {
     it("validateAccount with valid account id", async () => {
         let validateTx = await contract.validateAccount(brokerAccountId, wallet2.address);
         await expect(validateTx).emit(contract, "AccountValidated").withArgs(brokerAccountId, wallet2.address);
+
+        let accountId = await contract.isValid(wallet2.address);
+        expect(accountId).eq(brokerAccountId);
     });
 
     it("validateAccount two time same account id", async () => {
@@ -106,5 +109,21 @@ describe("KYC", () => {
         await expect(contract.getAccountId(userAddress)).rejectedWith(reason);
     })
 
+    it("should reject, invalidate account with zero address", async () => {
+        await contract.validateAccount(brokerAccountId, userAddress);
+        let accountId = await contract.getAccountId(userAddress);
+        expect(accountId).to.be.equal(brokerAccountId);
 
+        let reason = await contract.ADDRESS_CANNOT_BE_ZERO()
+        await expect(contract.invalidateAccount(AddressZero)).rejectedWith(reason);
+    })
+
+    it("should reject, invalidate address that is not stored on chain", async () => {
+        await contract.validateAccount(brokerAccountId, userAddress);
+        let accountId = await contract.getAccountId(userAddress);
+        expect(accountId).to.be.equal(brokerAccountId);
+
+        let reason = await contract.ADDRESS_NOT_VALID()
+        await expect(contract.invalidateAccount(wallet2.address)).rejectedWith(reason);
+    })
 });
