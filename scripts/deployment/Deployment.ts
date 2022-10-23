@@ -66,8 +66,10 @@ export default class Deployment {
     }
 
     public async setAddresses(contractInfo: ContractAddresses, liminalMarketContract: LiminalMarket | FakeContract<LiminalMarket>, aUsdContract : AUSD | FakeContract<AUSD>) {
+       console.log('set addresses for LiminalMarket contract')
         await liminalMarketContract.connect(this.signer).setAddresses(contractInfo.AUSD_ADDRESS, contractInfo.KYC_ADDRESS, contractInfo.MARKET_CALENDAR_ADDRESS);
-        await aUsdContract.connect(this.signer).setLiminalMarketAddress(contractInfo.LIMINAL_MARKET_ADDRESS);
+        console.log('set addresses for aUSD contract')
+       await aUsdContract.connect(this.signer).setLiminalMarketAddress(contractInfo.LIMINAL_MARKET_ADDRESS);
     }
 
 }

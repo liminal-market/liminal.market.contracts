@@ -9,6 +9,7 @@ import ContractInfo from "../../../scripts/addresses/ContractInfo";
 import {getImplementationAddress} from "@openzeppelin/upgrades-core";
 import {AUSD, KYC, LiminalMarket, MarketCalendar} from "../../../typechain-types";
 import {Contract} from "ethers";
+import * as parser from '@solidity-parser/parser';
 
 
 describe("Test Deployment script", () => {
@@ -35,7 +36,6 @@ describe("Test Deployment script", () => {
     })
 
 
-
     it("KYC - Deploy and update contract", async () => {
 
         let contractName = "KYC";
@@ -54,11 +54,12 @@ describe("Test Deployment script", () => {
 
     });
 
+
     it("aUSD - Deploy and update contract", async () => {
 
         let contractName = "aUSD";
 
-        let {deployment, contract,implementationAddress} = await deployContract(contractName);
+        let {deployment, contract, implementationAddress} = await deployContract(contractName);
 
         //set some data to contract
         const amount = 1000;
@@ -77,7 +78,7 @@ describe("Test Deployment script", () => {
 
         let contractName = "LiminalMarket";
 
-        let {deployment, contract,implementationAddress} = await deployContract(contractName);
+        let {deployment, contract, implementationAddress} = await deployContract(contractName);
 
         //set some data to contract
         const userAddress = "0x90F79bf6EB2c4f870365E785982E1f101E93b906";
@@ -190,6 +191,7 @@ describe("Test Deployment script", () => {
             });
     }
 
+
     const resetContractToOriginalSignature = async function (contractName: string) {
         await fs.readFile('./contracts/' + contractName + '.sol', 'utf-8',
             function (err, contents) {
@@ -206,5 +208,47 @@ describe("Test Deployment script", () => {
                 });
             });
 
+        let V2artifactPath = './artifacts/contracts/' + contractName + 'V2.sol';
+        if (fs.existsSync(V2artifactPath)) {
+            await fs.rmdir('./artifacts/contracts/' + contractName + 'V2.sol', (error) => {
+                console.log(error);
+            })
+        }
+    }
+
+
+    it("should validate that _authorizeUpdate is on all upgradeable contracts", async () => {
+
+        let result = await validateAuthorizeUpgradeFunction('KYC')
+        expect(result).to.be.true;
+        result = await validateAuthorizeUpgradeFunction('LiminalMarket')
+        expect(result).to.be.true;
+        result = await validateAuthorizeUpgradeFunction('aUSD')
+        expect(result).to.be.true;
+
+        result = await validateAuthorizeUpgradeFunction('MarketCalendar')
+        expect(result).to.be.true;
+    });
+    const validateAuthorizeUpgradeFunction = async function (contractName: string) {
+        let contents = fs.readFileSync('./contracts/' + contractName + '.sol', 'utf-8');
+
+        const ast = parser.parse(contents)
+        let contractDefinition = getContractDefinition(ast.children);
+        if (!contractDefinition) throw new Error('Cannot find contract definition')
+
+        return hasAuthorizeUpgrade(contractDefinition)
+
+    }
+
+    function hasAuthorizeUpgrade(contractDefinition: any) {
+        for (let i = 0; i < contractDefinition.subNodes.length; i++) {
+            if (contractDefinition.subNodes[i].name == '_authorizeUpgrade') return true;
+        }
+    }
+
+    function getContractDefinition(children: any) {
+        for (let i = 0; i < children.length; i++) {
+            if (children[i].type == 'ContractDefinition') return children[i];
+        }
     }
 })

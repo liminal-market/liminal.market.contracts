@@ -18,7 +18,7 @@ export default class FileHelper {
 		await fs.writeFileSync('../liminal.market.app/src/contracts/' + addresses.NetworkName + '-contract-addresses.ts', constantFile, 'utf-8');
 
 		constantFile = this.getConstantFile('cloud', addresses)
-		await fs.writeFileSync('../liminal.market.app/src/networks/' + addresses.NetworkName + '.ts', constantFile, 'utf-8');
+		await fs.writeFileSync('../liminal.market.cloud/src/networks/' + addresses.NetworkName + 'ContractAddresses.ts', constantFile, 'utf-8');
 
 		await this.copyAbiFile('LiminalMarket');
 		await this.copyAbiFile('aUSD');
