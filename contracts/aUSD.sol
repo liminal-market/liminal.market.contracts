@@ -1,5 +1,5 @@
 //SPDX-License-Identifier: Business Source License 1.1
-pragma solidity ^0.8.17;
+pragma solidity ^0.8.16;
 
 import "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
@@ -51,13 +51,12 @@ contract aUSD is Initializable, ERC20Upgradeable, PausableUpgradeable, AccessCon
     function setBalance(address recipient, uint256 amount) external onlyRole(SET_BALANCE) whenNotPaused {
         uint256 balance = balanceOf(recipient);
         if (amount == balance) return;
+
         if (amount > balance) {
             _mint(recipient, amount - balance);
         } else {
             _burn(recipient, balance - amount);
         }
-        uint balanceAfter = balanceOf(recipient);
-        require(balanceAfter == amount, "Wrong calculation");
 
         emit BalanceSet(recipient, amount);
     }

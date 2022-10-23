@@ -146,7 +146,6 @@ describe("SecurityToken", function () {
         let reason = await liminalContract.QUANTITY_MORE_THEN_BALANCE();
         await expect(contract.transfer(aUsdContract.address, qtyToTransfer))
             .to.rejectedWith(reason);
-
     })
 
 

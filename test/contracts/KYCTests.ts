@@ -34,6 +34,10 @@ describe("KYC", () => {
         let accountId = await contract.isValid(wallet2.address);
         expect(accountId).eq(brokerAccountId);
     });
+    it("check if address is valid kyc, should fail", async () => {
+        let reason = await contract.ADDRESS_NOT_VALID()
+        await expect(contract.isValid(wallet2.address)).rejectedWith(reason);
+    });
 
     it("validateAccount two time same account id", async () => {
         let validateTx = await contract.validateAccount(brokerAccountId, wallet2.address);

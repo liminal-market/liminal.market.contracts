@@ -25,7 +25,7 @@
     "ethers": "^5.6.5",
     "handlebars": "^4.7.7",
     "hardhat": "^2.9.3",
-    "hardhat-gas-reporter": "^1.0.8",
+    "hardhat-gas-reporter": "^1.0.9",
     "hardhat-log-remover": "^2.0.2",
     "mocha": "^10.0.0",
     "mock-fs": "^5.1.2",

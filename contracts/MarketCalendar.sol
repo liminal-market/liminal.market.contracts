@@ -1,5 +1,5 @@
 //SPDX-License-Identifier: Business Source License 1.1
-pragma solidity ^0.8.17;
+pragma solidity ^0.8.16;
 
 import "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
@@ -14,6 +14,7 @@ contract MarketCalendar is Initializable, AccessControlUpgradeable, UUPSUpgradea
     bytes32 public constant SET_CALENDAR_ROLE = keccak256("SET_CALENDAR_ROLE");
 
     event CalendarSet(uint startTimestamp, uint endTimestamp);
+    struct Calendar { uint opens; uint closes; }
 
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() initializer {}
@@ -58,13 +59,9 @@ contract MarketCalendar is Initializable, AccessControlUpgradeable, UUPSUpgradea
         _revokeRole(SET_CALENDAR_ROLE, addr);
     }
 
-    function _authorizeUpgrade(address newImplementation) internal onlyRole(UPGRADER_ROLE) onlyProxy override
-    {
+    function _authorizeUpgrade(address newImplementation) internal onlyRole(UPGRADER_ROLE) onlyProxy override {
         _upgradeTo(newImplementation);
     }
 
-    struct Calendar {
-        uint opens;
-        uint closes;
-    }
+
 }

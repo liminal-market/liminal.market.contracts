@@ -1,5 +1,5 @@
 //SPDX-License-Identifier: Business Source License 1.1
-pragma solidity ^0.8.17;
+pragma solidity ^0.8.16;
 
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
@@ -26,35 +26,20 @@ contract SecurityToken is Ownable, ERC20 {
         } else {
             _burn(recipient, balance - qty);
         }
-        uint256 balanceAfter = balanceOf(recipient);
-        require(balanceAfter == qty, "Wrong calculation");
 
         emit BalanceSet(recipient, qty);
     }
 
-    function transfer(address to, uint256 amount)
-        public
-        virtual
-        override
-        returns (bool)
-    {
+    function transfer(address to, uint256 amount) public virtual override returns (bool) {
         liminalMarketContract.sellSecurityToken(msg.sender, to, symbol(), amount, address(0));
-        emit Transfer(msg.sender, to, amount);
         return true;
     }
 
-    function transferFrom(
-        address from,
-        address to,
-        uint256 amount
-    ) public virtual override returns (bool) {
-
+    function transferFrom(address from, address to, uint256 amount) public virtual override returns (bool) {
         address spender = _msgSender();
         _spendAllowance(from, spender, amount);
 
         liminalMarketContract.sellSecurityToken(from, to, symbol(), amount, spender);
-
-        emit Transfer(from, to, amount);
         return true;
     }
 

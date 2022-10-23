@@ -59,7 +59,6 @@ describe("Test market calendar", () => {
             opens[i] = new Date(calendarEntries[i].date + "T" + calendarEntries[i].open + "-05:00").getTime() / 1000;
             closes[i] = new Date(calendarEntries[i].date + "T" + calendarEntries[i].close + "-05:00").getTime() / 1000;
         }
-        console.log(opens, closes);
 
         expect(await contract.setCalendar(opens, closes))
             .to.emit(contract, "CalendarSet").withArgs(opens[0], closes[closes.length-1]);

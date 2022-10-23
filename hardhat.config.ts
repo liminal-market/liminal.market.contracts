@@ -7,6 +7,7 @@ import "hardhat-gas-reporter";
 import "solidity-coverage";
 import '@openzeppelin/hardhat-upgrades';
 import 'hardhat-log-remover';
+import "hardhat-gas-reporter"
 
 import Release from "./scripts/deployment/Release";
 import Verify from "./scripts/deployment/Verify";
@@ -110,16 +111,17 @@ task('setupTest', 'give default values for dev environment', async (taskArgs, hr
 
 const config: HardhatUserConfig = {
     paths: {
-        sources: './contracts/'
+        sources: './contracts/',
+        tests: './test/contracts/'
     },
     solidity: {
         compilers: [
             {
-                version: "0.8.17",
+                version: "0.8.16",
                 settings: {
                     optimizer: {
                         enabled: true,
-                        runs: 200,
+                        runs: 2000,
                     },
                     outputSelection: {
                         "*": {
@@ -158,7 +160,10 @@ const config: HardhatUserConfig = {
     },
     gasReporter: {
         enabled: process.env.REPORT_GAS !== undefined,
-        currency: "USD",
+        currency: "ISK",
+        coinmarketcap: process.env.coinmarketcap_key,
+        gasPriceApi: "https://api.polygonscan.com/api?module=proxy&action=eth_gasPrice",
+        token:'MATIC',
     },
     etherscan: {
         apiKey: {
@@ -169,6 +174,7 @@ const config: HardhatUserConfig = {
         }
 
     }
+
 };
 
 export default config;
