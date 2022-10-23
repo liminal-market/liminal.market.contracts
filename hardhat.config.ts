@@ -6,11 +6,17 @@ import "@typechain/hardhat";
 import "hardhat-gas-reporter";
 import "solidity-coverage";
 import '@openzeppelin/hardhat-upgrades';
+import 'hardhat-log-remover';
 
 import Release from "./scripts/deployment/Release";
 import Verify from "./scripts/deployment/Verify";
 import ContractInfo from "./scripts/addresses/ContractInfo";
 import TaskHelper from "./scripts/TaskHelper";
+import Roles from "./scripts/deployment/Roles";
+import {AUSD, KYC, LiminalMarket, MarketCalendar} from "./typechain-types";
+import Deployment from "./scripts/deployment/Deployment";
+
+
 
 dotenv.config();
 
@@ -29,10 +35,10 @@ task('verifyContract', 'verifies', async (taskArgs, hre) => {
     const contractInfo = ContractInfo.getContractInfo(hre.network.name);
 
     let verify = new Verify(hre);
-    await verify.verifyContract(contractInfo.KYC_ADDRESS);
+    //await verify.verifyContract(contractInfo.KYC_ADDRESS);
     await verify.verifyContract(contractInfo.AUSD_ADDRESS);
-    await verify.verifyContract(contractInfo.LIMINAL_MARKET_ADDRESS);
-    await verify.verifyContract(contractInfo.MARKET_CALENDAR_ADDRESS);
+    //await verify.verifyContract(contractInfo.LIMINAL_MARKET_ADDRESS);
+    //await verify.verifyContract(contractInfo.MARKET_CALENDAR_ADDRESS);
 
 });
 
@@ -41,9 +47,44 @@ task('c', 'compiles', async (taskArgs, hre) => {
 });
 
 task('release', 'compiles, deploys & create release data', async (taskArgs, hre) => {
-   console.log('Running release on network ' + hre.network.name);
+    console.log('Running release on network ' + hre.network.name);
     let release = new Release(hre);
     await release.Execute();
+});
+task('setAddresses', async (taskArgs, hre) => {
+
+    const contractInfo = ContractInfo.getContractInfo(hre.network.name);
+
+
+    let liminalMarketFactory = await hre.ethers.getContractFactory('LiminalMarket');
+    let liminalMarket = liminalMarketFactory.attach(contractInfo.LIMINAL_MARKET_ADDRESS) as LiminalMarket;
+
+    let aUSDFactory = await hre.ethers.getContractFactory('aUSD');
+    let aUsd = aUSDFactory.attach(contractInfo.AUSD_ADDRESS) as AUSD;
+
+    let deployment = new Deployment(hre);
+    await deployment.setAddresses(contractInfo, liminalMarket, aUsd);
+
+})
+task('setRoles', 'compiles, deploys & create release data', async (taskArgs, hre) => {
+    console.log('Running setRoles on network ' + hre.network.name);
+
+    const contractInfo = ContractInfo.getContractInfo(hre.network.name);
+
+    let liminalMarketFactory = await hre.ethers.getContractFactory('LiminalMarket');
+    let liminalMarket = liminalMarketFactory.attach(contractInfo.LIMINAL_MARKET_ADDRESS) as LiminalMarket;
+
+    let aUSDFactory = await hre.ethers.getContractFactory('aUSD');
+    let aUsd = aUSDFactory.attach(contractInfo.AUSD_ADDRESS) as AUSD;
+
+    let kycFactory = await hre.ethers.getContractFactory('KYC');
+    let kyc = kycFactory.attach(contractInfo.KYC_ADDRESS) as KYC;
+
+    let marketCalendarFactory = await hre.ethers.getContractFactory('MarketCalendar');
+    let marketCalendar = marketCalendarFactory.attach(contractInfo.MARKET_CALENDAR_ADDRESS) as MarketCalendar;
+
+    let roles = new Roles(liminalMarket, aUsd, kyc, marketCalendar);
+    await roles.grantRoles(hre, contractInfo);
 });
 task('setValues', 'compiles, deploys & create release data', async (taskArgs, hre) => {
     console.log('Running release on network ' + hre.network.name);
@@ -68,13 +109,13 @@ task('setupTest', 'give default values for dev environment', async (taskArgs, hr
 });
 
 const config: HardhatUserConfig = {
-    paths : {
-      sources:'./contracts/'
+    paths: {
+        sources: './contracts/'
     },
     solidity: {
         compilers: [
             {
-                version: "0.8.7",
+                version: "0.8.17",
                 settings: {
                     optimizer: {
                         enabled: true,
@@ -95,7 +136,7 @@ const config: HardhatUserConfig = {
         hardhat: {
             forking: {
                 url: process.env.mumbaiUrl ?? '',
-               blockNumber: 26529265
+                blockNumber: 18565457
             }
         },
         rinkeby: {
@@ -104,7 +145,7 @@ const config: HardhatUserConfig = {
         },
         mumbai: {
             url: process.env.mumbaiUrl ?? '',
-            chainId : 80001,
+            chainId: 80001,
         },
         fuji: {
             url: process.env.fujiUrl ?? '',

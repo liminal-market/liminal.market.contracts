@@ -1,5 +1,5 @@
 //SPDX-License-Identifier: Business Source License 1.1
-pragma solidity ^0.8.7;
+pragma solidity ^0.8.17;
 
 import "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
@@ -7,11 +7,6 @@ import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol"
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 
-
-import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
-import "@openzeppelin/contracts/access/Ownable.sol";
-import "@openzeppelin/contracts/access/AccessControl.sol";
-import "hardhat/console.sol";
 import "./LiminalMarket.sol";
 
 contract aUSD is Initializable, ERC20Upgradeable, PausableUpgradeable, AccessControlUpgradeable, UUPSUpgradeable {
@@ -28,7 +23,7 @@ contract aUSD is Initializable, ERC20Upgradeable, PausableUpgradeable, AccessCon
     constructor() initializer {
     }
 
-    function initialize() external initializer  {
+    function initialize() external initializer {
         __ERC20_init("USD at Broker", "aUSD");
         __Pausable_init();
         __AccessControl_init();
@@ -53,8 +48,8 @@ contract aUSD is Initializable, ERC20Upgradeable, PausableUpgradeable, AccessCon
         revokeRole(SET_BALANCE, recipient);
     }
 
-	function setBalance(address recipient, uint256 amount) external onlyRole(SET_BALANCE) whenNotPaused {
-		uint256 balance = balanceOf(recipient);
+    function setBalance(address recipient, uint256 amount) external onlyRole(SET_BALANCE) whenNotPaused {
+        uint256 balance = balanceOf(recipient);
         if (amount == balance) return;
         if (amount > balance) {
             _mint(recipient, amount - balance);
@@ -65,51 +60,20 @@ contract aUSD is Initializable, ERC20Upgradeable, PausableUpgradeable, AccessCon
         require(balanceAfter == amount, "Wrong calculation");
 
         emit BalanceSet(recipient, amount);
-	}
-
-    function transfer(address recipient, uint256 amount)
-    public
-        virtual
-        whenNotPaused
-        override
-        returns (bool)
-    {
-		return liminalMarketContract.buyWithAUsd(msg.sender, recipient, amount);
-	}
-
-    function allowance(address, address)
-    public
-        view
-        virtual
-        whenNotPaused
-        override
-        returns (uint256)
-    {
-        require(false, "No need for allowance");
-        return 0;
     }
 
-    function approve(address, uint256)
-    public
-        virtual
-        whenNotPaused
-        override
-        returns (bool)
-    {
-        require(false, "No need for approve");
-        return false;
+    function transfer(address tokenAddress, uint256 amount) public virtual whenNotPaused override returns (bool) {
+        liminalMarketContract.buyWithAUsd(msg.sender, tokenAddress, amount, address(0));
+        return true;
     }
 
-    function transferFrom(
-        address,
-        address,
-        uint256
-    ) public
-        virtual
-        override whenNotPaused returns (bool) {
-			require(false, "This token cannot be transfered");
-            return false;
-		}
+    function transferFrom(address from, address tokenAddress, uint256 amount) public virtual override whenNotPaused returns (bool) {
+        address spender = _msgSender();
+        _spendAllowance(from, spender, amount);
+
+        liminalMarketContract.buyWithAUsd(from, tokenAddress, amount, spender);
+        return true;
+    }
 
     function pause() external onlyRole(PAUSER_ROLE) {
         _pause();
@@ -119,19 +83,7 @@ contract aUSD is Initializable, ERC20Upgradeable, PausableUpgradeable, AccessCon
         _unpause();
     }
 
-    function _beforeTokenTransfer(address from, address to, uint256 amount)
-    internal
-    whenNotPaused
-    override
-    {
-        super._beforeTokenTransfer(from, to, amount);
-    }
-
-    function _authorizeUpgrade(address newImplementation)
-    internal
-    onlyRole(UPGRADER_ROLE)
-    onlyProxy
-    override
+    function _authorizeUpgrade(address newImplementation) internal onlyRole(UPGRADER_ROLE) onlyProxy override
     {
         _upgradeTo(newImplementation);
     }

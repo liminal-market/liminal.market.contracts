@@ -1,317 +1,327 @@
-
 import chai from 'chai';
 import chaiAsPromised from 'chai-as-promised';
-import { solidity} from "ethereum-waffle";
-import { Wallet } from 'ethers';
+import {solidity} from "ethereum-waffle";
+import {Wallet} from 'ethers';
 import {upgrades} from "hardhat";
-import {
-  AUSD,
-  KYC,
-  LiminalMarket,
-  MarketCalendar,
-  SecurityToken__factory
-} from "../../typechain-types";
-import { FakeContract, smock } from '@defi-wonderland/smock';
+import {AUSD, KYC, LiminalMarket, MarketCalendar} from "../../typechain-types";
+import {FakeContract, smock} from '@defi-wonderland/smock';
 
-describe("aUsd", function () {
-  const expect = chai.expect;
-  const hre = require("hardhat");
-  const waffle = hre.waffle;
-  chai.should();
-  chai.use(chaiAsPromised);
-  chai.use(solidity);
-  chai.use(smock.matchers);
+describe("aUsd", () => {
+    const expect = chai.expect;
+    const hre = require("hardhat");
+    const waffle = hre.waffle;
+    chai.should();
+    chai.use(chaiAsPromised);
+    chai.use(solidity);
+    chai.use(smock.matchers);
 
-  let owner : Wallet, wallet2 : Wallet, wallet3 : Wallet;
-  let contract: AUSD;
-  let liminalMarketContract : FakeContract<LiminalMarket>;
-  let kycContract: FakeContract<KYC>;
-  let marketCalendarContract : FakeContract<MarketCalendar>;
+    let owner: Wallet, wallet2: Wallet, wallet3: Wallet;
+    let ownerContract: AUSD;
+    let contract: AUSD;
+    let liminalContract: LiminalMarket;
+    let kycContract: FakeContract<KYC>;
+    let marketCalendarContract: FakeContract<MarketCalendar>;
+    const AddressZero = '0x0000000000000000000000000000000000000000';
+    let tokenAddress = '';
+    let symbol = 'ABC';
+    const brokerAccountId = "wfs5w8d2-b250-432c-8s0b-66b0b87addw";
 
+    before("before running each test", async () => {
+        await hre.run('compile');
 
-  const userAddress = "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266";
-  const brokerAccountId = "aee548b2-b250-449c-8d0b-937b0b87ccef";
-  let salt = 123344;
+        [owner, wallet2, wallet3] = waffle.provider.getWallets();
+    })
 
-  before("before running each test", async function () {
-    await hre.run('compile');
+    beforeEach(async () => {
+        await redeployContracts()
+    })
 
-    [owner, wallet2, wallet3] = waffle.provider.getWallets();
+    const redeployContracts = async () => {
+        const contractFactory = await hre.ethers.getContractFactory('aUSD');
+        ownerContract = await upgrades.deployProxy(contractFactory) as AUSD;
 
-    await redeployContract();
-  })
+        kycContract = await smock.fake<KYC>('KYC');
+        marketCalendarContract = await smock.fake<MarketCalendar>("MarketCalendar");
 
-  const redeployContract = async function() {
-    const contractFactory = await hre.ethers.getContractFactory('aUSD');
-    contract = await upgrades.deployProxy(contractFactory) as AUSD;
+        const lmContractFactory = await hre.ethers.getContractFactory('LiminalMarket');
+        liminalContract = await upgrades.deployProxy(lmContractFactory) as LiminalMarket;
 
-    await initFakeContracts();
-  }
+        await initContracts();
 
-  const initFakeContracts = async function() {
-    kycContract = await smock.fake<KYC>('KYC');
-    marketCalendarContract = await smock.fake<MarketCalendar>("MarketCalendar");
-  }
+        //since owner will not normally interact with contract,
+        // we switch to wallet2 to simplify testing
+        contract = ownerContract.connect(wallet2);
+    }
 
-  it('Call transfer method, should call buyWithAUsd on LiminalMarket contract', async function() {
-    let tokenAddress = '0x70997970C51812dc3A010C7d01b50e0d17dc79C8';
-    let amount = 12;
-    let expectedResult = true;
+    const initContracts = async () => {
+        kycContract.isValid.returns(brokerAccountId);
+        marketCalendarContract.isMarketOpen.returns(true);
 
-    liminalMarketContract = await smock.fake<LiminalMarket>('LiminalMarket');
-    await liminalMarketContract.buyWithAUsd.returns(expectedResult);
+        await liminalContract.setAddresses(ownerContract.address, kycContract.address, marketCalendarContract.address);
+        await ownerContract.setLiminalMarketAddress(liminalContract.address);
+        await ownerContract.grantRoleForBalance(liminalContract.address);
 
-    await contract.setLiminalMarketAddress(liminalMarketContract.address);
+        await liminalContract.createToken(symbol);
+        tokenAddress = await liminalContract.getSecurityToken(symbol);
+    }
 
-    let contractW2 = contract.connect(wallet2);
-    await contractW2.transfer(tokenAddress, amount);
+    let fundAccount = async (amount: number) => {
+        return await ownerContract.setBalance(wallet2.address, amount);
+    }
 
-    expect(liminalMarketContract.buyWithAUsd).to.have.been.calledWith(wallet2.address, tokenAddress, amount);
-  })
+    it('Call transfer method, should call buyWithAUsd on LiminalMarket contract', async () => {
+        let fund = 150;
+        let amount = 12;
 
-  it("should buy with aUSD", async () => {
-    await redeployContract();
+        await fundAccount(fund);
+        let result = await contract.transfer(tokenAddress, amount);
+        let balance = await contract.balanceOf(wallet2.address);
 
-    let symbol = "ABC";
-    const contractFactory = await hre.ethers.getContractFactory('LiminalMarket');
-    let liminalContract = await upgrades.deployProxy(contractFactory) as LiminalMarket;
-    await liminalContract.setAddresses(contract.address, kycContract.address, marketCalendarContract.address);
+        expect(balance).eq(fund - amount)
+        expect(result).emit(contract, 'Transfer').withArgs(wallet2.address, AddressZero, amount);
+        expect(result).emit(liminalContract, 'BuyWithAUsd').withArgs(wallet2.address, amount, brokerAccountId, symbol, tokenAddress, liminalContract.address)
+    })
 
-    await contract.setLiminalMarketAddress(liminalContract.address);
-    await contract.grantRoleForBalance(liminalContract.address);
+    it('should fund account, then transfer all, balance should be 0', async () => {
+        let fund = 34322;
+        let amount = fund;
 
-    await liminalContract.createToken(symbol, salt);
-    let tokenAddress = await liminalContract.getSecurityToken(symbol);
+        await fundAccount(fund);
 
-    let amount = 100;
-    let aUsdContractBalance = 1000;
-    marketCalendarContract.isMarketOpen.returns(true);
-    kycContract.isValid.returns(brokerAccountId);
-    await contract.setBalance(wallet2.address, aUsdContractBalance);
+        await contract.transfer(tokenAddress, amount);
+        let balance = await contract.balanceOf(wallet2.address);
 
-    let contractW2 = contract.connect(wallet2);
-    expect(await contractW2.transfer(tokenAddress, amount))
-        .to.emit(liminalContract, "BuyWithAUsd")
-        .withArgs(wallet2.address, amount, brokerAccountId, symbol, tokenAddress);
+        expect(balance).eq(0);
 
-  })
+    })
 
-  it("try to buy with aUSD, but token address is NOT liminal.market token, should revert", async () => {
-    await redeployContract();
+    it("try to buy with aUSD, but token address is NOT liminal.market token, should revert", async () => {
+        let fund = 200;
+        let amount = 100;
+        let invalidTokenAddress = wallet3.address;
 
-    let symbol = "ABC";
+        await fundAccount(fund);
 
-    const contractFactory = await hre.ethers.getContractFactory('LiminalMarket');
-    let liminalContract = await upgrades.deployProxy(contractFactory) as LiminalMarket;
-    await liminalContract.setAddresses(contract.address, kycContract.address, marketCalendarContract.address);
+        let contractW2 = ownerContract.connect(wallet2);
 
-    await contract.setLiminalMarketAddress(liminalContract.address);
-    await contract.grantRoleForBalance(liminalContract.address);
+        await expect(contractW2.transfer(invalidTokenAddress, amount))
+            .rejectedWith("unexpected amount of data")
 
-    let securityTokenFactory = await smock.mock<SecurityToken__factory>('SecurityToken');
-    let securityToken = await securityTokenFactory.deploy(symbol, symbol);
+    })
 
-    let tokenAddress = securityToken.address;
+    it("try to buy, but doesn't have enough aUSD, should revert", async () => {
+        let fund = 10;
+        let amount = 100;
 
-    let amount = 100;
-    let aUsdContractBalance = 1000;
-    marketCalendarContract.isMarketOpen.returns(true);
-    kycContract.isValid.returns(brokerAccountId);
-    await contract.setBalance(wallet2.address, aUsdContractBalance);
+        await fundAccount(fund);
 
-    let contractW2 = contract.connect(wallet2);
-    await expect(contractW2.transfer(tokenAddress, amount))
-        .to.revertedWith("This is not valid token address")
+        await expect(contract.transfer(tokenAddress, amount))
+            .rejectedWith("You don't have enough aUSD");
+    })
 
-  })
+    it("try to buy, market is closed, should revert", async () => {
+        let fund = 110;
+        let amount = 100;
+        marketCalendarContract.isMarketOpen.returns(false);
 
-  it("try to buy, but doesn't have enough aUSD, should revert", async () => {
-    await redeployContract();
+        await fundAccount(fund);
 
-    const contractFactory = await hre.ethers.getContractFactory('LiminalMarket');
-    let liminalContract = await upgrades.deployProxy(contractFactory) as LiminalMarket;
-    await liminalContract.setAddresses(contract.address, kycContract.address, marketCalendarContract.address);
+        let reason = await liminalContract.MARKET_CLOSED();
+        await expect(contract.transfer(tokenAddress, amount))
+            .rejectedWith(reason);
+    })
 
-    await contract.setLiminalMarketAddress(liminalContract.address);
-    await contract.grantRoleForBalance(liminalContract.address);
 
-    let tokenAddress = userAddress;
-    let amount = 100;
-    let aUsdContractBalance = 1;
-    marketCalendarContract.isMarketOpen.returns(true);
-    kycContract.isValid.returns(brokerAccountId);
-    await contract.setBalance(wallet2.address, aUsdContractBalance);
+    it("Check balance of new deployment", async () => {
+        let balanceOf = await contract.balanceOf(owner.address);
+        expect(balanceOf).to.equal(0);
+    });
 
-    let contractW2 = contract.connect(wallet2);
-    await expect(contractW2.transfer(tokenAddress, amount))
-        .to.be.revertedWith("You don't have enough aUSD");
-  })
 
-  it("try to buy, market is closed, should revert", async () => {
+    it("set balance to wallet, then set same balance, BalanceSet event should only happen once", async () => {
+        let amount = 19456879;
 
-    const contractFactory = await hre.ethers.getContractFactory('LiminalMarket');
-    let liminalContract = await upgrades.deployProxy(contractFactory) as LiminalMarket;
-    await liminalContract.setAddresses(contract.address, kycContract.address, marketCalendarContract.address);
+        let result = await fundAccount(amount);
+        expect(result).emit(ownerContract, "BalanceSet").withArgs(wallet2.address, amount);
 
-    await contract.setLiminalMarketAddress(liminalContract.address);
-    await contract.grantRoleForBalance(liminalContract.address);
+        let balance = await contract.balanceOf(wallet2.address);
+        expect(balance).to.be.equal(amount);
 
-    let tokenAddress = userAddress;
-    let amount = 100;
-    marketCalendarContract.isMarketOpen.returns(false);
+        let secondFunding = await fundAccount(amount);
+        expect(secondFunding).not.emit(ownerContract, "BalanceSet");
+    });
 
-    let contractW2 = contract.connect(wallet2);
-    let reason = await liminalContract.MARKET_CLOSED();
-    await expect(contractW2.transfer(tokenAddress, amount))
-        .to.be.revertedWith(reason);
-  })
+    it("set different balances to same wallet", async () => {
+        let amount1 = 199;
+        let amount2 = 3888;
+        let amount3 = 23;
 
+        let fund1 = await fundAccount(amount1);
+        expect(fund1).emit(ownerContract, "BalanceSet").withArgs(wallet2.address, amount1);
 
-  it("Check balance of new deployment", async function () {
-    let balanceOf = await contract.balanceOf(owner.address);
-    expect(balanceOf).to.equal(0);
+        let balance1 = await ownerContract.balanceOf(wallet2.address);
+        expect(balance1).to.be.equal(amount1);
 
-  });
+        let fund2 = await fundAccount(amount2);
+        expect(fund2).emit(ownerContract, "BalanceSet").withArgs(wallet2.address, amount2);
 
-  it("set balance to wallet", async function() {
-    let amount = 199;
-    expect(await contract.setBalance(wallet2.address, amount))
-        .emit(contract, "BalanceSet").withArgs(wallet2.address, amount);
-    await expect(await contract.balanceOf(wallet2.address)).to.be.equal(amount);
+        let balance2 = await ownerContract.balanceOf(wallet2.address);
+        expect(balance2).to.be.equal(amount2);
 
-  });
+        let fund3 = await fundAccount(amount3);
+        expect(fund3).emit(ownerContract, "BalanceSet").withArgs(wallet2.address, amount3);
 
-  it("set balance to wallet, balance and amount is same so not emit should be made", async function() {
-    let amount = 205;
-    expect(await contract.setBalance(wallet2.address, amount))
-        .emit(contract, "BalanceSet").withArgs(wallet2.address, amount);
-    await expect(await contract.balanceOf(wallet2.address)).to.be.equal(amount);
+        let balance3 = await ownerContract.balanceOf(wallet2.address);
+        expect(balance3).to.be.equal(amount3);
 
-    expect(await contract.setBalance(wallet2.address, amount))
-        .not.emit(contract, "BalanceSet").withArgs(wallet2.address, amount);
-    await expect(await contract.balanceOf(wallet2.address)).to.be.equal(amount);
-  });
+    });
 
-  it("set different balances to wallet", async function() {
-    await redeployContract();
+    it("grant role, connect new wallet, set balance to wallet", async () => {
+        let amount = 235;
+        let roleSetBalance = await ownerContract.SET_BALANCE();
 
-    let amount1 = 199;
-    let amount2 = 3888;
-    let amount3 = 23;
-    expect(await contract.setBalance(wallet2.address, amount1))
-        .to.emit(contract, "BalanceSet").withArgs(wallet2.address, amount1);
-    expect(await contract.balanceOf(wallet2.address)).to.be.equal(amount1);
+        let grantRoleTx = await ownerContract.grantRoleForBalance(wallet3.address);
 
-    expect(await contract.setBalance(wallet2.address, amount2))
-        .to.emit(contract, "BalanceSet").withArgs(wallet2.address, amount2);
-    expect(await contract.balanceOf(wallet2.address)).to.be.equal(amount2);
+        let contractW3 = ownerContract.connect(wallet3);
+        let setBalanceTx = await contractW3.setBalance(wallet2.address, amount);
+        let balance = await ownerContract.balanceOf(wallet2.address);
 
-    expect(await contract.setBalance(wallet2.address, amount3))
-        .to.emit(contract, "BalanceSet").withArgs(wallet2.address, amount3);
-    expect(await contract.balanceOf(wallet2.address)).to.be.equal(amount3);
+        expect(balance).to.be.equal(amount);
+        expect(grantRoleTx).emit(ownerContract, 'RoleGranted').withArgs(roleSetBalance, wallet3.address, owner.address)
+        expect(setBalanceTx).emit(contractW3, 'BalanceSet').withArgs(wallet2.address, amount);
+    });
 
-  });
+    it("grant role, connect new wallet, set balance to wallet, then remove role and try again, should be revered", async () => {
+        let amount = 4678;
+        let roleSetBalance = await ownerContract.SET_BALANCE();
 
-  it("set balance, then set same amount. It should test first if clause and not emit event", async function() {
-    await redeployContract();
+        let grantRoleTx = await ownerContract.grantRoleForBalance(wallet3.address);
 
-    let amount1 = 78936;
-    expect(await contract.setBalance(wallet2.address, amount1))
-        .to.emit(contract, "BalanceSet").withArgs(wallet2.address, amount1);
-    expect(await contract.balanceOf(wallet2.address)).to.be.equal(amount1);
+        let contractW3 = ownerContract.connect(wallet3);
+        let setBalanceTx = await contractW3.setBalance(wallet2.address, amount);
+        let balance = await ownerContract.balanceOf(wallet2.address);
+        let revokeTx = await ownerContract.revokeRoleForBalance(wallet3.address);
+        let setBalanceReject = contractW3.setBalance(wallet2.address, 555);
 
-    expect(await contract.setBalance(wallet2.address, amount1))
-        .not.to.emit(contract, "BalanceSet");
+        expect(balance).to.be.equal(amount);
+        expect(grantRoleTx).emit(ownerContract, 'RoleGranted').withArgs(roleSetBalance, wallet3.address, owner.address)
+        expect(setBalanceTx).emit(contractW3, 'BalanceSet').withArgs(wallet2.address, amount);
 
-  });
+        expect(revokeTx)
+            .to.emit(ownerContract, "RoleRevoked")
+            .withArgs(roleSetBalance, wallet3.address, owner.address);
 
-  it("grant role, connect new wallet, set balance to wallet", async function() {
-    await contract.grantRoleForBalance(wallet3.address);
-    let amount = 235;
+        expect(setBalanceReject).to.be.rejected;
+    });
 
-    let contractW3 = contract.connect(wallet3);
-    await contractW3.setBalance(wallet2.address, amount);
-    await expect(await contract.balanceOf(wallet2.address)).to.be.equal(amount);
-  });
+    it("Try to set balance with wallet that doesnt have permission, should fail", async () => {
+        let contractW3 = ownerContract.connect(wallet3);
+        let setBalanceTx = contractW3.setBalance(wallet2.address, 199);
+        await expect(setBalanceTx).to.be.rejected;
+    });
 
-  it("grant role, connect new wallet, set balance to wallet, then remove role and try again, should be revered", async function() {
-    await redeployContract();
+    it("allowance should be 0", async () => {
+        let allowanceTx = await ownerContract.allowance(owner.address, wallet2.address);
 
-    expect(await contract.grantRoleForBalance(wallet3.address))
-        .to.emit(contract, "RoleGranted")
-        .withArgs(contract.SET_BALANCE, wallet3.address, owner.address);
+        await expect(allowanceTx).to.be.eq(0);
+    });
 
-    let amount = 235;
+    it("set approve for 100, get allowance, should be 100, then set to 90", async () => {
+        let amount = 100;
 
-    let contractW3 = contract.connect(wallet3);
-    await contractW3.setBalance(wallet2.address, amount);
-    await expect(await contract.balanceOf(wallet2.address)).to.be.equal(amount);
+        let approveTx = await contract.approve(owner.address, amount);
+        expect(approveTx)
+            .to.emit(contract, 'Approval').withArgs(wallet2.address, owner.address, amount)
 
-    expect(await contract.revokeRoleForBalance(wallet3.address))
-        .to.emit(contract, "RoleRevoked")
-        .withArgs(contract.SET_BALANCE, wallet3.address, owner.address);
+        let allowance = await contract.allowance(wallet2.address, owner.address);
+        await expect(allowance).to.be.eq(amount);
 
-    await expect(contractW3.setBalance(wallet2.address, 555)).to.be.rejected;
-  });
+        amount = 90;
+        let approveTx2 = await contract.approve(owner.address, amount);
+        expect(approveTx2)
+            .to.emit(contract, 'Approval').withArgs(wallet2.address, owner.address, amount)
 
-  it("Try to set balance with wallet that doesnt have permission, should fail", async function() {
-    await redeployContract();
+        allowance = await contract.allowance(wallet2.address, owner.address);
+        await expect(allowance).to.be.eq(amount);
+    });
 
-    let contractW3 = contract.connect(wallet3);
-    await expect(contractW3.setBalance(wallet2.address, 199)).to.be.rejected;
-  });
+    it("Transfer should be rejected, wallet has 0 aUSD, not enough aUsd", async () => {
+        let reason = await liminalContract.NOT_ENOUGH_AUSD();
+        await expect(ownerContract.transfer(owner.address, 10)).rejectedWith(reason);
+    });
+    it("Transfer should be rejected, fund 100, try to transfer 101, not enough aUsd", async () => {
+        let reason = await liminalContract.NOT_ENOUGH_AUSD();
+        await fundAccount(100);
+        await expect(ownerContract.transfer(owner.address, 101)).rejectedWith(reason);
+    });
 
-  it("give role", async function() {
-    await contract.grantRoleForBalance(wallet2.address);
-  })
+    it("approve allowance, retrieve allowance to confirm", async () => {
+        let amount = 100;
+        let approveTx = await ownerContract.approve(wallet2.address, amount)
 
-  it("allowance should be rejected", async function () {
-    await expect(contract.allowance(owner.address, wallet2.address)).to.be.reverted;
-  });
-  it("Transfer should be rejected", async function () {
-    await expect(contract.transfer(owner.address, 10)).to.be.reverted;
-  });
+        let allowance = await ownerContract.allowance(owner.address, wallet2.address);
+        expect(allowance).to.be.eq(amount);
 
-  it("allowance should be rejected", async function () {
-    await expect(contract.allowance(owner.address, wallet2.address)).to.be.reverted;
-  })
+        //emit Approval(owner, spender, amount);
+        expect(approveTx).emit(ownerContract, 'Approval').withArgs(owner.address, wallet2.address, amount);
+    })
 
-  it("approve should be rejected", async function () {
-    await expect(contract.approve(owner.address, 10)).to.be.rejected;
-  })
+    it("transferFrom should be rejected, allowance is missing", async () => {
+        await expect(ownerContract.transferFrom(owner.address, wallet2.address, 10)).rejectedWith('insufficient allowance');
+    })
 
-  it("transferFrom should be rejected", async function () {
-    await expect(contract.transferFrom(owner.address, wallet2.address, 10)).to.be.reverted;
-  })
+    it("should execute transferFrom, first set allowance 100, transfer 20, allowance should be 80", async () => {
+        let amount = 100;
+        let transferAmount = 20;
 
+        await fundAccount(500);
 
-  it("Pause contract, try to execute on it", async function () {
-    await contract.pause();
-    await expect(contract.transfer(wallet2.address, 12)).to.be.reverted;
-  });
+        let approveTx = await contract.approve(owner.address, amount);
+        expect(approveTx).emit(contract, 'Approval').withArgs(wallet2.address, owner.address, amount)
 
-  it("Pause contract, try to execute on it, then unpause contract and execute again", async function () {
-    await redeployContract();
+        let allowance = await contract.allowance(wallet2.address, owner.address);
+        await expect(allowance).to.be.eq(amount);
 
-    liminalMarketContract = await smock.fake<LiminalMarket>('LiminalMarket');
-    await liminalMarketContract.buyWithAUsd.returns(true);
-    await contract.setLiminalMarketAddress(liminalMarketContract.address);
+        let transferFromTx = await ownerContract.transferFrom(wallet2.address, tokenAddress, transferAmount);
 
-    await contract.pause();
-    await expect(contract.transfer(wallet2.address, 12)).to.be.reverted;
+        expect(transferFromTx).emit(ownerContract, 'Transfer').withArgs(wallet2.address, AddressZero, transferAmount);
+        expect(transferFromTx).emit(liminalContract, 'BuyWithAUsd')
+            .withArgs(wallet2.address, transferAmount, brokerAccountId, symbol, tokenAddress, owner.address);
 
-    await contract.unpause();
-    let tokenAddress = '0x70997970C51812dc3A010C7d01b50e0d17dc79C8';
-    let amount = 1244;
-    await contract.transfer(tokenAddress, amount);
+        allowance = await contract.allowance(wallet2.address, owner.address);
+        expect(allowance).eq(amount - transferAmount);
+    })
 
-    expect(liminalMarketContract.buyWithAUsd).to.have.been.calledWith(owner.address, tokenAddress, amount);
-  });
+    it("Pause contract, try to execute on it", async () => {
+        await ownerContract.pause();
+        await expect(ownerContract.transfer(wallet2.address, 12)).rejectedWith('paused');
+    });
 
-  it("Pause contract, try to execute on it, then unpause contract and execute again", async function () {
-    await redeployContract();
+    it("Pause contract, try to execute on it, then unpause contract and execute again", async () => {
+        let amount = 1244;
+        await fundAccount(amount);
 
-    await contract.pause();
-    await expect(contract.setBalance(wallet2.address, 12)).to.be.reverted;
-  });
+        await ownerContract.pause();
+        await expect(ownerContract.transfer(wallet2.address, 12)).rejectedWith('paused');
+
+        await ownerContract.unpause();
+
+        let transferTx = await contract.transfer(tokenAddress, amount);
+
+        expect(transferTx).emit(contract, 'Transfer').withArgs(wallet2.address, AddressZero, amount);
+        expect(transferTx).emit(liminalContract, 'BuyWithAUsd')
+            .withArgs(wallet2.address, amount, brokerAccountId, symbol, tokenAddress, liminalContract.address);
+
+    });
+
+    it("Pause contract, try to execute all function that are pausable, all should fail", async () => {
+        let amount = 84687;
+
+        await fundAccount(amount);
+
+        await ownerContract.pause();
+        await expect(ownerContract.setBalance(wallet2.address, 12)).rejectedWith('paused');
+        await expect(contract.transfer(tokenAddress, amount)).rejectedWith('paused');
+        await expect(contract.transferFrom(owner.address, tokenAddress, amount)).rejectedWith('paused');
+    });
 });

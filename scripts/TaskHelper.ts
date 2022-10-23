@@ -29,8 +29,10 @@ export default class TaskHelper {
     }
 
     static GetSigner(hre: HardhatRuntimeEnvironment) {
+        if (hre.network.name == 'localhost' || hre.network.name == 'hardhat' || hre.network.name == 'fuji') return hre.ethers.provider.getSigner();
 
-        if (hre.network.name == 'localhost' || hre.network.name == 'hardhat') return hre.ethers.provider.getSigner();
+
+
         let signer = new LedgerSigner(hre.ethers.provider);
 console.log(signer.path);
         return signer;

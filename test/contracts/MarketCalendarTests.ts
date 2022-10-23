@@ -24,7 +24,9 @@ describe("Test market calendar", () => {
         await hre.run('compile');
 
         [owner, wallet2, wallet3] = waffle.provider.getWallets();
+    })
 
+    beforeEach(async () => {
         await redeployContract();
     })
 
@@ -42,36 +44,40 @@ describe("Test market calendar", () => {
         opens[1] = new Date(calendarEntries[1].date + "T" + calendarEntries[1].open + "-05:00").getTime() / 1000;
 
         await expect(contract.setCalendar(opens, closes))
-            .to.be.revertedWith("opens & closes need to be same length");
+            .rejectedWith("opens & closes need to be same length");
     });
 
 
     it("should add days and validate that market is open", async () => {
-        //new Date("2022-05-31T09:30-05:00")
+        let fakeDate = new Date("2022-05-30T14:33:02");
+        await hre.network.provider.send("evm_setNextBlockTimestamp", [(fakeDate.getTime()/1000)]);
+        await hre.network.provider.send("evm_mine");
+
         let opens = [];
         let closes = [];
         for (let i=0;i<calendarEntries.length;i++) {
             opens[i] = new Date(calendarEntries[i].date + "T" + calendarEntries[i].open + "-05:00").getTime() / 1000;
             closes[i] = new Date(calendarEntries[i].date + "T" + calendarEntries[i].close + "-05:00").getTime() / 1000;
         }
+        console.log(opens, closes);
+
         expect(await contract.setCalendar(opens, closes))
             .to.emit(contract, "CalendarSet").withArgs(opens[0], closes[closes.length-1]);
         expect(await contract.isMarketOpen()).to.be.true;
     })
 
     it("should add days, market should be closed", async () => {
-        //new Date("2022-05-31T09:30-05:00")
         let [opens, closes] = getCalendarWithMarketOpen();
 
         await contract.setCalendar(opens, closes)
         expect(await contract.isMarketOpen()).to.be.false;
     });
 
-    it("set calendar without having permission", async () => {
-        let contractW2 = contract.connect(wallet2.address);
+    it("set calendar without having permission, should fail", async () => {
         let [opens, closes] = getCalendarWithMarketOpen();
 
-        await expect(contractW2.setCalendar(opens, closes)).to.be.reverted;
+        let contractW2 = contract.connect(wallet2);
+        await expect(contractW2.setCalendar(opens, closes)).rejectedWith('missing role');
 
     })
 
@@ -102,7 +108,7 @@ describe("Test market calendar", () => {
             .to.emit(contract, "RoleRevoked")
             .withArgs(contract.SET_CALENDAR_ROLE, wallet2.address, owner.address);
 
-        await expect(contractW2.setCalendar(opens, closes)).to.be.reverted;
+        await expect(contractW2.setCalendar(opens, closes)).rejectedWith('missing role');
     })
 
 

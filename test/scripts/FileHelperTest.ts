@@ -26,6 +26,7 @@ describe("Test FileHelper", () => {
                 'localhost-contract-addresses.ts' : ''
             },
             '../liminal.market.app/src/networks/localhost.ts' : '',
+            '../liminal.market.cloud/src/networks/localhostContractAddresses.ts' : '',
             './scripts/addresses/' : {},
             './artifacts/contracts/LiminalMarket.sol/' : {
                 'LiminalMarket.json' : ''

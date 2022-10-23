@@ -35,7 +35,6 @@ describe("Test Deployment script", () => {
     })
 
 
-
     it("KYC - Deploy and update contract", async () => {
 
         let contractName = "KYC";
@@ -58,7 +57,7 @@ describe("Test Deployment script", () => {
 
         let contractName = "aUSD";
 
-        let {deployment, contract,implementationAddress} = await deployContract(contractName);
+        let {deployment, contract, implementationAddress} = await deployContract(contractName);
 
         //set some data to contract
         const amount = 1000;
@@ -77,7 +76,7 @@ describe("Test Deployment script", () => {
 
         let contractName = "LiminalMarket";
 
-        let {deployment, contract,implementationAddress} = await deployContract(contractName);
+        let {deployment, contract, implementationAddress} = await deployContract(contractName);
 
         //set some data to contract
         const userAddress = "0x90F79bf6EB2c4f870365E785982E1f101E93b906";
@@ -206,5 +205,11 @@ describe("Test Deployment script", () => {
                 });
             });
 
+        let V2artifactPath = './artifacts/contracts/' + contractName + 'V2.sol';
+        if (fs.existsSync(V2artifactPath)) {
+            await fs.rmdir('./artifacts/contracts/' + contractName + 'V2.sol', (error) => {
+                console.log(error);
+            })
+        }
     }
 })
