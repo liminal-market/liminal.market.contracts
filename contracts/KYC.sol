@@ -22,11 +22,11 @@ contract KYC is Initializable, AccessControlUpgradeable, UUPSUpgradeable {
         uint256 validationDate;
     }
 
-    event AccountValidated(string accountId, address userAddress);
-    event AccountInvalidated(address userAddress);
+    event AccountValidated(string accountId, address walletAddress);
+    event AccountInvalidated(address walletAddress);
 
-    modifier validAddress(address userAddress) {
-        require(userAddress != address(0), ADDRESS_CANNOT_BE_ZERO);
+    modifier validAddress(address walletAddress) {
+        require(walletAddress != address(0), ADDRESS_CANNOT_BE_ZERO);
         _;
     }
 
@@ -50,30 +50,30 @@ contract KYC is Initializable, AccessControlUpgradeable, UUPSUpgradeable {
         revokeRole(SET_KYC, recipient);
     }
 
-    function invalidateAccount(address userAddress) external onlyRole(SET_KYC) validAddress(userAddress) {
-        AccountValidation memory account = kycAccount[userAddress];
+    function invalidateAccount(address walletAddress) external onlyRole(SET_KYC) validAddress(walletAddress) {
+        AccountValidation memory account = kycAccount[walletAddress];
 
         bytes memory emptyAccountId = bytes(account.accountId);
         require(emptyAccountId.length != 0, ADDRESS_NOT_VALID);
 
-        delete kycAccount[userAddress];
-        emit AccountInvalidated(userAddress);
+        delete kycAccount[walletAddress];
+        emit AccountInvalidated(walletAddress);
     }
 
-    function validateAccount(string memory accountId, address userAddress) external onlyRole(SET_KYC) validAddress(userAddress) returns (bool)
+    function validateAccount(string memory accountId, address walletAddress) external onlyRole(SET_KYC) validAddress(walletAddress) returns (bool)
     {
         bytes memory byteAccountId = bytes(accountId);
         require(byteAccountId.length == 36, INVALID_ACCOUNT_ID);
 
-        kycAccount[userAddress] = AccountValidation(accountId, block.timestamp);
+        kycAccount[walletAddress] = AccountValidation(accountId, block.timestamp);
 
-        emit AccountValidated(accountId, userAddress);
+        emit AccountValidated(accountId, walletAddress);
 
         return true;
     }
 
-    function isValid(address userAddress) external view validAddress(userAddress) returns (string memory) {
-        AccountValidation memory account = kycAccount[userAddress];
+    function isValid(address walletAddress) external view validAddress(walletAddress) returns (string memory) {
+        AccountValidation memory account = kycAccount[walletAddress];
 
         bytes memory emptyAccountId = bytes(account.accountId);
         require(emptyAccountId.length != 0, ADDRESS_NOT_VALID);
@@ -81,8 +81,8 @@ contract KYC is Initializable, AccessControlUpgradeable, UUPSUpgradeable {
         return account.accountId;
     }
 
-    function getAccountId(address userAddress) external view validAddress(userAddress) returns (string memory) {
-        AccountValidation memory account = kycAccount[userAddress];
+    function getAccountId(address walletAddress) external view validAddress(walletAddress) returns (string memory) {
+        AccountValidation memory account = kycAccount[walletAddress];
         require(bytes(account.accountId).length != 0, ADDRESS_NOT_VALID);
 
         return account.accountId;
