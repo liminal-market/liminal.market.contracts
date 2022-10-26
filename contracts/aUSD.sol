@@ -17,7 +17,7 @@ contract aUSD is Initializable, ERC20Upgradeable, PausableUpgradeable, AccessCon
     bytes32 public constant PAUSER_ROLE = keccak256("PAUSER_ROLE");
     bytes32 public constant UPGRADER_ROLE = keccak256("UPGRADER_ROLE");
 
-    event BalanceSet(address recipient, uint256 amount);
+    event BalanceSet(address recipient, uint256 balance);
 
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() initializer {
@@ -48,17 +48,17 @@ contract aUSD is Initializable, ERC20Upgradeable, PausableUpgradeable, AccessCon
         revokeRole(SET_BALANCE, recipient);
     }
 
-    function setBalance(address recipient, uint256 amount) external onlyRole(SET_BALANCE) whenNotPaused {
-        uint256 balance = balanceOf(recipient);
-        if (amount == balance) return;
+    function setBalance(address recipient, uint256 balance) external onlyRole(SET_BALANCE) whenNotPaused {
+        uint256 currentBalance = balanceOf(recipient);
+        if (balance == currentBalance) return;
 
-        if (amount > balance) {
-            _mint(recipient, amount - balance);
+        if (balance > currentBalance) {
+            _mint(recipient, balance - currentBalance);
         } else {
-            _burn(recipient, balance - amount);
+            _burn(recipient, currentBalance - balance);
         }
 
-        emit BalanceSet(recipient, amount);
+        emit BalanceSet(recipient, balance);
     }
 
     function transfer(address tokenAddress, uint256 amount) public virtual whenNotPaused override returns (bool) {

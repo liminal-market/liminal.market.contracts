@@ -40,7 +40,7 @@ contract LiminalMarket is Initializable, PausableUpgradeable, AccessControlUpgra
     event OrderExecuted(address recipient, string symbol, uint tsl,
         uint filledQty, uint filledAvgPrice, string side, uint filledAt,
         uint commission, uint aUsdBalance, address spender);
-    event OrderFailed(address recipient, string symbol, uint buyingPower, uint cost, string message, address spender);
+    event OrderFailed(address recipient, string symbol, uint buyingPower, string message, address spender);
 
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() initializer {}
@@ -123,8 +123,8 @@ contract LiminalMarket is Initializable, PausableUpgradeable, AccessControlUpgra
         emit OrderExecuted(recipient, symbol, tsl, filledQty, filledAvgPrice, side, filledAt, commission, aUsdBalance, spender);
     }
 
-    function orderFailed(address recipient, string memory symbol, uint buyingPower, uint cost, string memory message, address spender) external whenNotPaused onlyRole(MINTER_ROLE) {
-        emit OrderFailed(recipient, symbol, buyingPower, cost, message, spender);
+    function orderFailed(address recipient, string memory symbol, uint buyingPower, string memory message, address spender) external whenNotPaused onlyRole(MINTER_ROLE) {
+        emit OrderFailed(recipient, symbol, buyingPower, message, spender);
     }
 
     function createToken(string memory symbol) external whenNotPaused returns (SecurityToken) {

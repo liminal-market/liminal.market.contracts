@@ -212,14 +212,14 @@ describe("LiminalMarket", function () {
 
         expect(grantRoleTx).emit(ownerContract, 'RoleGranted').withArgs(mintAndBurnRole, wallet2.address, owner.address)
 
-        let orderFailTx = contract.orderFailed(wallet2.address, "ABC", 0, 0, 'Error', owner.address);
+        let orderFailTx = contract.orderFailed(wallet2.address, "ABC", 0, 'Error', owner.address);
         expect(orderFailTx).emit(contract, 'OrderFailed');
     })
 
     it("should grant mint and burn role, then remove it and revert when trying to execute order", async () => {
         await ownerContract.grantMintAndBurnRole(wallet2.address);
 
-        let orderFailTx = await contract.orderFailed(wallet3.address, "ABC", 0, 0, 'Error', owner.address);
+        let orderFailTx = await contract.orderFailed(wallet3.address, "ABC", 0, 'Error', owner.address);
         expect(orderFailTx).emit(contract, 'OrderFailed');
 
         await ownerContract.revokeMintAndBurnRole(wallet2.address);
