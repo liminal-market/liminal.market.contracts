@@ -82,7 +82,7 @@ contract LiminalMarket is Initializable, PausableUpgradeable, AccessControlUpgra
         if (spender == address(0)) spender = address(this);
 
         emit BuyWithAUsd(walletAddress, amount, accountId, symbol, tokenAddress, spender);
-        aUsdContract.setBalance(walletAddress, ausdBalance - amount);
+        aUsdContract.setBalance(walletAddress, ausdBalance - amount, Action.OrderBuy);
     }
 
     function sellSecurityToken(address walletAddress, address aUsdAddress, string memory symbol, uint quantity, address spender) external whenNotPaused {
@@ -99,7 +99,7 @@ contract LiminalMarket is Initializable, PausableUpgradeable, AccessControlUpgra
         if (spender == address(0)) spender = address(this);
 
         emit SellSecurityToken(accountId, walletAddress, aUsdAddress, symbol, quantity, spender);
-        token.setBalance(walletAddress, balance - quantity);
+        token.setBalance(walletAddress, balance - quantity, Action.OrderSell);
     }
 
     function orderExecuted(address recipient, string memory symbol,
@@ -117,8 +117,8 @@ contract LiminalMarket is Initializable, PausableUpgradeable, AccessControlUpgra
         } else {
             st = SecurityToken(tokenAddress);
         }
-        st.setBalance(recipient, tsl);
-        aUsdContract.setBalance(recipient, aUsdBalance);
+        st.setBalance(recipient, tsl, Action.OrderExecuted);
+        aUsdContract.setBalance(recipient, aUsdBalance, Action.OrderExecuted);
 
         emit OrderExecuted(recipient, symbol, tsl, filledQty, filledAvgPrice, side, filledAt, commission, aUsdBalance, spender);
     }
@@ -159,4 +159,11 @@ contract LiminalMarket is Initializable, PausableUpgradeable, AccessControlUpgra
     function _authorizeUpgrade(address newImplementation) internal onlyRole(UPGRADER_ROLE) onlyProxy override {
         _upgradeTo(newImplementation);
     }
+}
+
+enum Action {
+    Fund,
+    OrderBuy,
+    OrderSell,
+    OrderExecuted
 }

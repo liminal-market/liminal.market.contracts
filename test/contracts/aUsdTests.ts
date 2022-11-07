@@ -5,6 +5,7 @@ import {Wallet} from 'ethers';
 import {upgrades} from "hardhat";
 import {AUSD, KYC, LiminalMarket, MarketCalendar} from "../../typechain-types";
 import {FakeContract, smock} from '@defi-wonderland/smock';
+import exp from "constants";
 
 describe("aUsd", () => {
     const expect = chai.expect;
@@ -25,6 +26,9 @@ describe("aUsd", () => {
     let tokenAddress = '';
     let symbol = 'ABC';
     const brokerAccountId = "wfs5w8d2-b250-432c-8s0b-66b0b87addw";
+
+    const Fund = 0;
+    const OrderBuy = 1;
 
     before("before running each test", async () => {
         await hre.run('compile');
@@ -66,20 +70,23 @@ describe("aUsd", () => {
     }
 
     let fundAccount = async (amount: number) => {
-        return await ownerContract.setBalance(wallet2.address, amount);
+        return await ownerContract.setBalance(wallet2.address, amount, Fund);
     }
 
     it('Call transfer method, should call buyWithAUsd on LiminalMarket contract', async () => {
         let fund = 150;
         let amount = 12;
 
-        await fundAccount(fund);
+        let fundResult = await fundAccount(fund);
+        expect(fundResult).emit(ownerContract, 'BalanceSet').withArgs(wallet2.address, fund, Fund);
+
         let result = await contract.transfer(tokenAddress, amount);
         let balance = await contract.balanceOf(wallet2.address);
 
         expect(balance).eq(fund - amount)
         expect(result).emit(contract, 'Transfer').withArgs(wallet2.address, AddressZero, amount);
         expect(result).emit(liminalContract, 'BuyWithAUsd').withArgs(wallet2.address, amount, brokerAccountId, symbol, tokenAddress, liminalContract.address)
+        expect(result).emit(contract, 'BalanceSet').withArgs(wallet2.address, balance, OrderBuy)
     })
 
     it('should fund account, then transfer all, balance should be 0', async () => {
@@ -142,7 +149,7 @@ describe("aUsd", () => {
         let amount = 19456879;
 
         let result = await fundAccount(amount);
-        expect(result).emit(ownerContract, "BalanceSet").withArgs(wallet2.address, amount);
+        expect(result).emit(ownerContract, "BalanceSet").withArgs(wallet2.address, amount, Fund);
 
         let balance = await contract.balanceOf(wallet2.address);
         expect(balance).to.be.equal(amount);
@@ -157,19 +164,19 @@ describe("aUsd", () => {
         let amount3 = 23;
 
         let fund1 = await fundAccount(amount1);
-        expect(fund1).emit(ownerContract, "BalanceSet").withArgs(wallet2.address, amount1);
+        expect(fund1).emit(ownerContract, "BalanceSet").withArgs(wallet2.address, amount1, Fund);
 
         let balance1 = await ownerContract.balanceOf(wallet2.address);
         expect(balance1).to.be.equal(amount1);
 
         let fund2 = await fundAccount(amount2);
-        expect(fund2).emit(ownerContract, "BalanceSet").withArgs(wallet2.address, amount2);
+        expect(fund2).emit(ownerContract, "BalanceSet").withArgs(wallet2.address, amount2, Fund);
 
         let balance2 = await ownerContract.balanceOf(wallet2.address);
         expect(balance2).to.be.equal(amount2);
 
         let fund3 = await fundAccount(amount3);
-        expect(fund3).emit(ownerContract, "BalanceSet").withArgs(wallet2.address, amount3);
+        expect(fund3).emit(ownerContract, "BalanceSet").withArgs(wallet2.address, amount3, Fund);
 
         let balance3 = await ownerContract.balanceOf(wallet2.address);
         expect(balance3).to.be.equal(amount3);
@@ -183,12 +190,12 @@ describe("aUsd", () => {
         let grantRoleTx = await ownerContract.grantRoleForBalance(wallet3.address);
 
         let contractW3 = ownerContract.connect(wallet3);
-        let setBalanceTx = await contractW3.setBalance(wallet2.address, amount);
+        let setBalanceTx = await contractW3.setBalance(wallet2.address, amount, Fund);
         let balance = await ownerContract.balanceOf(wallet2.address);
 
         expect(balance).to.be.equal(amount);
         expect(grantRoleTx).emit(ownerContract, 'RoleGranted').withArgs(roleSetBalance, wallet3.address, owner.address)
-        expect(setBalanceTx).emit(contractW3, 'BalanceSet').withArgs(wallet2.address, amount);
+        expect(setBalanceTx).emit(contractW3, 'BalanceSet').withArgs(wallet2.address, amount, Fund);
     });
 
     it("grant role, connect new wallet, set balance to wallet, then remove role and try again, should be revered", async () => {
@@ -198,14 +205,14 @@ describe("aUsd", () => {
         let grantRoleTx = await ownerContract.grantRoleForBalance(wallet3.address);
 
         let contractW3 = ownerContract.connect(wallet3);
-        let setBalanceTx = await contractW3.setBalance(wallet2.address, amount);
+        let setBalanceTx = await contractW3.setBalance(wallet2.address, amount, Fund);
         let balance = await ownerContract.balanceOf(wallet2.address);
         let revokeTx = await ownerContract.revokeRoleForBalance(wallet3.address);
-        let setBalanceReject = contractW3.setBalance(wallet2.address, 555);
+        let setBalanceReject = contractW3.setBalance(wallet2.address, 555, Fund);
 
         expect(balance).to.be.equal(amount);
         expect(grantRoleTx).emit(ownerContract, 'RoleGranted').withArgs(roleSetBalance, wallet3.address, owner.address)
-        expect(setBalanceTx).emit(contractW3, 'BalanceSet').withArgs(wallet2.address, amount);
+        expect(setBalanceTx).emit(contractW3, 'BalanceSet').withArgs(wallet2.address, amount, Fund);
 
         expect(revokeTx)
             .to.emit(ownerContract, "RoleRevoked")
@@ -216,7 +223,7 @@ describe("aUsd", () => {
 
     it("Try to set balance with wallet that doesnt have permission, should fail", async () => {
         let contractW3 = ownerContract.connect(wallet3);
-        let setBalanceTx = contractW3.setBalance(wallet2.address, 199);
+        let setBalanceTx = contractW3.setBalance(wallet2.address, 199, Fund);
         await expect(setBalanceTx).to.be.rejected;
     });
 
@@ -271,25 +278,26 @@ describe("aUsd", () => {
     })
 
     it("should execute transferFrom, first set allowance 100, transfer 20, allowance should be 80", async () => {
-        let amount = 100;
+        let allowanceAmount = 100;
         let transferAmount = 20;
+        let fundAmount = 500;
+        await fundAccount(fundAmount);
 
-        await fundAccount(500);
-
-        let approveTx = await contract.approve(owner.address, amount);
-        expect(approveTx).emit(contract, 'Approval').withArgs(wallet2.address, owner.address, amount)
+        let approveTx = await contract.approve(owner.address, allowanceAmount);
+        expect(approveTx).emit(contract, 'Approval').withArgs(wallet2.address, owner.address, allowanceAmount)
 
         let allowance = await contract.allowance(wallet2.address, owner.address);
-        await expect(allowance).to.be.eq(amount);
+        await expect(allowance).to.be.eq(allowanceAmount);
 
         let transferFromTx = await ownerContract.transferFrom(wallet2.address, tokenAddress, transferAmount);
 
         expect(transferFromTx).emit(ownerContract, 'Transfer').withArgs(wallet2.address, AddressZero, transferAmount);
         expect(transferFromTx).emit(liminalContract, 'BuyWithAUsd')
             .withArgs(wallet2.address, transferAmount, brokerAccountId, symbol, tokenAddress, owner.address);
+        expect(transferFromTx).emit(ownerContract, 'BalanceSet').withArgs(wallet2.address, fundAmount - transferAmount, OrderBuy);
 
         allowance = await contract.allowance(wallet2.address, owner.address);
-        expect(allowance).eq(amount - transferAmount);
+        expect(allowance).eq(allowanceAmount - transferAmount);
     })
 
     it("Pause contract, try to execute on it", async () => {
@@ -311,7 +319,7 @@ describe("aUsd", () => {
         expect(transferTx).emit(contract, 'Transfer').withArgs(wallet2.address, AddressZero, amount);
         expect(transferTx).emit(liminalContract, 'BuyWithAUsd')
             .withArgs(wallet2.address, amount, brokerAccountId, symbol, tokenAddress, liminalContract.address);
-
+        expect(transferTx).emit(contract, 'BalanceSet').withArgs(wallet2.address, 0, OrderBuy);
     });
 
     it("Pause contract, try to execute all function that are pausable, all should fail", async () => {
@@ -320,7 +328,7 @@ describe("aUsd", () => {
         await fundAccount(amount);
 
         await ownerContract.pause();
-        await expect(ownerContract.setBalance(wallet2.address, 12)).rejectedWith('paused');
+        await expect(ownerContract.setBalance(wallet2.address, 12, Fund)).rejectedWith('paused');
         await expect(contract.transfer(tokenAddress, amount)).rejectedWith('paused');
         await expect(contract.transferFrom(owner.address, tokenAddress, amount)).rejectedWith('paused');
     });

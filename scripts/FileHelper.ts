@@ -14,7 +14,7 @@ export default class FileHelper {
 		let constantFile = this.getConstantFile('contracts', addresses)
 		await fs.writeFileSync('./scripts/addresses/' + addresses.NetworkName + '-contract-addresses.ts', constantFile, {encoding:'utf-8'});
 
-		constantFile = this.getConstantFile('web', addresses)
+		constantFile = this.getConstantFile('app', addresses)
 		await fs.writeFileSync('../liminal.market.app/src/contracts/' + addresses.NetworkName + '-contract-addresses.ts', constantFile, 'utf-8');
 
 		constantFile = this.getConstantFile('cloud', addresses)

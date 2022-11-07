@@ -17,7 +17,7 @@ contract aUSD is Initializable, ERC20Upgradeable, PausableUpgradeable, AccessCon
     bytes32 public constant PAUSER_ROLE = keccak256("PAUSER_ROLE");
     bytes32 public constant UPGRADER_ROLE = keccak256("UPGRADER_ROLE");
 
-    event BalanceSet(address recipient, uint256 balance);
+    event BalanceSet(address recipient, uint256 balance, Action action);
 
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() initializer {
@@ -48,7 +48,7 @@ contract aUSD is Initializable, ERC20Upgradeable, PausableUpgradeable, AccessCon
         revokeRole(SET_BALANCE, recipient);
     }
 
-    function setBalance(address recipient, uint256 balance) external onlyRole(SET_BALANCE) whenNotPaused {
+    function setBalance(address recipient, uint256 balance, Action action) external onlyRole(SET_BALANCE) whenNotPaused {
         uint256 currentBalance = balanceOf(recipient);
         if (balance == currentBalance) return;
 
@@ -58,19 +58,19 @@ contract aUSD is Initializable, ERC20Upgradeable, PausableUpgradeable, AccessCon
             _burn(recipient, currentBalance - balance);
         }
 
-        emit BalanceSet(recipient, balance);
+        emit BalanceSet(recipient, balance, action);
     }
 
-    function transfer(address tokenAddress, uint256 amount) public virtual whenNotPaused override returns (bool) {
-        liminalMarketContract.buyWithAUsd(msg.sender, tokenAddress, amount, address(0));
+    function transfer(address to, uint256 amount) public virtual whenNotPaused override returns (bool) {
+        liminalMarketContract.buyWithAUsd(msg.sender, to, amount, address(0));
         return true;
     }
 
-    function transferFrom(address from, address tokenAddress, uint256 amount) public virtual override whenNotPaused returns (bool) {
+    function transferFrom(address from, address to, uint256 amount) public virtual override whenNotPaused returns (bool) {
         address spender = _msgSender();
         _spendAllowance(from, spender, amount);
 
-        liminalMarketContract.buyWithAUsd(from, tokenAddress, amount, spender);
+        liminalMarketContract.buyWithAUsd(from, to, amount, spender);
         return true;
     }
 

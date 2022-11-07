@@ -13,7 +13,7 @@ export default class TaskHelper {
     public async fundAUSD(contractAddress: string, amount = "1000000000000000000000", userWallet = "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266") {
         console.log('aUSD address:' + contractAddress);
         const contract = await this.hre.ethers.getContractAt("aUSD", contractAddress) as AUSD;
-        await contract.setBalance(userWallet, amount);
+        await contract.setBalance(userWallet, amount, 1);
         console.log('Funded ' + amount + ' to wallet ' + userWallet);
         let balance = await contract.balanceOf(userWallet);
         console.log('retrieved balance:' + balance)
@@ -31,7 +31,7 @@ export default class TaskHelper {
     static GetSigner(hre: HardhatRuntimeEnvironment) {
         if (hre.network.name == 'localhost' || hre.network.name == 'hardhat' || hre.network.name == 'fuji') return hre.ethers.provider.getSigner();
 
-
+        return hre.ethers.provider.getSigner();
 
         let signer = new LedgerSigner(hre.ethers.provider);
 console.log(signer.path);

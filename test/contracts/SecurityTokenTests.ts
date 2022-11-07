@@ -24,14 +24,16 @@ describe("SecurityToken", function () {
     const userAddress = "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266";
     const AddressZero = '0x0000000000000000000000000000000000000000';
     const brokerAccountId = "wfs5w8d2-b250-432c-8s3b-66b0b87addw";
+    const OrderSell = 2;
+    const OrderExecuted = 3;
 
     before("compile", async function () {
         await hre.run('compile');
         [owner, wallet2, wallet3] = waffle.provider.getWallets();
     })
 
-    let liminalContract : LiminalMarket;
-    let aUsdContract : FakeContract<AUSD>;
+    let liminalContract: LiminalMarket;
+    let aUsdContract: FakeContract<AUSD>;
 
     beforeEach(async () => {
         const contractFactory = await hre.ethers.getContractFactory('LiminalMarket');
@@ -68,7 +70,7 @@ describe("SecurityToken", function () {
 
         expect(orderExecutedTx)
             .to.emit(ownerContract, "BalanceSet")
-            .withArgs(userAddress, qty);
+            .withArgs(userAddress, qty, OrderExecuted);
 
         balance = await contract.balanceOf(userAddress);
         expect(balance).equal(qty);
@@ -80,7 +82,7 @@ describe("SecurityToken", function () {
 
         expect(orderExecutedTx)
             .to.emit(ownerContract, "BalanceSet")
-            .withArgs(userAddress, qty);
+            .withArgs(userAddress, qty, OrderExecuted);
         //emit Transfer(address(0), account, amount);
         expect(orderExecutedTx).emit(ownerContract, 'Transfer').withArgs(AddressZero, userAddress, qty);
 
@@ -90,9 +92,9 @@ describe("SecurityToken", function () {
         let qty2 = 233430;
         let orderExecutedTx2 = await liminalContract.orderExecuted(userAddress, symbol, qty2, 0, 1, 'buy', 2, 0, 10, AddressZero);
 
-       expect(orderExecutedTx2)
+        expect(orderExecutedTx2)
             .to.emit(ownerContract, "BalanceSet")
-            .withArgs(userAddress, qty2);
+            .withArgs(userAddress, qty2, OrderExecuted);
         expect(orderExecutedTx2).emit(ownerContract, 'Transfer').withArgs(userAddress, AddressZero, qty - qty2);
 
         balance = await contract.balanceOf(userAddress);
@@ -106,7 +108,7 @@ describe("SecurityToken", function () {
 
         expect(orderExecutedTx)
             .to.emit(ownerContract, "BalanceSet")
-            .withArgs(userAddress, qty);
+            .withArgs(userAddress, qty, OrderExecuted);
 
         let balance = await contract.balanceOf(userAddress);
         expect(balance).equal(qty);
@@ -127,14 +129,15 @@ describe("SecurityToken", function () {
 
     it("should create order for user address, then transfer the token from the address", async () => {
         let qtyToTransfer = 100;
-
-        await setupLiminalContract(2000);
+        let tsl = 2000;
+        await setupLiminalContract(tsl);
 
         let transferTx = await contract.transfer(aUsdContract.address, qtyToTransfer);
 
         expect(transferTx).emit(liminalContract, "SellSecurityToken")
             .withArgs(brokerAccountId, wallet2.address, aUsdContract.address, symbol, qtyToTransfer, liminalContract.address)
         expect(transferTx).emit(contract, 'Transfer').withArgs(wallet2.address, AddressZero, qtyToTransfer);
+        expect(transferTx).emit(contract, 'BalanceSet').withArgs(wallet2.address, tsl - qtyToTransfer, OrderSell);
 
     });
 
@@ -180,8 +183,9 @@ describe("SecurityToken", function () {
     it("should execute transferFrom, first set allowance 100, transfer 20, allowance should be 80", async () => {
         let amount = 100;
         let transferAmount = 20;
+        let tsl = 10000;
 
-        await setupLiminalContract(10000);
+        await setupLiminalContract(tsl);
 
         let approveTx = await contract.approve(owner.address, amount);
         expect(approveTx).emit(contract, 'Approval').withArgs(wallet2.address, owner.address, amount)
@@ -190,6 +194,7 @@ describe("SecurityToken", function () {
 
         let transferFromTx = await ownerContract.transferFrom(wallet2.address, aUsdContract.address, transferAmount);
 
+        expect(transferFromTx).emit(contract, 'BalanceSet').withArgs(wallet2.address, tsl - transferAmount, OrderSell);
         expect(transferFromTx).emit(ownerContract, 'Transfer').withArgs(wallet2.address, AddressZero, transferAmount);
         // emit SellSecurityToken(accountId, walletAddress, aUsdAddress, symbol, quantity, spender);
         expect(transferFromTx).emit(liminalContract, 'SellSecurityToken')

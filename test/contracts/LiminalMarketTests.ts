@@ -23,6 +23,7 @@ describe("LiminalMarket", function () {
     let kycContract: FakeContract<KYC>;
     let aUsdContract: FakeContract<AUSD>;
     let marketCalendarContract: FakeContract<MarketCalendar>;
+    const OrderExecuted = 3;
 
     const AddressZero = "0x0000000000000000000000000000000000000000";
     const userAddress = "0x90F79bf6EB2c4f870365E785982E1f101E93b906";
@@ -173,6 +174,7 @@ describe("LiminalMarket", function () {
             .withArgs(userAddress, symbol, tsl, filledQty, filledAvgPrice, side, filledAt, commission, aUsdBalance, spender);
         expect(result).to.emit(contract, "TokenCreated")
             .withArgs(symbolAddress, symbol);
+        expect(aUsdContract.setBalance).to.be.calledWith(userAddress, aUsdBalance, OrderExecuted);
     })
 
     it("Order executed, token exists before orderExecuted is called", async () => {
@@ -199,7 +201,7 @@ describe("LiminalMarket", function () {
 
         expect(await securityToken.balanceOf(recipient)).to.be.equal(qty);
 
-        expect(aUsdContract.setBalance).to.be.calledWith(recipient, aUsdBalance);
+        expect(aUsdContract.setBalance).to.be.calledWith(recipient, aUsdBalance, OrderExecuted);
         expect(result).to.emit(contract, "OrderExecuted")
             .withArgs(recipient, symbol, qty, filledQty, filledAvgPrice, side, filledAt, commission, aUsdBalance, spender);
 

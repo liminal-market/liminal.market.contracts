@@ -9,15 +9,21 @@ export default class Verify {
     }
 
     public async verifyContract(proxyAddress : string) {
-        console.log(this.hre.network.name);
+        try {
+            console.log(this.hre.network.name);
 
-        const address = await getImplementationAddress(this.hre.network.provider, proxyAddress);
+            const address = await getImplementationAddress(this.hre.network.provider, proxyAddress);
 
-        console.log('verify address:' + address);
-        await this.hre.run("verify:verify", {
-                address: address,
+            console.log('verify address:' + address);
+            await this.hre.run("verify:verify", {
+                    address: address,
+                }
+            );
+        } catch (e : any) {
+            if (e.toString().indexOf('source code already verified') == -1) {
+                throw e;
             }
-        );
+        }
     }
 
 }

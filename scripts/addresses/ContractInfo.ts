@@ -7,7 +7,7 @@ export const SECURITY_TOKEN_OWNER = "0x0c8Cd13ff68D41263E6937224B9e5c7fF54d72f9"
 export const USDC_ADDRESS = "0x4DBCdF9B62e891a7cec5A2568C3F4FAF9E8Abe2b";
 */
 import localhostContractAddresses from './localhost-contract-addresses';
-import rinkebyContractAddresses from './rinkeby-contract-addresses';
+import polygonContractAddresses from './polygon-contract-addresses';
 import mumbaiContractAddresses from './mumbai-contract-addresses';
 import fujiContractAddresses from './fuji-contract-addresses';
 import ContractAddresses from "./ContractAddresses";
@@ -21,8 +21,8 @@ export default class ContractInfo {
 
     public static getContractInfo(networkName?: string): ContractAddresses {
         let contractInfos: any = {
-            localhostContractAddresses, rinkebyContractAddresses,
-            mumbaiContractAddresses, fujiContractAddresses, bsctestContractAddresses
+            localhostContractAddresses, mumbaiContractAddresses, fujiContractAddresses, bsctestContractAddresses,
+            polygonContractAddresses
         };
         if (networkName == 'hardhat') networkName = 'localhost';
 

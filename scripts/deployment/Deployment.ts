@@ -32,7 +32,7 @@ export default class Deployment {
         let contract;
         let status = Deployment.Deployed;
 
-        let upgrade = (preexistingAddress == '') ? false : await this.contractExistsOnChain(contractName, preexistingAddress);
+        let upgrade = (preexistingAddress == "") ? false : await this.contractExistsOnChain(contractName, preexistingAddress);
         console.log('upgrade:', upgrade);
         if (upgrade) {
             contract = await this.hre.upgrades.upgradeProxy(preexistingAddress, this.contractFactory,{timeout:0});

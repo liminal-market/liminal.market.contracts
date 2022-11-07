@@ -2,6 +2,7 @@
 export default interface ContractAddresses {
     ChainId : string;
     NetworkName : string;
+    IsTestNetwork : boolean;
     KYC_ADDRESS :string;
     AUSD_ADDRESS : string;
     LIMINAL_MARKET_ADDRESS :string;
