@@ -7,5 +7,8 @@ export default interface ContractAddresses {
     AUSD_ADDRESS : string;
     LIMINAL_MARKET_ADDRESS :string;
     MARKET_CALENDAR_ADDRESS : string;
+    SERVICE_SETTINGS_ADDRESS : string;
+    STAKING_POOL_ADDRESS : string;
+
     getRelayerAddress() : string;
 }

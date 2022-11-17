@@ -24,6 +24,8 @@ export default class FileHelper {
 		await this.copyAbiFile('aUSD');
 		await this.copyAbiFile('SecurityToken');
 		await this.copyAbiFile('KYC');
+		await this.copyAbiFile('ServiceSettings');
+		await this.copyAbiFile('StakingPool');
 	}
 
 	public getConstantFile(name : string, addresses : ContractAddresses) {

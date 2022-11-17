@@ -10,6 +10,8 @@ export default class localhostContractAddresses implements ContractAddresses {
     AUSD_ADDRESS = "0xCd40ae7648E53B92e338CCaAF78734397D2Fe2A4";
     LIMINAL_MARKET_ADDRESS = "0x54eb4fA482d50e0369D333193De804898317A2A5";
     MARKET_CALENDAR_ADDRESS = "0xF5A39660A894698074593A5B1fBd33697dCa4091";
+    SERVICE_SETTINGS_ADDRESS = "";
+    STAKING_POOL_ADDRESS = "";
 
     getRelayerAddress(): string {
         return RelayerAddress.getAddress(this.NetworkName);

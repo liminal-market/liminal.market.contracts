@@ -14,7 +14,7 @@ import Verify from "./scripts/deployment/Verify";
 import ContractInfo from "./scripts/addresses/ContractInfo";
 import TaskHelper from "./scripts/TaskHelper";
 import Roles from "./scripts/deployment/Roles";
-import {AUSD, KYC, LiminalMarket, MarketCalendar} from "./typechain-types";
+import {AUSD, KYC, LiminalMarket, MarketCalendar, ServiceSettings, StakingPool} from "./typechain-types";
 import Deployment from "./scripts/deployment/Deployment";
 
 
@@ -36,10 +36,10 @@ task('verifyContract', 'verifies', async (taskArgs, hre) => {
     const contractInfo = ContractInfo.getContractInfo(hre.network.name);
 
     let verify = new Verify(hre);
-    //await verify.verifyContract(contractInfo.KYC_ADDRESS);
-    await verify.verifyContract(contractInfo.AUSD_ADDRESS);
-    //await verify.verifyContract(contractInfo.LIMINAL_MARKET_ADDRESS);
-    //await verify.verifyContract(contractInfo.MARKET_CALENDAR_ADDRESS);
+    await verify.verifyContract(contractInfo.KYC_ADDRESS);
+    //await verify.verifyContract(contractInfo.AUSD_ADDRESS);
+    await verify.verifyContract(contractInfo.LIMINAL_MARKET_ADDRESS);
+    await verify.verifyContract(contractInfo.MARKET_CALENDAR_ADDRESS);
 
 });
 
@@ -63,8 +63,14 @@ task('setAddresses', async (taskArgs, hre) => {
     let aUSDFactory = await hre.ethers.getContractFactory('aUSD');
     let aUsd = aUSDFactory.attach(contractInfo.AUSD_ADDRESS) as AUSD;
 
+    let serviceSettingsFactory = await hre.ethers.getContractFactory('ServiceSettings');
+    let serviceSettings = serviceSettingsFactory.attach(contractInfo.SERVICE_SETTINGS_ADDRESS) as ServiceSettings;
+
+    let stakingPoolFactory = await hre.ethers.getContractFactory('StakingPool');
+    let stakingPool = stakingPoolFactory.attach(contractInfo.STAKING_POOL_ADDRESS) as StakingPool;
+
     let deployment = new Deployment(hre);
-    await deployment.setAddresses(contractInfo, liminalMarket, aUsd);
+    await deployment.setAddresses(contractInfo, liminalMarket, aUsd, serviceSettings, stakingPool);
 
 })
 task('setRoles', 'compiles, deploys & create release data', async (taskArgs, hre) => {
@@ -84,7 +90,13 @@ task('setRoles', 'compiles, deploys & create release data', async (taskArgs, hre
     let marketCalendarFactory = await hre.ethers.getContractFactory('MarketCalendar');
     let marketCalendar = marketCalendarFactory.attach(contractInfo.MARKET_CALENDAR_ADDRESS) as MarketCalendar;
 
-    let roles = new Roles(liminalMarket, aUsd, kyc, marketCalendar);
+    let serviceSettingsFactory = await hre.ethers.getContractFactory('ServiceSettings');
+    let serviceSettings = serviceSettingsFactory.attach(contractInfo.SERVICE_SETTINGS_ADDRESS) as ServiceSettings;
+
+    let stakingPoolFactory = await hre.ethers.getContractFactory('StakingPool');
+    let stakingPool = stakingPoolFactory.attach(contractInfo.STAKING_POOL_ADDRESS) as StakingPool;
+
+    let roles = new Roles(liminalMarket, aUsd, kyc, marketCalendar, serviceSettings, stakingPool);
     await roles.grantRoles(hre, contractInfo);
 });
 task('setValues', 'compiles, deploys & create release data', async (taskArgs, hre) => {
@@ -150,6 +162,11 @@ const config: HardhatUserConfig = {
             chainId: 80001,
             accounts: [process.env.PRIVATE_KEY ?? '0x47e179ec197488593b187f80a00eb0da91f1b9d0b13f8733639f19c30a34926a']
         },
+        polygon: {
+            url: process.env.polygonUrl ?? '',
+            chainId: 137,
+            accounts: [process.env.pk ?? '0x47e179ec197488593b187f80a00eb0da91f1b9d0b13f8733639f19c30a34926a']
+        },
         fuji: {
             url: process.env.fujiUrl ?? '',
             accounts: [process.env.PRIVATE_KEY ?? '0x47e179ec197488593b187f80a00eb0da91f1b9d0b13f8733639f19c30a34926a']
@@ -158,9 +175,12 @@ const config: HardhatUserConfig = {
             url: process.env.bsctest ?? '',
             accounts: [process.env.PRIVATE_KEY ?? '0x47e179ec197488593b187f80a00eb0da91f1b9d0b13f8733639f19c30a34926a']
         },
+        truffle: {
+            url: "http://localhost:24012/rpc"
+        }
     },
     gasReporter: {
-        enabled: process.env.REPORT_GAS !== undefined,
+        enabled: false,
         currency: "ISK",
         coinmarketcap: process.env.coinmarketcap_key,
         gasPriceApi: "https://api.polygonscan.com/api?module=proxy&action=eth_gasPrice",
@@ -169,9 +189,10 @@ const config: HardhatUserConfig = {
     etherscan: {
         apiKey: {
             rinkeby: process.env.ETHERSCAN_API_KEY ?? '',
-            polygonMumbai: process.env.POLYGON_API_KEY ?? '',
+            polygonMumbai: process.env.MUMBAI_API_KEY ?? '',
             avalancheFujiTestnet: process.env.AvalancheFujiTestnet ?? '',
-            bscTestnet: process.env.bsc_api_key ?? ''
+            bscTestnet: process.env.bsc_api_key ?? '',
+            polygon: process.env.polygon_main_api_key ?? ''
         }
 
     }

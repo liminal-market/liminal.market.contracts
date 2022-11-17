@@ -1,28 +1,30 @@
 import {HardhatRuntimeEnvironment} from "hardhat/types";
 import {BaseContract, Contract, ContractFactory, Signer} from "ethers";
 import ContractAddresses from "../addresses/ContractAddresses";
-import {AUSD, LiminalMarket} from "../../typechain-types";
+import {AUSD, LiminalMarket, ServiceSettings, StakingPool} from "../../typechain-types";
 import {FakeContract} from "@defi-wonderland/smock";
 import TaskHelper from "../TaskHelper";
 
 export default class Deployment {
 
-    hre : HardhatRuntimeEnvironment;
-    signer : Signer;
-    contractFactory? : ContractFactory;
+    hre: HardhatRuntimeEnvironment;
+    signer: Signer;
+    contractFactory?: ContractFactory;
     static Deployed = 'deployed';
     static Upgraded = 'upgraded';
 
-    constructor(hre : HardhatRuntimeEnvironment) {
+    constructor(hre: HardhatRuntimeEnvironment) {
         this.hre = hre;
         this.signer = TaskHelper.GetSigner(hre);
 
     }
 
     public async deployOrUpgradeContract(contractName: string,
-                                         preexistingAddress: string) : Promise<[Contract, string]> {
+                                         preexistingAddress: string): Promise<[Contract, string]> {
+
 
         this.contractFactory = await this.hre.ethers.getContractFactory(contractName);
+
         console.log('deployment for contractName:' + contractName + ' | preexistingAddress:' + preexistingAddress);
         if (this.hre.network.name == 'hardhat') {
             //throw new Error("Should not deploy on hardhat. Did you forget to set --network localhost?")
@@ -34,11 +36,12 @@ export default class Deployment {
 
         let upgrade = (preexistingAddress == "") ? false : await this.contractExistsOnChain(contractName, preexistingAddress);
         console.log('upgrade:', upgrade);
+
         if (upgrade) {
-            contract = await this.hre.upgrades.upgradeProxy(preexistingAddress, this.contractFactory,{timeout:0});
+            contract = await this.hre.upgrades.upgradeProxy(preexistingAddress, this.contractFactory, {timeout: 0});
             status = Deployment.Upgraded;
         } else {
-            contract = await this.hre.upgrades.deployProxy(this.contractFactory, undefined, {timeout:0});
+            contract = await this.hre.upgrades.deployProxy(this.contractFactory, undefined, {timeout: 0});
         }
 
         await contract.deployed();
@@ -50,7 +53,7 @@ export default class Deployment {
         return [contract, status];
     }
 
-    public async contractExistsOnChain (contractName: string, address: string) : Promise<boolean> {
+    public async contractExistsOnChain(contractName: string, address: string): Promise<boolean> {
 
         let contract = await this.contractFactory?.attach(address) as BaseContract // ContractInfo.getContract(this.hre, contractName, address);
         if (!contract) return false;
@@ -59,17 +62,22 @@ export default class Deployment {
             return true;
         } catch (e: any) {
             if (e.toString().indexOf('contract not deployed') != -1) {
-                return  false;
+                return false;
             }
             throw e;
         }
     }
 
-    public async setAddresses(contractInfo: ContractAddresses, liminalMarketContract: LiminalMarket | FakeContract<LiminalMarket>, aUsdContract : AUSD | FakeContract<AUSD>) {
-       console.log('set addresses for LiminalMarket contract')
-        await liminalMarketContract.connect(this.signer).setAddresses(contractInfo.AUSD_ADDRESS, contractInfo.KYC_ADDRESS, contractInfo.MARKET_CALENDAR_ADDRESS);
+    public async setAddresses(contractInfo: ContractAddresses, liminalMarketContract: LiminalMarket | FakeContract<LiminalMarket>,
+                              aUsdContract: AUSD | FakeContract<AUSD>,
+                              serviceSettingsContract: ServiceSettings | FakeContract<ServiceSettings>,
+                              stakingPoolContract: StakingPool | FakeContract<StakingPool>) {
+        console.log('set addresses for LiminalMarket contract')
+        await liminalMarketContract.connect(this.signer).setAddresses(contractInfo.AUSD_ADDRESS, contractInfo.KYC_ADDRESS, contractInfo.MARKET_CALENDAR_ADDRESS, contractInfo.STAKING_POOL_ADDRESS);
         console.log('set addresses for aUSD contract')
-       await aUsdContract.connect(this.signer).setLiminalMarketAddress(contractInfo.LIMINAL_MARKET_ADDRESS);
+        await aUsdContract.connect(this.signer).setLiminalMarketAddress(contractInfo.LIMINAL_MARKET_ADDRESS);
+        console.log('set addresses for StakingPool contract')
+        await stakingPoolContract.setAddresses(liminalMarketContract.address, serviceSettingsContract.address);
     }
 
 }

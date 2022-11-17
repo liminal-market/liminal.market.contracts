@@ -9,6 +9,8 @@ export default class bsctestContractAddresses implements ContractAddresses {
     AUSD_ADDRESS = "0xD1FCCdC474a3708B44C2F4F5C7De8C34328cD203";
     LIMINAL_MARKET_ADDRESS = "0xcD5FD1e5A49F474d26c535962C0eb2a680250904";
     MARKET_CALENDAR_ADDRESS = "";
+    SERVICE_SETTINGS_ADDRESS = "";
+    STAKING_POOL_ADDRESS = "";
 
     public getRelayerAddress() : string {
         return RelayerAddress.getAddress(this.NetworkName);

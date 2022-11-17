@@ -1,5 +1,5 @@
 import ContractAddresses from "../addresses/ContractAddresses";
-import {AUSD, KYC, LiminalMarket, MarketCalendar} from "../../typechain-types";
+import {AUSD, KYC, LiminalMarket, MarketCalendar, ServiceSettings, StakingPool} from "../../typechain-types";
 import {FakeContract} from "@defi-wonderland/smock";
 import TaskHelper from "../TaskHelper";
 import {HardhatRuntimeEnvironment} from "hardhat/types";
@@ -11,17 +11,23 @@ export default class Roles {
     aUSD: AUSD | FakeContract<AUSD>;
     kyc: KYC | FakeContract<KYC>;
     marketCalendar: MarketCalendar | FakeContract<MarketCalendar>;
+    serviceSettings: ServiceSettings | FakeContract<ServiceSettings>;
+    stakingPool: StakingPool | FakeContract<StakingPool>;
 
     constructor(
         liminalMarket: LiminalMarket | FakeContract<LiminalMarket>,
         aUSD: AUSD | FakeContract<AUSD>,
         kyc: KYC | FakeContract<KYC>,
-        marketCalendar: MarketCalendar | FakeContract<MarketCalendar>) {
+        marketCalendar: MarketCalendar | FakeContract<MarketCalendar>,
+        serviceSettings: ServiceSettings | FakeContract<ServiceSettings>,
+        stakingPool: StakingPool | FakeContract<StakingPool>) {
+
         this.liminalMarket = liminalMarket;
         this.aUSD = aUSD
         this.kyc = kyc;
         this.marketCalendar = marketCalendar;
-
+        this.serviceSettings = serviceSettings;
+        this.stakingPool = stakingPool;
     }
 
     public async grantRoles(hre: HardhatRuntimeEnvironment, contractInfo: ContractAddresses) {
@@ -30,7 +36,7 @@ export default class Roles {
 
         let relayerAddress = contractInfo.getRelayerAddress();
 
-        let result : ContractTransaction;
+        let result: ContractTransaction;
         console.log('grant relayerAddress:' + relayerAddress + " to Liminal.market");
         result = await this.liminalMarket.connect(signer).grantMintAndBurnRole(relayerAddress);
         console.log(result.hash);

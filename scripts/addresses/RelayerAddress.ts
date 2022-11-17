@@ -9,6 +9,8 @@ export default class RelayerAddress {
             return "0xfbccca4821b953a29471b743837f6dd48a919d49";
         } else if (network == 'localhost') {
             return "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266";
+        } else if (network == 'polygon') {
+            return "0xadab6bfac1c39591a25362015818ddb48b0fa207";
         }
 
         throw new Error("Could not find network:" + network);

@@ -10,6 +10,7 @@ import "./SecurityToken.sol";
 import "./aUSD.sol";
 import "./KYC.sol";
 import "./MarketCalendar.sol";
+import "./StakingPool.sol";
 
 contract LiminalMarket is Initializable, PausableUpgradeable, AccessControlUpgradeable, UUPSUpgradeable {
 
@@ -42,6 +43,9 @@ contract LiminalMarket is Initializable, PausableUpgradeable, AccessControlUpgra
         uint commission, uint aUsdBalance, address spender);
     event OrderFailed(address recipient, string symbol, uint buyingPower, string message, address spender);
 
+    StakingPool public stakingPoolContract;
+
+
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() initializer {}
 
@@ -56,10 +60,11 @@ contract LiminalMarket is Initializable, PausableUpgradeable, AccessControlUpgra
         _grantRole(UPGRADER_ROLE, msg.sender);
     }
 
-    function setAddresses(aUSD aUsdAddress, KYC kycAddress, MarketCalendar marketCalendarAddress) external onlyRole(DEFAULT_ADMIN_ROLE) {
+    function setAddresses(aUSD aUsdAddress, KYC kycAddress, MarketCalendar marketCalendarAddress, StakingPool stakingPoolAddress) external onlyRole(DEFAULT_ADMIN_ROLE) {
         aUsdContract = aUsdAddress;
         kycContract = kycAddress;
         marketCalendarContract = marketCalendarAddress;
+        stakingPoolContract = stakingPoolAddress;
     }
 
     function getSecurityToken(string memory symbol) public view returns (address) {
@@ -95,6 +100,7 @@ contract LiminalMarket is Initializable, PausableUpgradeable, AccessControlUpgra
         SecurityToken token = SecurityToken(msg.sender);
         uint balance = token.balanceOf(walletAddress);
         require(balance >= quantity, QUANTITY_MORE_THEN_BALANCE);
+        require(stakingPoolContract.canSellSymbol(walletAddress, symbol, balance, quantity), "Token is staked");
 
         if (spender == address(0)) spender = address(this);
 

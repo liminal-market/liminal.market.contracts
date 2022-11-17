@@ -60,3 +60,7 @@ export type { MarketCalendar } from "./contracts/MarketCalendar";
 export { MarketCalendar__factory } from "./factories/contracts/MarketCalendar__factory";
 export type { SecurityToken } from "./contracts/SecurityToken";
 export { SecurityToken__factory } from "./factories/contracts/SecurityToken__factory";
+export type { ServiceSettings } from "./contracts/ServiceSettings";
+export { ServiceSettings__factory } from "./factories/contracts/ServiceSettings__factory";
+export type { StakingPool } from "./contracts/StakingPool";
+export { StakingPool__factory } from "./factories/contracts/StakingPool__factory";
