@@ -16,7 +16,7 @@ import TaskHelper from "./scripts/TaskHelper";
 import Roles from "./scripts/deployment/Roles";
 import {AUSD, KYC, LiminalMarket, MarketCalendar, ServiceSettings, StakingPool} from "./typechain-types";
 import Deployment from "./scripts/deployment/Deployment";
-
+import {BigNumber} from "ethers";
 
 
 dotenv.config();
@@ -115,6 +115,28 @@ task('setCalendar', 'gets aUSD token', async (taskArgs, hre) => {
     await taskHelper.setMarketCalendarAsOpen(contractInfo.MARKET_CALENDAR_ADDRESS);
 });
 
+task('stakingTestSetup', 'create tokens for staking test', async (task, hre) => {
+
+    let liminalMarket = await TaskHelper.getLiminalMarket(hre);
+    await liminalMarket.orderExecuted('0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC', 'MSFT',
+        BigNumber.from('236870862844000000000'), BigNumber.from('236870862844000000000'), BigNumber.from('123'), 'buy',
+        BigNumber.from(123), BigNumber.from('0'), BigNumber.from('600000000000000'), '0x19d5ABE7854b01960D4911e6536b26F8A38C3a18')
+
+    await liminalMarket.orderExecuted('0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC', 'AAPL',
+        BigNumber.from('2131872530000000000'), BigNumber.from('2131872530000000000'), BigNumber.from('123'), 'buy',
+        BigNumber.from(123), BigNumber.from('0'), BigNumber.from('600000000000000'), '0x19d5ABE7854b01960D4911e6536b26F8A38C3a18')
+})
+
+task('getTokens', '', async (task, hre) => {
+    let liminalMarket = await TaskHelper.getLiminalMarket(hre);
+    console.log('MSFT', await liminalMarket.getSecurityToken('MSFT'))
+    console.log('AAPL', await liminalMarket.getSecurityToken('AAPL'))
+})
+
+task('setServiceContract', '', async (task, hre) => {
+    let serviceSettings = await TaskHelper.getServiceSettings(hre);
+    await serviceSettings.createContract('0x120baBBf81cBB9E6768B8356eEB073AB35e2Dc8e', 'Liquitys', 'liq.com');
+})
 task('setupTest', 'give default values for dev environment', async (taskArgs, hre) => {
     await hre.run('release');
     await hre.run('getAusd');
@@ -184,7 +206,7 @@ const config: HardhatUserConfig = {
         currency: "ISK",
         coinmarketcap: process.env.coinmarketcap_key,
         gasPriceApi: "https://api.polygonscan.com/api?module=proxy&action=eth_gasPrice",
-        token:'MATIC',
+        token: 'MATIC',
     },
     etherscan: {
         apiKey: {

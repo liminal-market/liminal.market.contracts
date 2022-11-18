@@ -22,8 +22,9 @@ contract StakingPool is Initializable, PausableUpgradeable, AccessControlUpgrade
 
     enum Status{STAKED, MARGIN_CALL, RELEASE}
 
-    //walletAddress => symbol => Stake
+    //walletAddress => symbol => StakingInfo
     mapping(address => mapping(string => StakingInfo)) public stakings;
+    mapping(address => string[]) public symbols;
 
     struct StakingInfo {
         address service;
@@ -31,9 +32,10 @@ contract StakingPool is Initializable, PausableUpgradeable, AccessControlUpgrade
         Status status;
     }
 
-    event Staked(address wallet, string symbol, uint quantity, address service);
-    event Unstaked(address wallet, string symbol, uint quantity, address service);
-    event MarginCall(address wallet, string symbol, uint quantity, address service);
+    event Staked(address wallet, string symbol, uint quantity, uint totalStakedQuantity, address service);
+    event Unstaked(address wallet, string symbol, uint quantity, uint totalStakedQuantity, address service);
+    event Liquidate(address wallet, string symbol, uint quantity, address service);
+    event Liquidated(address wallet, string symbol, address service);
 
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() initializer {}
@@ -54,8 +56,12 @@ contract StakingPool is Initializable, PausableUpgradeable, AccessControlUpgrade
         serviceSettings = ServiceSettings(serviceSettingsAddress);
     }
 
-    function getStakedInfo(address wallet, string memory symbol) public view returns (StakingInfo memory) {
+    function getStakingInfo(address wallet, string memory symbol) public view returns (StakingInfo memory) {
         return stakings[wallet][symbol];
+    }
+
+    function getSymbols(address wallet) public view returns (string[] memory) {
+        return symbols[wallet];
     }
 
     function canSellSymbol(address wallet, string memory symbol, uint balance, uint quantityToSell) public view returns (bool) {
@@ -65,7 +71,7 @@ contract StakingPool is Initializable, PausableUpgradeable, AccessControlUpgrade
     }
 
 
-    function stakeSecurityToken(address wallet, string memory symbol, uint quantity) public {
+    function stake(address wallet, string memory symbol, uint quantity) public {
         address serviceInfo = serviceSettings.getService(msg.sender);
         require(serviceInfo != address(0), "You don't have service contract and cannot stake");
 
@@ -74,21 +80,34 @@ contract StakingPool is Initializable, PausableUpgradeable, AccessControlUpgrade
 
         SecurityToken securityToken = SecurityToken(symbolAddress);
         require(securityToken.allowance(wallet, msg.sender) >= quantity, "Service doesn't have allowance");
+        console.log("1");
         require(stakings[wallet][symbol].service == msg.sender || stakings[wallet][symbol].service == address(0), "Symbol already staked with another service");
-
+        console.log("2");
         uint balance = securityToken.balanceOf(wallet);
+        console.log("3 balance:", balance);
         uint availableQtyToStake = balance - stakings[wallet][symbol].quantity;
+        console.log("4 availableQtyToStake:", availableQtyToStake);
+        console.log("5 quantity:", quantity);
+
         require(availableQtyToStake >= quantity, "Don't have enough qty to stake");
+
+        console.log("6 service:", stakings[wallet][symbol].service);
 
         if (stakings[wallet][symbol].service == address(0)) {
             stakings[wallet][symbol] = StakingInfo(msg.sender, quantity, Status.STAKED);
+            symbols[wallet].push(symbol);
         } else {
             stakings[wallet][symbol].quantity += quantity;
         }
-        emit Staked(wallet, symbol, quantity, msg.sender);
+        console.log('Staked wallet', wallet);
+        console.log('symbol', symbol);
+        console.log('quantity', quantity);
+        console.log('total quantity', stakings[wallet][symbol].quantity);
+        console.log('sender', msg.sender);
+        emit Staked(wallet, symbol, quantity, stakings[wallet][symbol].quantity, msg.sender);
     }
 
-    function unstakeSecurityToken(address wallet, string memory symbol, uint quantity) public {
+    function unstake(address wallet, string memory symbol, uint quantity) public {
         address serviceInfo = serviceSettings.getService(msg.sender);
         require(serviceInfo != address(0), "You don't have service contract and cannot stake");
         require(stakings[wallet][symbol].service == msg.sender, "Service doesn't have anything staked");
@@ -98,31 +117,34 @@ contract StakingPool is Initializable, PausableUpgradeable, AccessControlUpgrade
         if (stakings[wallet][symbol].quantity == 0) {
             delete stakings[wallet][symbol].quantity;
         }
-
-        emit Unstaked(wallet, symbol, quantity, msg.sender);
+        console.log('Unstaked wallet', wallet);
+        console.log('symbol', symbol);
+        console.log('quantity', quantity);
+        console.log('totalStaked', stakings[wallet][symbol].quantity);
+        console.log('sender', msg.sender);
+        emit Unstaked(wallet, symbol, quantity, stakings[wallet][symbol].quantity, msg.sender);
     }
 
-    function marginCallSecurityToken(address wallet, string memory symbol, uint quantity) public {
+    function liquidate(address wallet) public {
         address serviceInfo = serviceSettings.getService(msg.sender);
         require(serviceInfo != address(0), "You don't have service contract and cannot stake");
-        require(stakings[wallet][symbol].service == msg.sender, "Service doesn't have anything staked");
-        require(stakings[wallet][symbol].quantity >= quantity, "Quantity staked is not enough");
 
-        address symbolAddress= liminalMarket.getSecurityToken(symbol);
-        require(symbolAddress == address(0), "Symbol couldn't be found");
-
-        SecurityToken securityToken = SecurityToken(symbolAddress);
-        securityToken.transferFrom(wallet, msg.sender, quantity);
-
-        stakings[wallet][symbol].quantity -= quantity;
-        if (stakings[wallet][symbol].quantity == 0) {
-            delete stakings[wallet][symbol].quantity;
+        string[] memory symbolsArray = getSymbols(wallet);
+        for (uint i = 0; i < symbolsArray.length; i++) {
+            if (stakings[wallet][symbolsArray[i]].service == msg.sender) {
+                //console.log('Liquidate wallet', wallet, symbolsArray[i], stakings[wallet][symbolsArray[i]].quantity, msg.sender);
+                emit Liquidate(wallet, symbolsArray[i], stakings[wallet][symbolsArray[i]].quantity, msg.sender);
+            }
         }
-
-        emit MarginCall(wallet, symbol, quantity, msg.sender);
     }
 
-
+    function liquidated(address wallet, string memory symbol, address service) public {
+        delete stakings[wallet][symbol];
+        console.log('Liquidated wallet', wallet);
+        console.log('symbol', symbol);
+        console.log('service', service);
+        emit Liquidated(wallet, symbol, service);
+    }
 
 
     function pause() external onlyRole(PAUSER_ROLE) {

@@ -1,7 +1,8 @@
 import {HardhatRuntimeEnvironment} from "hardhat/types";
-import {AUSD, MarketCalendar} from "../typechain-types";
+import {AUSD, LiminalMarket, MarketCalendar, ServiceSettings} from "../typechain-types";
 import {LedgerSigner} from "@anders-t/ethers-ledger";
 import ethProvider from "eth-provider";
+import ContractInfo from "./addresses/ContractInfo";
 
 export default class TaskHelper {
     hre: HardhatRuntimeEnvironment;
@@ -9,6 +10,20 @@ export default class TaskHelper {
     constructor(hre: HardhatRuntimeEnvironment) {
         this.hre = hre;
         console.log('network:', hre.network.name);
+    }
+
+    public static async getLiminalMarket(hre: any) {
+        const contractInfo = ContractInfo.getContractInfo(hre.network.name);
+
+        let liminalMarketFactory = await hre.ethers.getContractFactory('LiminalMarket');
+        return liminalMarketFactory.attach(contractInfo.LIMINAL_MARKET_ADDRESS) as LiminalMarket;
+    }
+
+    public static async getServiceSettings(hre: any) {
+        const contractInfo = ContractInfo.getContractInfo(hre.network.name);
+
+        let serviceSettingsFactory = await hre.ethers.getContractFactory('ServiceSettings');
+        return serviceSettingsFactory.attach(contractInfo.SERVICE_SETTINGS_ADDRESS) as ServiceSettings;
     }
 
     public async fundAUSD(contractAddress: string, amount = "1000000000000000000000", userWallet = "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266") {
@@ -35,7 +50,7 @@ export default class TaskHelper {
 
         return hre.ethers.provider.getSigner();
         let signer = new LedgerSigner(hre.ethers.provider);
-console.log(signer.path);
+        console.log(signer.path);
         return signer;
 
     }
