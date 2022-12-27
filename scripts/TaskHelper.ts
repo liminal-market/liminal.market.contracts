@@ -1,6 +1,8 @@
 import {HardhatRuntimeEnvironment} from "hardhat/types";
-import {AUSD, MarketCalendar} from "../typechain-types";
+import {AUSD, LiminalMarket, MarketCalendar} from "../typechain-types";
 import {LedgerSigner} from "@anders-t/ethers-ledger";
+import {BigNumber} from "ethers";
+import ContractAddresses from "./addresses/ContractAddresses";
 
 export default class TaskHelper {
     hre: HardhatRuntimeEnvironment;
@@ -12,9 +14,11 @@ export default class TaskHelper {
 
     public async fundAUSD(contractAddress: string, amount = "1000000000000000000000", userWallet = "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266") {
         console.log('aUSD address:' + contractAddress);
+        let randomAmount = parseInt((Math.random() * 10000).toString()) + '0'.repeat(18);
+
         const contract = await this.hre.ethers.getContractAt("aUSD", contractAddress) as AUSD;
-        await contract.setBalance(userWallet, amount, 1);
-        console.log('Funded ' + amount + ' to wallet ' + userWallet);
+        await contract.setBalance(userWallet, randomAmount, 1);
+        console.log('Funded ' + randomAmount + ' to wallet ' + userWallet);
         let balance = await contract.balanceOf(userWallet);
         console.log('retrieved balance:' + balance)
     }
@@ -37,5 +41,24 @@ export default class TaskHelper {
 console.log(signer.path);
         return signer;
 
+    }
+
+    async executeTrade(contractAddress: ContractAddresses) {
+        console.log('aUSD address:' + contractAddress);
+        const lmContract = await this.hre.ethers.getContractAt("LiminalMarket", contractAddress.LIMINAL_MARKET_ADDRESS) as LiminalMarket;
+let symbolAddress = await lmContract.getSecurityToken('MSFT')
+        console.log('symbol:', symbolAddress)
+        const aUsdContract = await this.hre.ethers.getContractAt("aUSD", contractAddress.AUSD_ADDRESS) as AUSD;
+        await aUsdContract.transfer(symbolAddress, BigNumber.from('1' + '0'.repeat(18)))
+
+        let app = await lmContract.attach(contractAddress.LIMINAL_MARKET_ADDRESS);
+        const logs = await lmContract.filters.BuyWithAUsd();
+    const _logs = await app.queryFilter(logs, 0)
+        console.log(_logs);
+    }
+
+    async createToken(contractInfo: ContractAddresses) {
+        const lmContract = await this.hre.ethers.getContractAt("LiminalMarket", contractInfo.LIMINAL_MARKET_ADDRESS) as LiminalMarket;
+        await lmContract.createToken('MSFT')
     }
 }

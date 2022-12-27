@@ -35,6 +35,7 @@
     "typescript": "^4.6.4"
   },
   "dependencies": {
+    "@nomicfoundation/hardhat-network-helpers": "^1.0.7",
     "@openzeppelin/contracts": "^4.6.0",
     "@openzeppelin/contracts-upgradeable": "^4.6.0",
     "@solidity-parser/parser": "^0.14.3",
@@ -52,7 +53,9 @@
     "setroles-mumbai": "npx hardhat setRoles --network mumbai --show-stack-traces",
     "setaddress-mumbai": "npx hardhat setAddresses --network mumbai --show-stack-traces",
     "fund": "npx hardhat getAusd --network localhost --show-stack-traces",
+    "createToken": "npx hardhat createToken --network localhost --show-stack-traces",
     "cal": "npx hardhat setCalendar --network localhost --show-stack-traces",
+    "executeTrade": "npx hardhat executeBuy --network localhost --show-stack-traces",
     "compile": "npx hardhat compile",
     "coverage": "npx hardhat coverage --testfiles \"test/contracts/*.ts\"",
     "setup-test": "npx hardhat setupTest --network localhost --show-stack-traces",

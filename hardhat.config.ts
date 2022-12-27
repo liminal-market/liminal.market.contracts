@@ -103,6 +103,18 @@ task('setCalendar', 'gets aUSD token', async (taskArgs, hre) => {
     await taskHelper.setMarketCalendarAsOpen(contractInfo.MARKET_CALENDAR_ADDRESS);
 });
 
+task('executeBuy', async (taskArgs, hre) => {
+    let taskHelper = new TaskHelper(hre);
+    let contractInfo = ContractInfo.getContractInfo(hre.network.name);
+    await taskHelper.executeTrade(contractInfo);
+});
+
+task('createToken', async (taskArgs, hre) => {
+    let taskHelper = new TaskHelper(hre);
+    let contractInfo = ContractInfo.getContractInfo(hre.network.name);
+    await taskHelper.createToken(contractInfo);
+});
+
 task('setupTest', 'give default values for dev environment', async (taskArgs, hre) => {
     await hre.run('release');
     await hre.run('getAusd');
@@ -136,10 +148,12 @@ const config: HardhatUserConfig = {
     networks: {
 
         hardhat: {
+
             forking: {
                 url: process.env.mumbaiUrl ?? '',
                 blockNumber: 18565457
             }
+
         },
         rinkeby: {
             url: process.env.rinkebyUrl ?? '',
@@ -175,7 +189,6 @@ const config: HardhatUserConfig = {
         }
 
     }
-
 };
 
 export default config;

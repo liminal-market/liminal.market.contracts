@@ -6,6 +6,7 @@ import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol"
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 
+import "hardhat/console.sol";
 
 contract MarketCalendar is Initializable, AccessControlUpgradeable, UUPSUpgradeable {
     Calendar[] public s_calendar;
@@ -49,6 +50,10 @@ contract MarketCalendar is Initializable, AccessControlUpgradeable, UUPSUpgradea
         }
 
         return false;
+    }
+
+    function getCalendar() public view returns (Calendar[] memory) {
+        return s_calendar;
     }
 
     function grantCalendarRole(address newAddress) external onlyRole(DEFAULT_ADMIN_ROLE) {
