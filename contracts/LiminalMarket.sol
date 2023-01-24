@@ -165,5 +165,8 @@ enum Action {
     Fund,
     OrderBuy,
     OrderSell,
-    OrderExecuted
+    OrderExecuted,
+    Dividend,
+    Fee,
+    Tax
 }

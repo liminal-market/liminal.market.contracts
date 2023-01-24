@@ -11,3 +11,4 @@ artifacts
 typechain-types
 /.idea/
 /.nyc_output
+/truffle-config.js
