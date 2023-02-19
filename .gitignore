@@ -13,3 +13,4 @@ typechain-types
 /.nyc_output
 /truffle-config.js
 /keys.txt
+.run
