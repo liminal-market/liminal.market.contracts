@@ -20,10 +20,14 @@ describe("Test FileHelper", () => {
             './scripts/templates/': {
                 'ContractAddress.app.handlebars': '',
                 'ContractAddress.contracts.handlebars': '',
-                'ContractAddress.cloud.handlebars' : ''
+                'ContractAddress.cloud.handlebars' : '',
+                'ContractAddress.libraries.handlebars' : ''
             },
             '../liminal.market.app/src/contracts/': {
                 'localhost-contract-addresses.ts' : ''
+            },
+            '../liminal.market.libraries/javascript/core/src/networks/': {
+                'LocalhostNetwork.ts' : ''
             },
             '../liminal.market.app/src/networks/localhost.ts' : '',
             '../liminal.market.cloud/src/networks/localhostContractAddresses.ts' : '',
