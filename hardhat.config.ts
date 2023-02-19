@@ -14,7 +14,7 @@ import Verify from "./scripts/deployment/Verify";
 import ContractInfo from "./scripts/addresses/ContractInfo";
 import TaskHelper from "./scripts/TaskHelper";
 import Roles from "./scripts/deployment/Roles";
-import {AUSD, KYC, LiminalMarket, MarketCalendar} from "./typechain-types";
+import {AUSD, KYC, LiminalMarket, LM, MarketCalendar, ServiceContract} from "./typechain-types";
 import Deployment from "./scripts/deployment/Deployment";
 
 
@@ -56,15 +56,20 @@ task('setAddresses', async (taskArgs, hre) => {
 
     const contractInfo = ContractInfo.getContractInfo(hre.network.name);
 
-
     let liminalMarketFactory = await hre.ethers.getContractFactory('LiminalMarket');
     let liminalMarket = liminalMarketFactory.attach(contractInfo.LIMINAL_MARKET_ADDRESS) as LiminalMarket;
 
     let aUSDFactory = await hre.ethers.getContractFactory('aUSD');
     let aUsd = aUSDFactory.attach(contractInfo.AUSD_ADDRESS) as AUSD;
 
+    let lmFactory = await hre.ethers.getContractFactory('LM');
+    let lm = lmFactory.attach(contractInfo.LM_ADDRESS) as LM;
+
+    let serviceContractFactory = await hre.ethers.getContractFactory('ServiceContract');
+    let serviceContract = serviceContractFactory.attach(contractInfo.SERVICE_CONTRACT_ADDRESS) as ServiceContract;
+
     let deployment = new Deployment(hre);
-    await deployment.setAddresses(contractInfo, liminalMarket, aUsd);
+    await deployment.setAddresses(contractInfo, liminalMarket, aUsd, lm, serviceContract);
 
 })
 task('setRoles', 'compiles, deploys & create release data', async (taskArgs, hre) => {
@@ -84,7 +89,13 @@ task('setRoles', 'compiles, deploys & create release data', async (taskArgs, hre
     let marketCalendarFactory = await hre.ethers.getContractFactory('MarketCalendar');
     let marketCalendar = marketCalendarFactory.attach(contractInfo.MARKET_CALENDAR_ADDRESS) as MarketCalendar;
 
-    let roles = new Roles(liminalMarket, aUsd, kyc, marketCalendar);
+    let lmFactory = await hre.ethers.getContractFactory('LM');
+    let lm = lmFactory.attach(contractInfo.LM_ADDRESS) as LM;
+
+    let serviceContractFactory = await hre.ethers.getContractFactory('ServiceContract');
+    let serviceContract = serviceContractFactory.attach(contractInfo.SERVICE_CONTRACT_ADDRESS) as ServiceContract;
+
+    let roles = new Roles(liminalMarket, aUsd, kyc, marketCalendar, lm, serviceContract);
     await roles.grantRoles(hre, contractInfo);
 });
 task('setValues', 'compiles, deploys & create release data', async (taskArgs, hre) => {
@@ -95,7 +106,8 @@ task('setValues', 'compiles, deploys & create release data', async (taskArgs, hr
 task('getAusd', 'gets aUSD token', async (taskArgs, hre) => {
     let taskHelper = new TaskHelper(hre);
     let contractInfo = ContractInfo.getContractInfo(hre.network.name);
-    await taskHelper.fundAUSD(contractInfo.AUSD_ADDRESS);
+    let randomAmount = parseInt((Math.random() * 10000).toString()) + '0'.repeat(18);
+    await taskHelper.fundAUSD(contractInfo.AUSD_ADDRESS, randomAmount);
 });
 task('setCalendar', 'gets aUSD token', async (taskArgs, hre) => {
     let taskHelper = new TaskHelper(hre);

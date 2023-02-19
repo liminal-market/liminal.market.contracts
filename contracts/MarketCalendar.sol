@@ -6,7 +6,6 @@ import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol"
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 
-import "hardhat/console.sol";
 
 contract MarketCalendar is Initializable, AccessControlUpgradeable, UUPSUpgradeable {
     Calendar[] public s_calendar;
@@ -18,9 +17,11 @@ contract MarketCalendar is Initializable, AccessControlUpgradeable, UUPSUpgradea
     struct Calendar { uint opens; uint closes; }
 
     /// @custom:oz-upgrades-unsafe-allow constructor
-    constructor() initializer {}
+    constructor() {
+        _disableInitializers();
+    }
 
-    function initialize() external initializer  {
+    function initialize() initializer public {
         __AccessControl_init();
         __UUPSUpgradeable_init();
 
@@ -67,6 +68,4 @@ contract MarketCalendar is Initializable, AccessControlUpgradeable, UUPSUpgradea
     function _authorizeUpgrade(address newImplementation) internal onlyRole(UPGRADER_ROLE) onlyProxy override {
         _upgradeTo(newImplementation);
     }
-
-
 }

@@ -1,0 +1,8 @@
+{
+  "include": ["scripts/scripts/*.ts"],
+  "reporter": [
+    "text",
+    "html",
+    "lcov"
+  ]
+}

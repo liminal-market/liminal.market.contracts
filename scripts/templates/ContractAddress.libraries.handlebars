@@ -1,0 +1,15 @@
+import {{upperFirst NetworkName}}NetworkDefaults from "./{{upperFirst NetworkName}}NetworkDefaults";
+
+export default class {{upperFirst NetworkName}}Network extends {{upperFirst NetworkName}}NetworkDefaults {
+    constructor() {
+        super();
+    }
+
+    override KYC_ADDRESS = "{{KYC_ADDRESS}}";
+    override AUSD_ADDRESS = "{{AUSD_ADDRESS}}";
+    override LIMINAL_MARKET_ADDRESS = "{{LIMINAL_MARKET_ADDRESS}}";
+    override MARKET_CALENDAR_ADDRESS = "{{MARKET_CALENDAR_ADDRESS}}";
+    override LM_ADDRESS = "{{LM_ADDRESS}}";
+    override SERVICE_CONTRACT_ADDRESS = "{{SERVICE_CONTRACT_ADDRESS}}";
+    override NO_FEE_SERVICE_CONTRACT_ADDRESS = "{{NO_FEE_CONTRACT_ADDRESS}}";
+}

@@ -7,7 +7,7 @@ import Deployment from "../../../scripts/deployment/Deployment";
 import * as fs from "fs";
 import ContractInfo from "../../../scripts/addresses/ContractInfo";
 import {getImplementationAddress} from "@openzeppelin/upgrades-core";
-import {AUSD, KYC, LiminalMarket, MarketCalendar} from "../../../typechain-types";
+import {AUSD, KYC, LiminalMarket, LM, MarketCalendar, ServiceContract} from "../../../typechain-types";
 import {Contract} from "ethers";
 import * as parser from '@solidity-parser/parser';
 
@@ -25,6 +25,8 @@ describe("Test Deployment script", () => {
         await resetContractToOriginalSignature("KYC");
         await resetContractToOriginalSignature("LiminalMarket");
         await resetContractToOriginalSignature("MarketCalendar");
+        await resetContractToOriginalSignature("LM");
+        await resetContractToOriginalSignature("ServiceContract");
 
         await hre.run('compile', '--force');
     })
@@ -65,7 +67,7 @@ describe("Test Deployment script", () => {
         const amount = 1000;
         const userAddress = "0x90F79bf6EB2c4f870365E785982E1f101E93b906";
 
-        await (contract as AUSD).setBalance(userAddress, amount);
+        await (contract as AUSD).setBalance(userAddress, amount, 0);
 
         let contractV2 = await modifyContractBuildAndValidate(contractName, deployment, contract, implementationAddress);
 
@@ -108,6 +110,40 @@ describe("Test Deployment script", () => {
 
     });
 
+    it("LM - Deploy and update contract", async () => {
+
+        let contractName = "LM";
+
+        let {deployment, contract, implementationAddress} = await deployContract(contractName);
+
+        //set some data to contract
+        const userAddress = "0x90F79bf6EB2c4f870365E785982E1f101E93b906";
+        await (contract as LM).grantServiceFeeRole(userAddress);
+
+        let contractV2 = await modifyContractBuildAndValidate(contractName, deployment, contract, implementationAddress);
+
+        let hasRole = await (contractV2 as LM).hasRole(await (contractV2 as LM).SERVICE_FEE_ROLE(), userAddress);
+        expect(hasRole).to.be.true;
+
+    });
+
+    it("ServiceContract - Deploy and update contract", async () => {
+
+        let contractName = "ServiceContract";
+
+        let {deployment, contract, implementationAddress} = await deployContract(contractName);
+
+        //set some data to contract
+        const userAddress = "0x90F79bf6EB2c4f870365E785982E1f101E93b906";
+        await (contract as ServiceContract).setLMServiceFeeAddress(userAddress);
+
+        let contractV2 = await modifyContractBuildAndValidate(contractName, deployment, contract, implementationAddress);
+
+        let serviceFeeAddress = await (contractV2 as ServiceContract).getLMServiceFeeAddress();
+        expect(serviceFeeAddress).to.be.eq(userAddress);
+
+    });
+
     it("Check if contract exists on chain, first deploy then check, should be on chain", async () => {
 
         let deployment = new Deployment(hre);
@@ -123,25 +159,6 @@ describe("Test Deployment script", () => {
         let deployment = new Deployment(hre);
         let result = await deployment.contractExistsOnChain("aUSD", contractInfo.AUSD_ADDRESS);
         expect(result).to.be.false;
-    });
-
-    it("NOT Implemented - should set addresses on contracts", async () => {
-        /*
-        let aUsdContract = await smock.fake<AUSD>('aUSD');
-        let liminalMarketContract = await smock.fake<LiminalMarket>('LiminalMarket');
-        let contractInfo = ContractInfo.getContractInfo(hre.network.name);
-
-        liminalMarketContract.setAddresses.returns();
-
-        aUsdContract = aUsdContract.connect(liminalMarketContract.wallet);
-        aUsdContract.setBalance.returns();
-
-        let deployment = new Deployment(hre);
-        await deployment.setAddresses(contractInfo, liminalMarketContract, aUsdContract);
-
-        expect(liminalMarketContract.setAddresses).to.been.calledWith(contractInfo.AUSD_ADDRESS, contractInfo.KYC_ADDRESS, contractInfo.MARKET_CALENDAR_ADDRESS);
-        expect(aUsdContract.setBalance).to.been.calledWith(contractInfo.LIMINAL_MARKET_ADDRESS);
-*/
     });
 
     async function deployContract(contractName: string) {
@@ -182,6 +199,7 @@ describe("Test Deployment script", () => {
                     return;
                 }
                 let idx = contents.lastIndexOf("}");
+
                 let replaced = contents.substring(0, idx);
                 replaced += tempFunction + '}';
                 console.log('changing ' + contractName + ' to have new functions');

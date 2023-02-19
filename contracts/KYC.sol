@@ -31,9 +31,11 @@ contract KYC is Initializable, AccessControlUpgradeable, UUPSUpgradeable {
     }
 
     /// @custom:oz-upgrades-unsafe-allow constructor
-    constructor() initializer {}
+    constructor() {
+        _disableInitializers();
+    }
 
-    function initialize() external initializer {
+    function initialize() initializer public {
         __AccessControl_init();
         __UUPSUpgradeable_init();
 
