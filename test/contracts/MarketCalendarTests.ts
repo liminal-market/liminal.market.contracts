@@ -68,9 +68,22 @@ describe("Test market calendar", () => {
 
 
     it("should add days and validate that market is open", async () => {
-        let fakeDate = new Date("2022-05-30T14:33:02");
-        await hre.network.provider.send("evm_setNextBlockTimestamp", [(fakeDate.getTime()/1000)]);
+        //"2022-05-30T14:33:02"
+        let fakeDate = new Date();
+        console.log('set timestamp', Math.round(fakeDate.getTime()/1000));
+        await hre.network.provider.send("evm_setNextBlockTimestamp", [(Math.round(fakeDate.getTime()/1000))]);
         await hre.network.provider.send("evm_mine");
+
+        let fakeDateAfter1Hour = new Date()
+        //-6 hours since it's in timezone -5
+        fakeDate.setTime(fakeDate.getTime() + (-6 * 60 * 60 * 1000));
+        fakeDateAfter1Hour.setTime(fakeDateAfter1Hour.getTime() + (1 * 60 * 60 * 1000));
+        //set today as open date
+        calendarEntries[0].date = fakeDate.toISOString().split('T')[0]
+        calendarEntries[0].open = fakeDate.toISOString().split('T')[1].split('.')[0];
+        calendarEntries[0].close = fakeDateAfter1Hour.toISOString().split('T')[1].split('.')[0];
+
+        console.log(calendarEntries[0].date, calendarEntries[0].open, calendarEntries[0].close)
 
         let opens = [];
         let closes = [];
