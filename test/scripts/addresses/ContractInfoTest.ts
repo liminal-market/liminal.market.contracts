@@ -4,7 +4,7 @@ import {expect} from "chai";
 describe("Tests ContractInfo class", () => {
 
     it("get all networks available", async ()=>{
-        let networks = ["localhost", "rinkeby", "mumbai", "fuji"];
+        let networks = ["localhost", "mumbai", "fuji"];
         for (let i=0;i<networks.length;i++) {
             let contractAddress = ContractInfo.getContractInfo(networks[i]);
             expect(contractAddress.AUSD_ADDRESS).to.contain('0x');

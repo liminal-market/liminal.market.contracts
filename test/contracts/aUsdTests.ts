@@ -2,10 +2,11 @@ import chai from 'chai';
 import chaiAsPromised from 'chai-as-promised';
 import {solidity} from "ethereum-waffle";
 import {Wallet} from 'ethers';
-import {upgrades} from "hardhat";
-import {AUSD, KYC, LiminalMarket, MarketCalendar} from "../../typechain-types";
+import hre, {upgrades} from "hardhat";
+import {AUSD, KYC, LiminalMarket, LM, MarketCalendar, ServiceContract} from "../../typechain-types";
 import {FakeContract, smock} from '@defi-wonderland/smock';
 import exp from "constants";
+import TestHelper from "../TestHelper";
 
 describe("aUsd", () => {
     const expect = chai.expect;
@@ -22,11 +23,14 @@ describe("aUsd", () => {
     let liminalContract: LiminalMarket;
     let kycContract: FakeContract<KYC>;
     let marketCalendarContract: FakeContract<MarketCalendar>;
+    let lmContract : LM;
+    let serviceContract : ServiceContract;
+
     const AddressZero = '0x0000000000000000000000000000000000000000';
     let tokenAddress = '';
     let symbol = 'ABC';
     const brokerAccountId = "wfs5w8d2-b250-432c-8s0b-66b0b87addw";
-
+    const lmServiceFeeAddress = '0x8626f6940E2eb28930eFb4CeF49B2d1F2C9C1199';
     const Fund = 0;
     const OrderBuy = 1;
 
@@ -47,8 +51,15 @@ describe("aUsd", () => {
         kycContract = await smock.fake<KYC>('KYC');
         marketCalendarContract = await smock.fake<MarketCalendar>("MarketCalendar");
 
-        const lmContractFactory = await hre.ethers.getContractFactory('LiminalMarket');
-        liminalContract = await upgrades.deployProxy(lmContractFactory) as LiminalMarket;
+        const liminalMarketFactory = await hre.ethers.getContractFactory('LiminalMarket');
+        liminalContract = await upgrades.deployProxy(liminalMarketFactory) as LiminalMarket;
+
+        const lmFactory = await hre.ethers.getContractFactory('LM');
+        lmContract = await upgrades.deployProxy(lmFactory) as LM;
+
+        const serviceContractFactory = await hre.ethers.getContractFactory('ServiceContract');
+        serviceContract = await upgrades.deployProxy(serviceContractFactory) as ServiceContract;
+
 
         await initContracts();
 
@@ -61,9 +72,17 @@ describe("aUsd", () => {
         kycContract.isValid.returns(brokerAccountId);
         marketCalendarContract.isMarketOpen.returns(true);
 
-        await liminalContract.setAddresses(ownerContract.address, kycContract.address, marketCalendarContract.address);
+        await liminalContract.setAddresses(ownerContract.address, kycContract.address, marketCalendarContract.address, lmContract.address);
         await ownerContract.setLiminalMarketAddress(liminalContract.address);
         await ownerContract.grantRoleForBalance(liminalContract.address);
+
+        await lmContract.setServiceContractAddress(serviceContract.address);
+        await lmContract.grantServiceFeeRole(liminalContract.address);
+
+
+        await serviceContract.setLMServiceFeeAddress(TestHelper.LMServiceFeeAddress);
+        await serviceContract.createContract(wallet3.address, wallet3.address, 100, "DeFi Service", "https://defi.com")
+        await serviceContract.createContract(liminalContract.address, wallet3.address, 0, "Liminal.market Service", "https://liminal.market")
 
         await liminalContract.createToken(symbol);
         tokenAddress = await liminalContract.getSecurityToken(symbol);
@@ -72,13 +91,45 @@ describe("aUsd", () => {
     let fundAccount = async (amount: number) => {
         return await ownerContract.setBalance(wallet2.address, amount, Fund);
     }
+    let mintLMToWallet = async (amount: number) => {
+        return await lmContract.mint(wallet2.address, amount);
+    }
 
-    it('Call transfer method, should call buyWithAUsd on LiminalMarket contract', async () => {
-        let fund = 150;
-        let amount = 12;
+    it('should call initialize, should be rejected', async () => {
+        await TestHelper.initializeRejected(ownerContract);
+    })
+
+    it('should try to setLiminalMarket address, does not have role, should be rejected', async () => {
+        await expect(contract.setLiminalMarketAddress(wallet2.address)).rejectedWith(TestHelper.AccessControlErrorMessage);
+    })
+    it('should try to grantRoleForBalance, does not have role, should be rejected', async () => {
+        await expect(contract.grantRoleForBalance(wallet2.address)).rejectedWith(TestHelper.AccessControlErrorMessage);
+    })
+    it('should try to revokeRoleForBalance, does not have role, should be rejected', async () => {
+        await expect(contract.revokeRoleForBalance(wallet2.address)).rejectedWith(TestHelper.AccessControlErrorMessage);
+    })
+
+    it('Call transfer, user does not have LM token to pay for service fee, should revert', async () => {
+        let fund = 150 * 10**5;
+        let amount = 12 * 10**5;
 
         let fundResult = await fundAccount(fund);
         expect(fundResult).emit(ownerContract, 'BalanceSet').withArgs(wallet2.address, fund, Fund);
+
+        await expect(contract.transfer(tokenAddress, amount))
+            .rejectedWith(await lmContract.NOT_ENOUGH_FOR_SERVICE_FEE())
+
+    })
+
+    it('Call transfer method, should call buyWithAUsd on LiminalMarket contract', async () => {
+        let fund = 150 * 10**5;
+        let amount = 12 * 10**5;
+
+        let fundResult = await fundAccount(fund);
+
+        expect(fundResult).emit(ownerContract, 'BalanceSet').withArgs(wallet2.address, fund, Fund);
+
+        await mintLMToWallet(100 * 10**5);
 
         let result = await contract.transfer(tokenAddress, amount);
         let balance = await contract.balanceOf(wallet2.address);
@@ -94,6 +145,7 @@ describe("aUsd", () => {
         let amount = fund;
 
         await fundAccount(fund);
+        await mintLMToWallet(100);
 
         await contract.transfer(tokenAddress, amount);
         let balance = await contract.balanceOf(wallet2.address);
@@ -278,10 +330,12 @@ describe("aUsd", () => {
     })
 
     it("should execute transferFrom, first set allowance 100, transfer 20, allowance should be 80", async () => {
-        let allowanceAmount = 100;
-        let transferAmount = 20;
-        let fundAmount = 500;
+        let allowanceAmount = 100 * 10**5;
+        let transferAmount = 20 * 10**5;
+        let fundAmount = 500 * 10**5;
         await fundAccount(fundAmount);
+        await mintLMToWallet(100 * 10**5)
+        await serviceContract.createContract(owner.address, wallet3.address, 0, "Liminal.market Service", "https://liminal.market")
 
         let approveTx = await contract.approve(owner.address, allowanceAmount);
         expect(approveTx).emit(contract, 'Approval').withArgs(wallet2.address, owner.address, allowanceAmount)
@@ -305,10 +359,18 @@ describe("aUsd", () => {
         await expect(ownerContract.transfer(wallet2.address, 12)).rejectedWith('paused');
     });
 
-    it("Pause contract, try to execute on it, then unpause contract and execute again", async () => {
-        let amount = 1244;
-        await fundAccount(amount);
+    it("try to pause contract but not owner, should be rejected", async () => {
+        await TestHelper.pauseContractReject(contract)
+    });
 
+    it("try to unpause contract but not owner, should be rejected", async () => {
+        await TestHelper.unPauseContractReject(contract)
+    });
+
+    it("Pause contract, try to execute on it, then unpause contract and execute again", async () => {
+        let amount = 1244 * 10**5;
+        await fundAccount(amount);
+        await mintLMToWallet(100 * 10**5);
         await ownerContract.pause();
         await expect(ownerContract.transfer(wallet2.address, 12)).rejectedWith('paused');
 

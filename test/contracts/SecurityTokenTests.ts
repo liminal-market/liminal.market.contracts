@@ -5,7 +5,8 @@ import {solidity} from "ethereum-waffle";
 import {Wallet} from 'ethers';
 import {FakeContract, smock} from '@defi-wonderland/smock';
 import hre, {upgrades} from "hardhat";
-import {AUSD, KYC, LiminalMarket, MarketCalendar, SecurityToken} from "../../typechain-types";
+import {AUSD, KYC, LiminalMarket, LM, MarketCalendar, SecurityToken} from "../../typechain-types";
+import TestHelper from "../TestHelper";
 
 describe("SecurityToken", function () {
     const waffle = hre.waffle;
@@ -41,7 +42,8 @@ describe("SecurityToken", function () {
         let kycContract = await smock.fake<KYC>('KYC');
         aUsdContract = await smock.fake<AUSD>('aUSD');
         let marketCalendarContract = await smock.fake<MarketCalendar>("MarketCalendar");
-        await liminalContract.setAddresses(aUsdContract.address, kycContract.address, marketCalendarContract.address);
+        let lmContract =  await smock.fake<LM>("LM");
+        await liminalContract.setAddresses(aUsdContract.address, kycContract.address, marketCalendarContract.address, lmContract.address);
 
         kycContract.isValid.returns(brokerAccountId);
         marketCalendarContract.isMarketOpen.returns(true);
@@ -62,11 +64,15 @@ describe("SecurityToken", function () {
         expect(await contract.name()).equal(name);
     });
 
+    it('should try to set balance, but doesnt have role, should be rejected', async () => {
+        await expect(contract.setBalance(wallet2.address, 100, 1)).rejectedWith(TestHelper.OwnableErrorMessage);
+    })
+
     it("should get balance, should be 0, then setBalance and verify it", async () => {
         let balance = await contract.balanceOf(userAddress);
         expect(balance).equal(0);
         let qty = 100;
-        let orderExecutedTx = await liminalContract.orderExecuted(userAddress, symbol, qty, 0, 1, 'buy', 2, 0, 10, AddressZero);
+        let orderExecutedTx = await liminalContract.orderExecuted(userAddress, symbol, qty, 0, 1, 'buy', 2, 10, AddressZero);
 
         expect(orderExecutedTx)
             .to.emit(ownerContract, "BalanceSet")
@@ -78,7 +84,7 @@ describe("SecurityToken", function () {
 
     it("should set the balance, to decrease the balance of the account", async () => {
         let qty = 1000000;
-        let orderExecutedTx = await liminalContract.orderExecuted(userAddress, symbol, qty, 0, 1, 'buy', 2, 0, 10, AddressZero);
+        let orderExecutedTx = await liminalContract.orderExecuted(userAddress, symbol, qty, 0, 1, 'buy', 2, 10, AddressZero);
 
         expect(orderExecutedTx)
             .to.emit(ownerContract, "BalanceSet")
@@ -90,7 +96,7 @@ describe("SecurityToken", function () {
         expect(balance).equal(qty);
 
         let qty2 = 233430;
-        let orderExecutedTx2 = await liminalContract.orderExecuted(userAddress, symbol, qty2, 0, 1, 'buy', 2, 0, 10, AddressZero);
+        let orderExecutedTx2 = await liminalContract.orderExecuted(userAddress, symbol, qty2, 0, 1, 'buy', 2, 10, AddressZero);
 
         expect(orderExecutedTx2)
             .to.emit(ownerContract, "BalanceSet")
@@ -104,7 +110,7 @@ describe("SecurityToken", function () {
 
     it("should set the balance what it already is, nothing should happen", async () => {
         let qty = 1000000;
-        let orderExecutedTx = await liminalContract.orderExecuted(userAddress, symbol, qty, 0, 1, 'buy', 2, 0, 10, AddressZero);
+        let orderExecutedTx = await liminalContract.orderExecuted(userAddress, symbol, qty, 0, 1, 'buy', 2, 10, AddressZero);
 
         expect(orderExecutedTx)
             .to.emit(ownerContract, "BalanceSet")
@@ -113,7 +119,7 @@ describe("SecurityToken", function () {
         let balance = await contract.balanceOf(userAddress);
         expect(balance).equal(qty);
 
-        let orderExecutedTx2 = await liminalContract.orderExecuted(userAddress, symbol, qty, 0, 1, 'buy', 2, 0, 10, AddressZero);
+        let orderExecutedTx2 = await liminalContract.orderExecuted(userAddress, symbol, qty, 0, 1, 'buy', 2, 10, AddressZero);
         expect(orderExecutedTx2)
             .not.to.emit(ownerContract, "BalanceSet");
         expect(orderExecutedTx2)
@@ -122,7 +128,7 @@ describe("SecurityToken", function () {
 
     let setupLiminalContract = async (tsl: number): Promise<[LiminalMarket, FakeContract<AUSD>]> => {
 
-        await liminalContract.orderExecuted(wallet2.address, symbol, tsl, 10, 10, "buy", 122, 0, 1200, AddressZero)
+        await liminalContract.orderExecuted(wallet2.address, symbol, tsl, 10, 10, "buy", 122, 1200, AddressZero)
 
         return [liminalContract, aUsdContract];
     }

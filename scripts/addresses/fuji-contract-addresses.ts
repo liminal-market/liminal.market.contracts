@@ -1,5 +1,5 @@
 import ContractAddresses from "./ContractAddresses";
-import RelayerAddress from "./RelayerAddress";
+import FixedAddresses from "./FixedAddresses";
 
 export default class fujiContractAddresses implements ContractAddresses {
     ChainId = "43113";
@@ -9,8 +9,13 @@ export default class fujiContractAddresses implements ContractAddresses {
     AUSD_ADDRESS = "0xbAc482aE0b0d652854df377be566445984A021ED";
     LIMINAL_MARKET_ADDRESS = "0x098A512B017408008a23ECe22843788799CDebFd";
     MARKET_CALENDAR_ADDRESS = "0x77E6A62Be8398B18d2dA81CDB6Eb097bD8132ccB";
-
+    LM_ADDRESS: string = '';
+    NO_FEE_CONTRACT_ADDRESS = '';
+    SERVICE_CONTRACT_ADDRESS = '';
     getRelayerAddress(): string {
-        return RelayerAddress.getAddress(this.NetworkName);
+        return FixedAddresses.getRelayerAddress(this.NetworkName);
+    }
+    getLMServiceFeeAddress(): string {
+        return FixedAddresses.getLMServiceFeeAddress(this.NetworkName);
     }
 }

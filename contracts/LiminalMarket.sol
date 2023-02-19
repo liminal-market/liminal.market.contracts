@@ -10,6 +10,8 @@ import "./SecurityToken.sol";
 import "./aUSD.sol";
 import "./KYC.sol";
 import "./MarketCalendar.sol";
+import "./LM.sol";
+
 
 contract LiminalMarket is Initializable, PausableUpgradeable, AccessControlUpgradeable, UUPSUpgradeable {
 
@@ -34,18 +36,32 @@ contract LiminalMarket is Initializable, PausableUpgradeable, AccessControlUpgra
     string public constant TOKEN_ALREADY_EXISTS = "Security token already exists";
     string public constant TOKEN_NAME = "Liminal.market symbol";
 
+    LM public lmToken;
+
+    enum Action {
+        Fund,
+        OrderBuy,
+        OrderSell,
+        OrderExecuted,
+        Dividend,
+        Fee,
+        Tax
+    }
+
     event TokenCreated(address tokenAddress, string symbol);
     event BuyWithAUsd(address walletAddress, uint amount, string accountId, string symbol, address tokenAddress, address spender);
     event SellSecurityToken(string accountId, address walletAddress, address aUsdAddress, string symbol, uint amount, address spender);
     event OrderExecuted(address recipient, string symbol, uint tsl,
         uint filledQty, uint filledAvgPrice, string side, uint filledAt,
-        uint commission, uint aUsdBalance, address spender);
+        uint serviceFee, uint aUsdBalance, address spender);
     event OrderFailed(address recipient, string symbol, uint buyingPower, string message, address spender);
 
     /// @custom:oz-upgrades-unsafe-allow constructor
-    constructor() initializer {}
+    constructor() {
+        _disableInitializers();
+    }
 
-    function initialize() external initializer {
+    function initialize() initializer public {
         __Pausable_init();
         __AccessControl_init();
         __UUPSUpgradeable_init();
@@ -56,18 +72,27 @@ contract LiminalMarket is Initializable, PausableUpgradeable, AccessControlUpgra
         _grantRole(UPGRADER_ROLE, msg.sender);
     }
 
-    function setAddresses(aUSD aUsdAddress, KYC kycAddress, MarketCalendar marketCalendarAddress) external onlyRole(DEFAULT_ADMIN_ROLE) {
+    function setAddresses(aUSD aUsdAddress, KYC kycAddress, MarketCalendar marketCalendarAddress, LM lmTokenAddress) external onlyRole(DEFAULT_ADMIN_ROLE) {
         aUsdContract = aUsdAddress;
         kycContract = kycAddress;
         marketCalendarContract = marketCalendarAddress;
+        lmToken = lmTokenAddress;
     }
 
     function getSecurityToken(string memory symbol) public view returns (address) {
         return securityTokens[symbol];
     }
 
-    function buyWithAUsd(address walletAddress, address tokenAddress, uint256 amount, address spender) external whenNotPaused {
-        require(msg.sender == address(aUsdContract), ONLY_AUSD_CAN_CALL_ME);
+    function buySecurityToken(address walletAddress, string memory symbol, uint256 amount, address spender) external whenNotPaused {
+        address securityTokenAddress = securityTokens[symbol];
+        if (securityTokenAddress == address(0)) {
+            securityTokenAddress = address(createToken(symbol));
+        }
+        buyWithAUsd(walletAddress, securityTokenAddress, amount, spender);
+    }
+
+    function buyWithAUsd(address walletAddress, address tokenAddress, uint256 amount, address spender) public whenNotPaused {
+        require(msg.sender == address(aUsdContract) || spender != address(0), ONLY_AUSD_CAN_CALL_ME);
         require(marketCalendarContract.isMarketOpen(), MARKET_CLOSED);
 
         uint256 ausdBalance = aUsdContract.balanceOf(walletAddress);
@@ -81,14 +106,16 @@ contract LiminalMarket is Initializable, PausableUpgradeable, AccessControlUpgra
         string memory symbol = securityToken.symbol();
         if (spender == address(0)) spender = address(this);
 
-        emit BuyWithAUsd(walletAddress, amount, accountId, symbol, tokenAddress, spender);
+        lmToken.payOutstandingServiceFeeAndValidateBalance(walletAddress, amount, spender);
+
         aUsdContract.setBalance(walletAddress, ausdBalance - amount, Action.OrderBuy);
+        emit BuyWithAUsd(walletAddress, amount, accountId, symbol, tokenAddress, spender);
     }
 
-    function sellSecurityToken(address walletAddress, address aUsdAddress, string memory symbol, uint quantity, address spender) external whenNotPaused {
+    function sellSecurityToken(address walletAddress, address aUsdAddress, string memory symbol, uint quantity, address spender) public whenNotPaused {
         require(aUsdAddress == address(aUsdContract), ONLY_SEND_TO_AUSD);
         require(marketCalendarContract.isMarketOpen(), MARKET_CLOSED);
-        require(getSecurityToken(symbol) == msg.sender, NOT_VALID_TOKEN_ADDRESS);
+        require(getSecurityToken(symbol) == msg.sender || spender != address(0), NOT_VALID_TOKEN_ADDRESS);
 
         string memory accountId = kycContract.isValid(walletAddress);
 
@@ -98,14 +125,17 @@ contract LiminalMarket is Initializable, PausableUpgradeable, AccessControlUpgra
 
         if (spender == address(0)) spender = address(this);
 
-        emit SellSecurityToken(accountId, walletAddress, aUsdAddress, symbol, quantity, spender);
+        //while we dont have price on chain, amount is ignored and set to 0
+        lmToken.payOutstandingServiceFeeAndValidateBalance(walletAddress, 0, spender);
         token.setBalance(walletAddress, balance - quantity, Action.OrderSell);
+
+        emit SellSecurityToken(accountId, walletAddress, aUsdAddress, symbol, quantity, spender);
     }
 
     function orderExecuted(address recipient, string memory symbol,
-                            uint tsl, uint filledQty, uint filledAvgPrice, string memory side,
-                            uint filledAt, uint commission, uint aUsdBalance, address spender)
-                            external whenNotPaused onlyRole(MINTER_ROLE) {
+        uint tsl, uint filledQty, uint filledAvgPrice, string memory side,
+        uint filledAt, uint aUsdBalance, address spender)
+    external whenNotPaused onlyRole(MINTER_ROLE) {
 
         require(recipient != address(0), ADDRESS_CANNOT_BE_ZERO);
 
@@ -116,18 +146,33 @@ contract LiminalMarket is Initializable, PausableUpgradeable, AccessControlUpgra
             st = this.createToken(symbol);
         } else {
             st = SecurityToken(tokenAddress);
+            require(!(isEqual(side, "init") && st.balanceOf(recipient) != 0), "init cannot be called on existing balance");
         }
+
         st.setBalance(recipient, tsl, Action.OrderExecuted);
         aUsdContract.setBalance(recipient, aUsdBalance, Action.OrderExecuted);
 
-        emit OrderExecuted(recipient, symbol, tsl, filledQty, filledAvgPrice, side, filledAt, commission, aUsdBalance, spender);
+        uint totalServiceFee = 0;
+        if (!isEqual(side, "init")) {
+            totalServiceFee = lmToken.payServiceFee(recipient, mul(filledQty, filledAvgPrice), spender);
+        }
+
+        emit OrderExecuted(recipient, symbol, tsl, filledQty, filledAvgPrice, side, filledAt, totalServiceFee, aUsdBalance, spender);
+    }
+
+    function isEqual(string memory a, string memory b) public pure returns (bool) {
+        return keccak256(abi.encodePacked(a)) == keccak256(abi.encodePacked(b));
+    }
+
+    function mul(uint a, uint b) internal pure returns (uint) {
+        return a * b / 10**18;
     }
 
     function orderFailed(address recipient, string memory symbol, uint buyingPower, string memory message, address spender) external whenNotPaused onlyRole(MINTER_ROLE) {
         emit OrderFailed(recipient, symbol, buyingPower, message, spender);
     }
 
-    function createToken(string memory symbol) external whenNotPaused returns (SecurityToken) {
+    function createToken(string memory symbol) public whenNotPaused returns (SecurityToken) {
         require(bytes(symbol).length != 0, SYMBOL_CANNOT_BE_EMPTY);
         require(securityTokens[symbol] == address(0), TOKEN_ALREADY_EXISTS);
 
@@ -159,14 +204,5 @@ contract LiminalMarket is Initializable, PausableUpgradeable, AccessControlUpgra
     function _authorizeUpgrade(address newImplementation) internal onlyRole(UPGRADER_ROLE) onlyProxy override {
         _upgradeTo(newImplementation);
     }
-}
 
-enum Action {
-    Fund,
-    OrderBuy,
-    OrderSell,
-    OrderExecuted,
-    Dividend,
-    Fee,
-    Tax
 }

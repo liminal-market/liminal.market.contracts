@@ -18,7 +18,7 @@ describe("Test FileHelper", () => {
 
         mock({
             './scripts/templates/': {
-                'ContractAddress.web.handlebars': '',
+                'ContractAddress.app.handlebars': '',
                 'ContractAddress.contracts.handlebars': '',
                 'ContractAddress.cloud.handlebars' : ''
             },
@@ -54,12 +54,12 @@ describe("Test FileHelper", () => {
         mock.restore();
     });
 
-    it('should verify web constant file is valid', async () => {
+    it('should verify app constant file is valid', async () => {
         mock.restore();
 
         let contractInfo = ContractInfo.getContractInfo(hre.network.name);
         let fileHelper = new FileHelper(hre);
-        let content = fileHelper.getConstantFile("web", contractInfo);
+        let content = fileHelper.getConstantFile("app", contractInfo);
 
         expect(content).to.contain(contractInfo.LIMINAL_MARKET_ADDRESS);
         expect(content).to.contain(contractInfo.AUSD_ADDRESS);

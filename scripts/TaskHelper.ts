@@ -14,11 +14,10 @@ export default class TaskHelper {
 
     public async fundAUSD(contractAddress: string, amount = "1000000000000000000000", userWallet = "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266") {
         console.log('aUSD address:' + contractAddress);
-        let randomAmount = parseInt((Math.random() * 10000).toString()) + '0'.repeat(18);
 
         const contract = await this.hre.ethers.getContractAt("aUSD", contractAddress) as AUSD;
-        await contract.setBalance(userWallet, randomAmount, 1);
-        console.log('Funded ' + randomAmount + ' to wallet ' + userWallet);
+        await contract.setBalance(userWallet, amount, 1);
+        console.log('Funded ' + amount + ' to wallet ' + userWallet);
         let balance = await contract.balanceOf(userWallet);
         console.log('retrieved balance:' + balance)
     }

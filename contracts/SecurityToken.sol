@@ -6,7 +6,7 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 import "./LiminalMarket.sol";
 
 contract SecurityToken is Ownable, ERC20 {
-    event BalanceSet(address recipient, uint256 amount, Action action);
+    event BalanceSet(address recipient, uint256 amount, LiminalMarket.Action action);
 
     LiminalMarket private liminalMarketContract;
 
@@ -17,7 +17,7 @@ contract SecurityToken is Ownable, ERC20 {
         liminalMarketContract = LiminalMarket(msg.sender);
     }
 
-    function setBalance(address recipient, uint256 qty, Action action) external onlyOwner {
+    function setBalance(address recipient, uint256 qty, LiminalMarket.Action action) external onlyOwner {
         uint256 balance = balanceOf(recipient);
         if (qty == balance) return;
 

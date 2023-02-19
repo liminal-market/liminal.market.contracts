@@ -9,6 +9,7 @@ import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 
 import "./LiminalMarket.sol";
 
+
 contract aUSD is Initializable, ERC20Upgradeable, PausableUpgradeable, AccessControlUpgradeable, UUPSUpgradeable {
 
     LiminalMarket private liminalMarketContract;
@@ -17,13 +18,14 @@ contract aUSD is Initializable, ERC20Upgradeable, PausableUpgradeable, AccessCon
     bytes32 public constant PAUSER_ROLE = keccak256("PAUSER_ROLE");
     bytes32 public constant UPGRADER_ROLE = keccak256("UPGRADER_ROLE");
 
-    event BalanceSet(address recipient, uint256 balance, Action action);
+    event BalanceSet(address recipient, uint256 balance, LiminalMarket.Action action);
 
     /// @custom:oz-upgrades-unsafe-allow constructor
-    constructor() initializer {
+    constructor() {
+        _disableInitializers();
     }
 
-    function initialize() external initializer {
+    function initialize() initializer public {
         __ERC20_init("USD at Broker", "aUSD");
         __Pausable_init();
         __AccessControl_init();
@@ -48,7 +50,7 @@ contract aUSD is Initializable, ERC20Upgradeable, PausableUpgradeable, AccessCon
         revokeRole(SET_BALANCE, recipient);
     }
 
-    function setBalance(address recipient, uint256 balance, Action action) external onlyRole(SET_BALANCE) whenNotPaused {
+    function setBalance(address recipient, uint256 balance, LiminalMarket.Action action) external onlyRole(SET_BALANCE) whenNotPaused {
         uint256 currentBalance = balanceOf(recipient);
         if (balance == currentBalance) return;
 

@@ -1,5 +1,5 @@
 import ContractAddresses from "../addresses/ContractAddresses";
-import {AUSD, KYC, LiminalMarket, MarketCalendar} from "../../typechain-types";
+import {AUSD, KYC, LiminalMarket, LM, MarketCalendar, ServiceContract} from "../../typechain-types";
 import {FakeContract} from "@defi-wonderland/smock";
 import TaskHelper from "../TaskHelper";
 import {HardhatRuntimeEnvironment} from "hardhat/types";
@@ -11,17 +11,21 @@ export default class Roles {
     aUSD: AUSD | FakeContract<AUSD>;
     kyc: KYC | FakeContract<KYC>;
     marketCalendar: MarketCalendar | FakeContract<MarketCalendar>;
-
+    lm : LM | FakeContract<LM>;
+    serviceContract : ServiceContract | FakeContract<ServiceContract>;
     constructor(
         liminalMarket: LiminalMarket | FakeContract<LiminalMarket>,
         aUSD: AUSD | FakeContract<AUSD>,
         kyc: KYC | FakeContract<KYC>,
-        marketCalendar: MarketCalendar | FakeContract<MarketCalendar>) {
+        marketCalendar: MarketCalendar | FakeContract<MarketCalendar>,
+        lm : LM | FakeContract<LM>,
+        serviceContract : ServiceContract | FakeContract<ServiceContract>) {
         this.liminalMarket = liminalMarket;
         this.aUSD = aUSD
         this.kyc = kyc;
         this.marketCalendar = marketCalendar;
-
+        this.lm = lm;
+        this.serviceContract = serviceContract;
     }
 
     public async grantRoles(hre: HardhatRuntimeEnvironment, contractInfo: ContractAddresses) {
@@ -47,6 +51,12 @@ export default class Roles {
         console.log('grant relayerAddress:' + relayerAddress + " to Calendar");
         result = await this.marketCalendar.connect(signer).grantCalendarRole(relayerAddress);
         console.log(result.hash);
+
+        console.log('set lm service fee role')
+        result = await this.lm.connect(signer).grantServiceFeeRole(contractInfo.getLMServiceFeeAddress());
+        result = await this.lm.connect(signer).grantServiceFeeRole(contractInfo.LIMINAL_MARKET_ADDRESS);
+        console.log(result.hash);
+
     }
 
 }

@@ -12,3 +12,4 @@ typechain-types
 /.idea/
 /.nyc_output
 /truffle-config.js
+/keys.txt

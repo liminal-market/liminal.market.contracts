@@ -5,6 +5,7 @@ import {solidity} from "ethereum-waffle";
 import {smock} from "@defi-wonderland/smock";
 import {Wallet} from "ethers";
 import {MarketCalendar} from "../../typechain-types";
+import TestHelper from "../TestHelper";
 
 describe("Test market calendar", () => {
 
@@ -34,6 +35,24 @@ describe("Test market calendar", () => {
         const contractFactory = await hre.ethers.getContractFactory('MarketCalendar');
         contract = await upgrades.deployProxy(contractFactory) as MarketCalendar;
     }
+
+    it('should call initialize, should be rejected', async () => {
+        await TestHelper.initializeRejected(contract);
+    })
+    it('should getCalendar', async () => {
+        let opens = [];
+        let closes = [];
+
+        opens[0] = new Date(calendarEntries[0].date + "T" + calendarEntries[0].open + "-05:00").getTime() / 1000;
+        closes[0] = new Date(calendarEntries[0].date + "T" + calendarEntries[0].close + "-05:00").getTime() / 1000;
+
+        await expect(contract.setCalendar(opens, closes))
+
+        let calendar = await contract.getCalendar();
+
+        expect(calendar[0].opens).eq(1653921000);
+        expect(calendar[0].closes).eq(1653944400);
+    })
 
     it("should have different open and close array length and revert", async () => {
         let opens = [];
@@ -90,6 +109,14 @@ describe("Test market calendar", () => {
             .to.emit(contractW2, "CalendarSet").withArgs(opens[0], closes[closes.length-1]);
     })
 
+    it('should try to grant role, but doesnt have role to do it, should be rejected', async () => {
+        let contractW2 = contract.connect(wallet3);
+        await expect(contractW2.grantCalendarRole(wallet2.address)).rejectedWith(TestHelper.AccessControlErrorMessage);
+    })
+    it('should try to revoke role, but doesnt have role to do it, should be rejected', async () => {
+        let contractW2 = contract.connect(wallet3);
+        await expect(contractW2.revokeCalendarRole(wallet2.address)).rejectedWith(TestHelper.AccessControlErrorMessage);
+    })
     it("should set permission, then remove permission", async () => {
         await redeployContract();
 
