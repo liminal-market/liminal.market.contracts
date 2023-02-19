@@ -1,10 +1,10 @@
 import chai from "chai";
-import hre, {upgrades} from "hardhat";
+import {upgrades} from "hardhat";
 import chaiAsPromised from "chai-as-promised";
 import {solidity} from "ethereum-waffle";
 import {smock} from "@defi-wonderland/smock";
-import {ethers, Wallet} from "ethers";
-import {AUSD, KYC, LiminalMarket, LM, MarketCalendar, ServiceContract} from "../../typechain-types";
+import {Wallet} from "ethers";
+import {ServiceContract} from "../../typechain-types";
 import TestHelper from "../TestHelper";
 
 
@@ -50,7 +50,10 @@ describe('ServiceContract tests', () => {
     it('should call initialize, should be rejected', async () => {
         await TestHelper.initializeRejected(ownerContract);
     })
-
+    it('setting zero address, should fail', async () => {
+        await expect(ownerContract.setAddress(TestHelper.AddressZero))
+            .rejectedWith('Address cannot be zero')
+    })
     it('should update liminal LiminalMarket contract address', async () => {
         let newAddress = "0xdD2FD4581271e230360230F9337D5c0430Bf44C0";
         let result = await ownerContract.setAddress(newAddress);
@@ -60,6 +63,10 @@ describe('ServiceContract tests', () => {
     it('try to update LiminalMarket address, doesnt have role, should be rejected', async () => {
         let newAddress = "0xdD2FD4581271e230360230F9337D5c0430Bf44C0";
         await expect(contract.setAddress(newAddress)).rejectedWith(TestHelper.AccessControlErrorMessage)
+    })
+    it('setting zero address on lm service fee, should fail', async () => {
+        await expect(ownerContract.setLMServiceFeeAddress(TestHelper.AddressZero))
+            .rejectedWith('Address cannot be zero')
     })
     it('should update liminal serviceFee address', async () => {
         let newAddress = "0xdD2FD4581271e230360230F9337D5c0430Bf44C0";
@@ -114,7 +121,21 @@ describe('ServiceContract tests', () => {
         await createServiceContract();
         await expect(contract.createContract(serviceAddress, serviceFeeAddress, 10, name, url)).rejectedWith('This contract already exists. Use updateContract')
     })
+    it('should update contract, contract address is zero, should fail', async () => {
+        await createServiceContract();
+        let name = 'NewName';
+        let url = 'https://newdefi.com';
+        await expect(contract.updateContract(TestHelper.AddressZero, serviceFeeAddress, 500, name, url))
+            .rejectedWith('cannot be zero')
+    });
 
+    it('should update contract, service fee address is zero, should fail', async () => {
+        await createServiceContract();
+        let name = 'NewName';
+        let url = 'https://newdefi.com';
+        await expect(contract.updateContract(serviceAddress, TestHelper.AddressZero, 500, name, url))
+            .rejectedWith('cannot be zero')
+    });
     it('should update contract, get serviceFee with new serviceFee points', async () => {
         await createServiceContract();
         let name = 'NewName';
@@ -142,6 +163,28 @@ describe('ServiceContract tests', () => {
         let url = 'https://newdefi.com';
         await expect(ownerContract.updateContract(serviceAddress, serviceFeeAddress, 500, name, url)).rejectedWith('Only owner can change contract');
 
+    })
+    it('try to change owner of service contract, does not have permission, should fail', async () => {
+        await createServiceContract();
+
+       await expect(ownerContract.setServiceContractOwner(wallet3.address, serviceAddress))
+           .rejectedWith('Only owner can set owner of service contract');
+    })
+
+    it('try change owner of service contract, owner is zero address, should fail', async () => {
+        await createServiceContract();
+
+        await expect(contract.setServiceContractOwner(TestHelper.AddressZero, serviceAddress))
+            .rejectedWith('cannot be zero');
+    })
+    it('should change owner of service contract', async () => {
+        await createServiceContract();
+
+        let tx = await contract.setServiceContractOwner(wallet3.address, serviceAddress)
+
+        let contracts = await ownerContract.getContractsByOwner(wallet3.address)
+        expect(contracts.length).to.eq(1);
+        expect(tx).to.emit(contract, 'NewOwnerOnServiceContract').withArgs(serviceAddress, wallet2.address, wallet3.address)
     })
 
     it('should validate total serviceFee for an amount', async () => {

@@ -25,7 +25,7 @@ describe("LiminalMarket", function () {
     chai.use(solidity);
     chai.use(smock.matchers);
 
-    let owner: Wallet, wallet2: Wallet, wallet3: Wallet;
+    let owner: Wallet, wallet2: Wallet, wallet3: Wallet, wallet4: Wallet;
     let contract: LiminalMarket;
     let ownerContract: LiminalMarket;
 
@@ -39,10 +39,10 @@ describe("LiminalMarket", function () {
     const AddressZero = "0x0000000000000000000000000000000000000000";
     const userAddress = "0x90F79bf6EB2c4f870365E785982E1f101E93b906";
     const lmServiceFeeAddress = TestHelper.LMServiceFeeAddress;
-
+    const accountId = '123-456-789';
     before("compile", async function () {
         await hre.run('compile');
-        [owner, wallet2, wallet3] = waffle.provider.getWallets();
+        [owner, wallet2, wallet3, wallet4] = waffle.provider.getWallets();
     })
 
     beforeEach(async () => {
@@ -54,7 +54,10 @@ describe("LiminalMarket", function () {
         ownerContract = await upgrades.deployProxy(contractFactory) as LiminalMarket;
 
         kycContract = await smock.fake<KYC>('KYC');
+        kycContract.isValid.returns(accountId);
+
         aUsdContract = await smock.fake<AUSD>('aUSD');
+        aUsdContract.balanceOf.returns(1000);
         marketCalendarContract = await smock.fake<MarketCalendar>("MarketCalendar");
 
         let lmContractFactory = await hre.ethers.getContractFactory('LM');
@@ -132,8 +135,22 @@ describe("LiminalMarket", function () {
         await expect(contract.createToken(symbol)).rejectedWith(reason);
     });
 
+    it('should buySecurityToken', async () => {
+        let createContractResult = await serviceContract.createContract(TestHelper.AddressZero, wallet4.address, 100, "ble", "bla")
+        let ble = await createContractResult.wait();
+        let contractAddress = ble.events![0].args!.contractAddress;
+        console.log('contractAddress', contractAddress);
+        await lmContract.mint(wallet4.address, 200 * 10 ** 5);
 
-    it("try to buy with aUSD, this is now allowed since it's not coming from aUSD contract, will revert", async () => {
+        let result = await contract.buySecurityToken(wallet3.address, 'AAPL', 100, contractAddress);
+        let tx = await result.wait();
+        let tokenAddress = TestHelper.getArgValueFromEvent(tx, 'TokenCreated', 'tokenAddress')
+        expect(result).to.emit(contract, 'BuyWithAUsd')
+            .withArgs(wallet3.address, 100, accountId, 'AAPL', tokenAddress, contractAddress)
+    })
+
+
+    it("try to buy with aUSD, this is not allowed since it's not coming from aUSD contract, will revert", async () => {
         let reason = await contract.ONLY_AUSD_CAN_CALL_ME();
         await expect(contract.buyWithAUsd(userAddress, userAddress, 100, AddressZero))
             .rejectedWith(reason);

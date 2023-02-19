@@ -37,7 +37,6 @@ contract LM is Initializable, ERC20Upgradeable, ERC20BurnableUpgradeable, Pausab
         __ERC20_init("LiminalMarket utility token", "LM");
         __ERC20Burnable_init();
         __AccessControl_init();
-
         _mint(msg.sender, 100000 ether);
         _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
         _grantRole(PAUSER_ROLE, msg.sender);
