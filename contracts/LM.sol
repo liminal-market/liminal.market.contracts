@@ -38,7 +38,7 @@ contract LM is Initializable, ERC20Upgradeable, ERC20BurnableUpgradeable, Pausab
         __ERC20Burnable_init();
         __AccessControl_init();
 
-        _mint(msg.sender, 100000 * 10 ** decimals());
+        _mint(msg.sender, 100000 ether);
         _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
         _grantRole(PAUSER_ROLE, msg.sender);
         _grantRole(UPGRADER_ROLE, msg.sender);

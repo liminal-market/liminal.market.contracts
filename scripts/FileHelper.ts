@@ -16,13 +16,13 @@ export default class FileHelper {
             return this.UpperFirstLetter(text);
         })
 
-        let constantFile = this.getConstantFile('contracts', addresses)
+        let constantFile = this.getConstantFile('ContractAddress.contracts', addresses)
         await fs.writeFileSync('./scripts/addresses/' + addresses.NetworkName + '-contract-addresses.ts', constantFile, {encoding: 'utf-8'});
 
-        constantFile = this.getConstantFile('libraries', addresses)
+        constantFile = this.getConstantFile('Abis.libraries.core', addresses)
         await fs.writeFileSync('../liminal.market.libraries/javascript/core/src/networks/' + this.UpperFirstLetter(addresses.NetworkName) + 'Network.ts', constantFile, 'utf-8');
         console.log('write to cloud ' + addresses.NetworkName, constantFile)
-        constantFile = this.getConstantFile('cloud', addresses)
+        constantFile = this.getConstantFile('ContractAddress.cloud', addresses)
         await fs.writeFileSync('../liminal.market.cloud/src/networks/' + addresses.NetworkName + 'ContractAddresses.ts', constantFile, 'utf-8');
 
         await this.writeAbiFiles()
@@ -78,7 +78,7 @@ export default class FileHelper {
     }
 
     public getConstantFile(name: string, addresses: ContractAddresses) {
-        let fileContent = fs.readFileSync('./scripts/templates/ContractAddress.' + name + '.handlebars');
+        let fileContent = fs.readFileSync('./scripts/templates/' + name + '.handlebars');
         let template = Handlebars.compile(fileContent.toString());
         return template(addresses);
     }
