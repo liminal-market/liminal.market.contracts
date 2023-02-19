@@ -75,8 +75,8 @@ describe("Test market calendar", () => {
         await hre.network.provider.send("evm_mine");
 
         let fakeDateAfter1Hour = new Date()
-        //-6 hours since it's in timezone -5
-        fakeDate.setTime(fakeDate.getTime() + (-6 * 60 * 60 * 1000));
+        //-7 hours since it's in timezone -5
+        fakeDate.setTime(fakeDate.getTime() + (-7 * 60 * 60 * 1000));
         fakeDateAfter1Hour.setTime(fakeDateAfter1Hour.getTime() + (1 * 60 * 60 * 1000));
         //set today as open date
         calendarEntries[0].date = fakeDate.toISOString().split('T')[0]
