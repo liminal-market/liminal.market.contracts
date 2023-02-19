@@ -55,11 +55,13 @@ contract ServiceContract is Initializable, PausableUpgradeable, AccessControlUpg
     }
 
     function setAddress(address liminalMarketAddress) onlyRole(DEFAULT_ADMIN_ROLE) public {
+        require(liminalMarketAddress != address(0), "Address cannot be zero address");
         liminalMarket = LiminalMarket(liminalMarketAddress);
         emit LiminalMarketAddressSet(liminalMarketAddress);
     }
 
     function setLMServiceFeeAddress(address lmAddress) onlyRole(DEFAULT_ADMIN_ROLE) public {
+        require(lmAddress != address(0), "Address cannot be zero address");
         lmServiceFeeAddress = lmAddress;
         emit LMServiceFeeAddressSet(lmAddress);
     }
@@ -130,6 +132,8 @@ contract ServiceContract is Initializable, PausableUpgradeable, AccessControlUpg
     function setServiceContractOwner(address newOwner, address contractAddress) public {
         ServiceInfo memory serviceInfo = services[contractAddress];
         require(serviceInfo.owner == msg.sender, "Only owner can set owner of service contract");
+        require(contractAddress != address(0), "contractAddress cannot be zero address");
+        require(newOwner != address(0), "New owner cannot be zero address");
 
         serviceInfo.owner = newOwner;
         services[contractAddress] = serviceInfo;

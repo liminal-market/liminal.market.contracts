@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.9;
+pragma solidity ^0.8.16;
 
 import "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC20/extensions/ERC20BurnableUpgradeable.sol";
@@ -38,7 +38,7 @@ contract LM is Initializable, ERC20Upgradeable, ERC20BurnableUpgradeable, Pausab
         __ERC20Burnable_init();
         __AccessControl_init();
 
-        _mint(msg.sender, 100000000 * 10 ** decimals());
+        _mint(msg.sender, 100000 * 10 ** decimals());
         _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
         _grantRole(PAUSER_ROLE, msg.sender);
         _grantRole(UPGRADER_ROLE, msg.sender);

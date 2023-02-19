@@ -163,7 +163,7 @@ const config: HardhatUserConfig = {
 
             forking: {
                 url: process.env.mumbaiUrl ?? '',
-                blockNumber: 18565457
+                /*blockNumber: latest*/
             }
 
         },

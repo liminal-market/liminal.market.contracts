@@ -4,7 +4,7 @@ pragma solidity ^0.8.16;
 import "./LiminalMarket.sol";
 
 contract LiminalMarketExternalService {
-    LiminalMarket liminalMarket;
+    LiminalMarket immutable liminalMarket;
     constructor(address liminalMarketAddress) {
         liminalMarket = LiminalMarket(liminalMarketAddress);
     }
