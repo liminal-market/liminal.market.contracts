@@ -5,7 +5,6 @@ import Deployment from "./Deployment";
 import Roles from "./Roles";
 import {AUSD, KYC, LiminalMarket, LM, MarketCalendar, ServiceContract} from "../../typechain-types";
 import Verify from "./Verify";
-import timers from "@nomicfoundation/hardhat-network-helpers";
 import {Contract} from "ethers";
 
 export default class Release {
@@ -15,6 +14,7 @@ export default class Release {
         this.hre = hre;
     }
 
+    static Update = true;
     public async Execute() {
         const contractInfo = ContractInfo.getContractInfo(this.hre.network.name);
         console.log('ContractInfo for network:' + contractInfo.NetworkName);

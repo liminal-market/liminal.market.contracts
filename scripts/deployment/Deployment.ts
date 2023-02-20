@@ -4,6 +4,7 @@ import ContractAddresses from "../addresses/ContractAddresses";
 import {AUSD, LiminalMarket, LM, ServiceContract} from "../../typechain-types";
 import {FakeContract} from "@defi-wonderland/smock";
 import TaskHelper from "../TaskHelper";
+import Release from "./Release";
 
 export default class Deployment {
 
@@ -30,6 +31,13 @@ export default class Deployment {
                                          preexistingAddress: string): Promise<[Contract, string]> {
 
         this.contractFactory = await this.hre.ethers.getContractFactory(contractName);
+
+        if (preexistingAddress && !Release.Update) {
+            console.log('Update is false. Using ' + preexistingAddress)
+            let contract = new Contract(preexistingAddress, this.contractFactory.interface, this.signer);
+            return [contract, Deployment.Upgraded];
+        }
+
         console.log('deployment for contractName:' + contractName + ' | preexistingAddress:' + preexistingAddress);
         if (this.hre.network.name == 'hardhat') {
             //throw new Error("Should not deploy on hardhat. Did you forget to set --network localhost?")
@@ -80,10 +88,11 @@ export default class Deployment {
         await aUsdContract.connect(this.signer).setLiminalMarketAddress(contractInfo.LIMINAL_MARKET_ADDRESS);
         console.log('set address for serviceContract')
         await LMContract.connect(this.signer).setServiceContractAddress(contractInfo.SERVICE_CONTRACT_ADDRESS);
-        await LMContract.connect(this.signer).transfer(contractInfo.getRelayerAddress(), '10000000' + '0'.repeat(18))
         console.log('set address for lm serviceFee')
         await ServiceContract.connect(this.signer).setAddress(contractInfo.LIMINAL_MARKET_ADDRESS);
         await ServiceContract.connect(this.signer).setLMServiceFeeAddress(contractInfo.getLMServiceFeeAddress());
+
+        await LMContract.connect(this.signer).transfer(contractInfo.getRelayerAddress(), '90000' + '0'.repeat(18))
     }
 
 }

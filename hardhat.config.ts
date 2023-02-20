@@ -18,7 +18,6 @@ import {AUSD, KYC, LiminalMarket, LM, MarketCalendar, ServiceContract} from "./t
 import Deployment from "./scripts/deployment/Deployment";
 
 
-
 dotenv.config();
 
 
@@ -36,10 +35,14 @@ task('verifyContract', 'verifies', async (taskArgs, hre) => {
     const contractInfo = ContractInfo.getContractInfo(hre.network.name);
 
     let verify = new Verify(hre);
-    //await verify.verifyContract(contractInfo.KYC_ADDRESS);
+    await verify.verifyContract(contractInfo.KYC_ADDRESS);
     await verify.verifyContract(contractInfo.AUSD_ADDRESS);
-    //await verify.verifyContract(contractInfo.LIMINAL_MARKET_ADDRESS);
-    //await verify.verifyContract(contractInfo.MARKET_CALENDAR_ADDRESS);
+    await verify.verifyContract(contractInfo.LIMINAL_MARKET_ADDRESS);
+    await verify.verifyContract(contractInfo.MARKET_CALENDAR_ADDRESS);
+
+    await verify.verifyContract(contractInfo.LM_ADDRESS);
+    await verify.verifyContract(contractInfo.SERVICE_CONTRACT_ADDRESS);
+
 
 });
 
@@ -47,29 +50,62 @@ task('c', 'compiles', async (taskArgs, hre) => {
     await hre.run('compile');
 });
 
+task('forceImport', async (taskArgs, hre) => {
+    try {
+        /**/
+        let liminalMarketContractFactory = await hre.ethers.getContractFactory('LiminalMarket');
+        await hre.upgrades.forceImport('0x6e9C29e416dc9F7A6A03ffebaB3f02Ef62a1baE4', liminalMarketContractFactory)
+
+        let aUsdContractFactory = await hre.ethers.getContractFactory('aUSD');
+        await hre.upgrades.forceImport('0x38F2B1E9F11937dD276D64521535b15280A7F137', aUsdContractFactory)
+
+        let kycContractFactory = await hre.ethers.getContractFactory('KYC');
+        await hre.upgrades.forceImport('0x9e2B28D9F841300bE3B64e505dEcA36c35250609', kycContractFactory)
+
+        let marketCalContractFactory = await hre.ethers.getContractFactory('MarketCalendar');
+        await hre.upgrades.forceImport('0xc6B29dfd4FD756EF94b3A3FF7a531F4467BDDA75', marketCalContractFactory)
+
+
+    } catch (e: any) {
+        console.log(e);
+        console.log(e.message);
+        console.log(e.data);
+    }
+})
 task('release', 'compiles, deploys & create release data', async (taskArgs, hre) => {
     console.log('Running release on network ' + hre.network.name);
-    let release = new Release(hre);
-    await release.Execute();
+    try {
+        let release = new Release(hre);
+        await release.Execute();
+    } catch (e: any) {
+        console.log(e);
+        console.log(e.message);
+        console.log(e.data);
+    }
+
 });
 task('setAddresses', async (taskArgs, hre) => {
+    try {
+        const contractInfo = ContractInfo.getContractInfo(hre.network.name);
 
-    const contractInfo = ContractInfo.getContractInfo(hre.network.name);
+        let liminalMarketFactory = await hre.ethers.getContractFactory('LiminalMarket');
+        let liminalMarket = liminalMarketFactory.attach(contractInfo.LIMINAL_MARKET_ADDRESS) as LiminalMarket;
 
-    let liminalMarketFactory = await hre.ethers.getContractFactory('LiminalMarket');
-    let liminalMarket = liminalMarketFactory.attach(contractInfo.LIMINAL_MARKET_ADDRESS) as LiminalMarket;
+        let aUSDFactory = await hre.ethers.getContractFactory('aUSD');
+        let aUsd = aUSDFactory.attach(contractInfo.AUSD_ADDRESS) as AUSD;
 
-    let aUSDFactory = await hre.ethers.getContractFactory('aUSD');
-    let aUsd = aUSDFactory.attach(contractInfo.AUSD_ADDRESS) as AUSD;
+        let lmFactory = await hre.ethers.getContractFactory('LM');
+        let lm = lmFactory.attach(contractInfo.LM_ADDRESS) as LM;
 
-    let lmFactory = await hre.ethers.getContractFactory('LM');
-    let lm = lmFactory.attach(contractInfo.LM_ADDRESS) as LM;
+        let serviceContractFactory = await hre.ethers.getContractFactory('ServiceContract');
+        let serviceContract = serviceContractFactory.attach(contractInfo.SERVICE_CONTRACT_ADDRESS) as ServiceContract;
 
-    let serviceContractFactory = await hre.ethers.getContractFactory('ServiceContract');
-    let serviceContract = serviceContractFactory.attach(contractInfo.SERVICE_CONTRACT_ADDRESS) as ServiceContract;
-
-    let deployment = new Deployment(hre);
-    await deployment.setAddresses(contractInfo, liminalMarket, aUsd, lm, serviceContract);
+        let deployment = new Deployment(hre);
+        await deployment.setAddresses(contractInfo, liminalMarket, aUsd, lm, serviceContract);
+    } catch (e : any) {
+        console.log(e.message);
+        console.log(e.data);
+    }
 
 })
 task('setRoles', 'compiles, deploys & create release data', async (taskArgs, hre) => {
@@ -190,14 +226,14 @@ const config: HardhatUserConfig = {
         currency: "ISK",
         coinmarketcap: process.env.coinmarketcap_key,
         gasPriceApi: "https://api.polygonscan.com/api?module=proxy&action=eth_gasPrice",
-        token:'MATIC',
+        token: 'MATIC',
     },
     etherscan: {
         apiKey: {
             rinkeby: process.env.ETHERSCAN_API_KEY ?? '',
-            polygonMumbai: process.env.POLYGON_API_KEY ?? '',
+            polygonMumbai: process.env.MUMBAI_API_KEY ?? '',
             avalancheFujiTestnet: process.env.AvalancheFujiTestnet ?? '',
-            bscTestnet: process.env.bsc_api_key ?? ''
+            bscTestnet: process.env.bsc_api_key ?? '',
         }
 
     }

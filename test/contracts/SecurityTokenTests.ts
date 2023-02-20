@@ -72,7 +72,7 @@ describe("SecurityToken", function () {
         let balance = await contract.balanceOf(userAddress);
         expect(balance).equal(0);
         let qty = 100;
-        let orderExecutedTx = await liminalContract.orderExecuted(userAddress, symbol, qty, 0, 1, 'buy', 2, 10, AddressZero);
+        let orderExecutedTx = await liminalContract.orderExecuted('123', userAddress, symbol, qty, 0, 1, 'buy', 2, 10, AddressZero);
 
         expect(orderExecutedTx)
             .to.emit(ownerContract, "BalanceSet")
@@ -84,7 +84,7 @@ describe("SecurityToken", function () {
 
     it("should set the balance, to decrease the balance of the account", async () => {
         let qty = 1000000;
-        let orderExecutedTx = await liminalContract.orderExecuted(userAddress, symbol, qty, 0, 1, 'buy', 2, 10, AddressZero);
+        let orderExecutedTx = await liminalContract.orderExecuted('123', userAddress, symbol, qty, 0, 1, 'buy', 2, 10, AddressZero);
 
         expect(orderExecutedTx)
             .to.emit(ownerContract, "BalanceSet")
@@ -96,7 +96,7 @@ describe("SecurityToken", function () {
         expect(balance).equal(qty);
 
         let qty2 = 233430;
-        let orderExecutedTx2 = await liminalContract.orderExecuted(userAddress, symbol, qty2, 0, 1, 'buy', 2, 10, AddressZero);
+        let orderExecutedTx2 = await liminalContract.orderExecuted('12355', userAddress, symbol, qty2, 0, 1, 'buy', 2, 10, AddressZero);
 
         expect(orderExecutedTx2)
             .to.emit(ownerContract, "BalanceSet")
@@ -110,7 +110,7 @@ describe("SecurityToken", function () {
 
     it("should set the balance what it already is, nothing should happen", async () => {
         let qty = 1000000;
-        let orderExecutedTx = await liminalContract.orderExecuted(userAddress, symbol, qty, 0, 1, 'buy', 2, 10, AddressZero);
+        let orderExecutedTx = await liminalContract.orderExecuted('12323', userAddress, symbol, qty, 0, 1, 'buy', 2, 10, AddressZero);
 
         expect(orderExecutedTx)
             .to.emit(ownerContract, "BalanceSet")
@@ -119,7 +119,7 @@ describe("SecurityToken", function () {
         let balance = await contract.balanceOf(userAddress);
         expect(balance).equal(qty);
 
-        let orderExecutedTx2 = await liminalContract.orderExecuted(userAddress, symbol, qty, 0, 1, 'buy', 2, 10, AddressZero);
+        let orderExecutedTx2 = await liminalContract.orderExecuted('123', userAddress, symbol, qty, 0, 1, 'buy', 2, 10, AddressZero);
         expect(orderExecutedTx2)
             .not.to.emit(ownerContract, "BalanceSet");
         expect(orderExecutedTx2)
@@ -128,7 +128,7 @@ describe("SecurityToken", function () {
 
     let setupLiminalContract = async (tsl: number): Promise<[LiminalMarket, FakeContract<AUSD>]> => {
 
-        await liminalContract.orderExecuted(wallet2.address, symbol, tsl, 10, 10, "buy", 122, 1200, AddressZero)
+        await liminalContract.orderExecuted('123', wallet2.address, symbol, tsl, 10, 10, "buy", 122, 1200, AddressZero)
 
         return [liminalContract, aUsdContract];
     }

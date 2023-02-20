@@ -135,7 +135,7 @@ describe("LiminalMarket", function () {
         await expect(contract.createToken(symbol)).rejectedWith(reason);
     });
 
-    it('should buySecurityToken', async () => {
+    it('should buySecurityToken, should create token', async () => {
         let createContractResult = await serviceContract.createContract(TestHelper.AddressZero, wallet4.address, 100, "ble", "bla")
         let ble = await createContractResult.wait();
         let contractAddress = ble.events![0].args!.contractAddress;
@@ -149,7 +149,22 @@ describe("LiminalMarket", function () {
             .withArgs(wallet3.address, 100, accountId, 'AAPL', tokenAddress, contractAddress)
     })
 
+    it('should buySecurityToken, token should exists', async () => {
+        let createContractResult = await serviceContract.createContract(TestHelper.AddressZero, wallet4.address, 100, "ble", "bla")
+        let ble = await createContractResult.wait();
+        let contractAddress = ble.events![0].args!.contractAddress;
+        console.log('contractAddress', contractAddress);
+        await lmContract.mint(wallet4.address, 200 * 10 ** 5);
 
+        let createTokenResult = await contract.createToken('AAAA')
+        let tokenCreatedTx = await createTokenResult.wait()
+
+        let result = await contract.buySecurityToken(wallet3.address, 'AAAA', 100, contractAddress);
+
+        let tokenAddress = TestHelper.getArgValueFromEvent(tokenCreatedTx, 'TokenCreated', 'tokenAddress')
+        expect(result).to.emit(contract, 'BuyWithAUsd')
+            .withArgs(wallet3.address, 100, accountId, 'AAAA', tokenAddress, contractAddress)
+    })
     it("try to buy with aUSD, this is not allowed since it's not coming from aUSD contract, will revert", async () => {
         let reason = await contract.ONLY_AUSD_CAN_CALL_ME();
         await expect(contract.buyWithAUsd(userAddress, userAddress, 100, AddressZero))
@@ -194,9 +209,10 @@ describe("LiminalMarket", function () {
         let side = 'buy';
         let filledAt = new Date().getTime();
         let aUsdBalance = 100;
+        let orderId = '123';
 
         let reason = await ownerContract.ADDRESS_CANNOT_BE_ZERO();
-        await expect(ownerContract.orderExecuted(AddressZero, symbol, tsl, filledQty, filledAvgPrice, side, filledAt, aUsdBalance, AddressZero))
+        await expect(ownerContract.orderExecuted(orderId, AddressZero, symbol, tsl, filledQty, filledAvgPrice, side, filledAt, aUsdBalance, AddressZero))
             .rejectedWith(reason);
 
     });
@@ -206,6 +222,7 @@ describe("LiminalMarket", function () {
     }
 
     it("should execute order, with side = init, should work", async () => {
+        let orderId = '123';
         let symbol = 'abc';
         let tsl = getBigNumber(10);
         let filledQty = getBigNumber(3);
@@ -218,18 +235,19 @@ describe("LiminalMarket", function () {
         let symbolAddressZero = await contract.getSecurityToken(symbol);
         expect(symbolAddressZero).eq(AddressZero);
 
-        let result = await ownerContract.orderExecuted(userAddress, symbol, tsl, filledQty, filledAvgPrice, side, filledAt, aUsdBalance, spender);
+        let result = await ownerContract.orderExecuted(orderId, userAddress, symbol, tsl, filledQty, filledAvgPrice, side, filledAt, aUsdBalance, spender);
         let symbolAddress = await contract.getSecurityToken(symbol);
         expect(symbolAddress).not.be.eq(AddressZero);
 
         expect(result).to.emit(contract, "OrderExecuted")
-            .withArgs(userAddress, symbol, tsl, filledQty, filledAvgPrice, side, filledAt, serviceFee, aUsdBalance, spender);
+            .withArgs(orderId, userAddress, symbol, tsl, filledQty, filledAvgPrice, side, filledAt, serviceFee, aUsdBalance, spender);
         expect(result).to.emit(contract, "TokenCreated")
             .withArgs(symbolAddress, symbol);
         expect(aUsdContract.setBalance).to.be.calledWith(userAddress, aUsdBalance, OrderExecuted);
     })
 
     it("should execute order, with side = init, user already has this symbol amount, should fail", async () => {
+        let orderId = '123';
         let symbol = 'abc';
         let tsl = getBigNumber(10);
         let filledQty = getBigNumber(3);
@@ -241,14 +259,15 @@ describe("LiminalMarket", function () {
         let symbolAddressZero = await contract.getSecurityToken(symbol);
         expect(symbolAddressZero).eq(AddressZero);
 
-        let result = await ownerContract.orderExecuted(userAddress, symbol, tsl, filledQty, filledAvgPrice, side, filledAt, aUsdBalance, spender);
+        let result = await ownerContract.orderExecuted(orderId, userAddress, symbol, tsl, filledQty, filledAvgPrice, side, filledAt, aUsdBalance, spender);
         await result.wait();
-        await expect(ownerContract.orderExecuted(userAddress, symbol, tsl, filledQty, filledAvgPrice, 'init', filledAt, aUsdBalance, spender))
+        await expect(ownerContract.orderExecuted('222', userAddress, symbol, tsl, filledQty, filledAvgPrice, 'init', filledAt, aUsdBalance, spender))
             .rejectedWith('init cannot be called on existing balance');
 
     })
 
     it("should execute 3 orders, first init, then buy, then sell", async () => {
+
         let symbol = 'abc';
         let filledAvgPrice = getBigNumber(10);
         let filledAt = new Date().getTime();
@@ -258,31 +277,69 @@ describe("LiminalMarket", function () {
         let symbolAddressZero = await contract.getSecurityToken(symbol);
         expect(symbolAddressZero).eq(AddressZero);
 
-        let result = await ownerContract.orderExecuted(userAddress, symbol, getBigNumber(10), getBigNumber(10), filledAvgPrice, 'init', filledAt, aUsdBalance, spender);
+        let result = await ownerContract.orderExecuted('123', userAddress, symbol, getBigNumber(10), getBigNumber(10), filledAvgPrice, 'init', filledAt, aUsdBalance, spender);
         await result.wait();
-        let result2 = await ownerContract.orderExecuted(userAddress, symbol, getBigNumber(13), getBigNumber(3), filledAvgPrice, 'buy', filledAt, aUsdBalance, spender);
+        let result2 = await ownerContract.orderExecuted('1234', userAddress, symbol, getBigNumber(13), getBigNumber(3), filledAvgPrice, 'buy', filledAt, aUsdBalance, spender);
         await result2.wait();
-        let result3 = await ownerContract.orderExecuted(userAddress, symbol, getBigNumber(11), getBigNumber(2), filledAvgPrice, 'sell', filledAt, aUsdBalance, spender);
+        let result3 = await ownerContract.orderExecuted('12345', userAddress, symbol, getBigNumber(11), getBigNumber(2), filledAvgPrice, 'sell', filledAt, aUsdBalance, spender);
         await result3.wait();
 
         let symbolAddress = await contract.getSecurityToken(symbol);
         expect(symbolAddress).not.be.eq(AddressZero);
 
         expect(result).to.emit(contract, "OrderExecuted")
-            .withArgs(userAddress, symbol, getBigNumber(10), getBigNumber(10), filledAvgPrice, 'init', filledAt, 0, aUsdBalance, spender);
+            .withArgs('123', userAddress, symbol, getBigNumber(10), getBigNumber(10), filledAvgPrice, 'init', filledAt, 0, aUsdBalance, spender);
         expect(result).to.emit(contract, "TokenCreated")
             .withArgs(symbolAddress, symbol);
 
         expect(result2).to.emit(contract, "OrderExecuted")
-            .withArgs(userAddress, symbol, getBigNumber(13), getBigNumber(3), filledAvgPrice, 'buy', filledAt, serviceFee, aUsdBalance, spender);
+            .withArgs('1234', userAddress, symbol, getBigNumber(13), getBigNumber(3), filledAvgPrice, 'buy', filledAt, serviceFee, aUsdBalance, spender);
         expect(result2).to.not.emit(contract, "TokenCreated")
 
         expect(result3).to.emit(contract, "OrderExecuted")
-            .withArgs(userAddress, symbol, getBigNumber(11), getBigNumber(2), filledAvgPrice, 'sell', filledAt, getBigNumber(6, 16), aUsdBalance, spender);
+            .withArgs('12345', userAddress, symbol, getBigNumber(11), getBigNumber(2), filledAvgPrice, 'sell', filledAt, getBigNumber(6, 16), aUsdBalance, spender);
         expect(result3).to.not.emit(contract, "TokenCreated")
     })
 
-    it("try to execute order, but symbol is address zero, should be create new token and add to securityTokens list", async () => {
+    it("should execute 2 orders with same orderId, should fail the second execution", async () => {
+
+        let symbol = 'abc';
+        let filledAvgPrice = getBigNumber(10);
+        let filledAt = new Date().getTime();
+        let aUsdBalance = getBigNumber(100);
+        let spender = wallet3.address;
+        let symbolAddressZero = await contract.getSecurityToken(symbol);
+        expect(symbolAddressZero).eq(AddressZero);
+
+        let result = await ownerContract.orderExecuted('123', userAddress, symbol, getBigNumber(10), getBigNumber(10), filledAvgPrice, 'init', filledAt, aUsdBalance, spender);
+
+        await expect(ownerContract.orderExecuted('123', userAddress, symbol, getBigNumber(13), getBigNumber(3), filledAvgPrice, 'buy', filledAt, aUsdBalance, spender))
+            .rejectedWith('Order exists')
+
+
+
+        expect(result).to.emit(contract, "OrderExecuted")
+            .withArgs('123', userAddress, symbol, getBigNumber(10), getBigNumber(10), filledAvgPrice, 'init', filledAt, 0, aUsdBalance, spender);
+    })
+
+    it("should execute 1 order, then getByOrderId the recipient", async () => {
+
+        let symbol = 'abc';
+        let filledAvgPrice = getBigNumber(10);
+        let filledAt = new Date().getTime();
+        let aUsdBalance = getBigNumber(100);
+        let spender = wallet3.address;
+        let symbolAddressZero = await contract.getSecurityToken(symbol);
+        expect(symbolAddressZero).eq(AddressZero);
+
+        await ownerContract.orderExecuted('123', userAddress, symbol, getBigNumber(10), getBigNumber(10), filledAvgPrice, 'init', filledAt, aUsdBalance, spender);
+
+        let recipient = await ownerContract.getByOrderId('123');
+        expect(recipient).to.be.eq(userAddress);
+    })
+
+    it("try to execute order, symbol is address zero, should be create new token and add to securityTokens list", async () => {
+        let orderId = '123';
         let symbol = 'abc';
         let tsl = getBigNumber(10);
         let filledQty = getBigNumber(3);
@@ -295,18 +352,19 @@ describe("LiminalMarket", function () {
         let symbolAddressZero = await contract.getSecurityToken(symbol);
         expect(symbolAddressZero).eq(AddressZero);
 
-        let result = await ownerContract.orderExecuted(userAddress, symbol, tsl, filledQty, filledAvgPrice, side, filledAt, aUsdBalance, spender);
+        let result = await ownerContract.orderExecuted(orderId, userAddress, symbol, tsl, filledQty, filledAvgPrice, side, filledAt, aUsdBalance, spender);
         let symbolAddress = await contract.getSecurityToken(symbol);
         expect(symbolAddress).not.be.eq(AddressZero);
 
         expect(result).to.emit(contract, "OrderExecuted")
-            .withArgs(userAddress, symbol, tsl, filledQty, filledAvgPrice, side, filledAt, serviceFee, aUsdBalance, spender);
+            .withArgs(orderId, userAddress, symbol, tsl, filledQty, filledAvgPrice, side, filledAt, serviceFee, aUsdBalance, spender);
         expect(result).to.emit(contract, "TokenCreated")
             .withArgs(symbolAddress, symbol);
         expect(aUsdContract.setBalance).to.be.calledWith(userAddress, aUsdBalance, OrderExecuted);
     })
 
     it("Order executed, token exists before orderExecuted is called", async () => {
+        let orderId = '123';
         let recipient = userAddress;
         let symbol = "ABC";
         let qty = getBigNumber(1000);
@@ -323,7 +381,7 @@ describe("LiminalMarket", function () {
         expect(tokenTx).to.emit(contract, "TokenCreated")
             .withArgs(symbolAddress, symbol);
 
-        let result = await ownerContract.orderExecuted(recipient, symbol, qty, filledQty, filledAvgPrice, side, filledAt, aUsdBalance, spender)
+        let result = await ownerContract.orderExecuted(orderId, recipient, symbol, qty, filledQty, filledAvgPrice, side, filledAt, aUsdBalance, spender)
 
         let securityToken = SecurityToken__factory.connect(symbolAddress, wallet2);
 
@@ -331,7 +389,7 @@ describe("LiminalMarket", function () {
 
         expect(aUsdContract.setBalance).to.be.calledWith(recipient, aUsdBalance, OrderExecuted);
         expect(result).to.emit(contract, "OrderExecuted")
-            .withArgs(recipient, symbol, qty, filledQty, filledAvgPrice, side, filledAt, serviceFee, aUsdBalance, spender);
+            .withArgs(orderId, recipient, symbol, qty, filledQty, filledAvgPrice, side, filledAt, serviceFee, aUsdBalance, spender);
 
     })
 
@@ -364,7 +422,7 @@ describe("LiminalMarket", function () {
 
         await ownerContract.revokeMintAndBurnRole(wallet2.address);
 
-        await expect(contract.orderExecuted(wallet3.address, "", 0, 0, 0, "buy", 0, 0, AddressZero))
+        await expect(contract.orderExecuted('123', wallet3.address, "", 0, 0, 0, "buy", 0, 0, AddressZero))
             .rejectedWith('missing role');
     })
 
@@ -377,7 +435,7 @@ describe("LiminalMarket", function () {
     it("pause contract", async () => {
         await ownerContract.pause();
         let reason = "Pausable: paused";
-        await expect(contract.orderExecuted(AddressZero, "", 0, 0, 0, "buy", 0, 0, AddressZero))
+        await expect(contract.orderExecuted('123', AddressZero, "", 0, 0, 0, "buy", 0, 0, AddressZero))
             .rejectedWith(reason);
 
         await expect(contract.createToken("abc"))
@@ -396,7 +454,8 @@ describe("LiminalMarket", function () {
 
         await expect(contract.createToken("abc"))
             .rejectedWith(reason);
-
+        await expect(contract.buySecurityToken(wallet3.address, 'AADD', 1200, wallet2.address))
+            .rejectedWith(reason);
         await ownerContract.unpause();
 
         expect(await contract.createToken("abc"))

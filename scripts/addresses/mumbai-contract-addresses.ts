@@ -6,13 +6,13 @@ export default class mumbaiContractAddresses implements ContractAddresses {
     NetworkName = "mumbai";
     IsTestNetwork = true;
 
-    KYC_ADDRESS = "0x9e2B28D9F841300bE3B64e505dEcA36c35250609";
-    AUSD_ADDRESS = "0x38F2B1E9F11937dD276D64521535b15280A7F137";
-    LIMINAL_MARKET_ADDRESS = "0x6e9C29e416dc9F7A6A03ffebaB3f02Ef62a1baE4";
-    MARKET_CALENDAR_ADDRESS = "0xc6B29dfd4FD756EF94b3A3FF7a531F4467BDDA75";
-    LM_ADDRESS: string = '';
-    SERVICE_CONTRACT_ADDRESS: string = '';
-    NO_FEE_CONTRACT_ADDRESS: string = '';
+    KYC_ADDRESS = "0xA5C844558a93590A32D1110D7031531A0bBf0773";
+    AUSD_ADDRESS = "0xc4d1f8D35DB0f0d3E91a3fc8485792F4Df60C387";
+    LIMINAL_MARKET_ADDRESS = "0x0D8c3D4F4B29EfC3c54172803dA8a7f1CA2E6189";
+    MARKET_CALENDAR_ADDRESS = "0x67Dad7E344C6137DF922924a0aAb26bba862BFDe";
+    LM_ADDRESS = "0x808C2F1bBE4C7fE72F77e84F57C346603E63291e";
+    SERVICE_CONTRACT_ADDRESS = "0x0827C71852ba59661aAd9f1fab25B377B3f39C40";
+    NO_FEE_CONTRACT_ADDRESS = "0x3BBc034e9dC74749000fE384eD504E7d58281065";
 
     getRelayerAddress(): string {
         return FixedAddresses.getRelayerAddress(this.NetworkName);
@@ -20,6 +20,4 @@ export default class mumbaiContractAddresses implements ContractAddresses {
     getLMServiceFeeAddress(): string {
         return FixedAddresses.getLMServiceFeeAddress(this.NetworkName);
     }
-
-
 }

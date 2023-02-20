@@ -106,16 +106,18 @@ contract LM is Initializable, ERC20Upgradeable, ERC20BurnableUpgradeable, Pausab
         if (balanceOf(walletAddress) >= lmServiceFee + serviceFee) {
             if (lmServiceFee > 0) {
                 _transfer(walletAddress, lmServiceFeeAddress, lmServiceFee);
+                unpaidLMServiceFee[walletAddress] = 0;
             }
 
             if (serviceFee > 0) {
                 _transfer(walletAddress, serviceFeeAddress, serviceFee);
+                unpaidServiceFee[walletAddress] = 0;
             }
 
             emit ServiceFeePaid(walletAddress, lmServiceFeeAddress, lmServiceFee, serviceFeeAddress, serviceFee);
         } else {
-            unpaidLMServiceFee[walletAddress] = lmServiceFee;
-            unpaidServiceFee[walletAddress] = serviceFee;
+            unpaidLMServiceFee[walletAddress] += lmServiceFee;
+            unpaidServiceFee[walletAddress] += serviceFee;
 
             emit ServiceFeePaidFailed(walletAddress, lmServiceFeeAddress, lmServiceFee, serviceFeeAddress, serviceFee);
         }

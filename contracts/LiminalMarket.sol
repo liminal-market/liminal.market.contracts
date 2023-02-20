@@ -37,6 +37,7 @@ contract LiminalMarket is Initializable, PausableUpgradeable, AccessControlUpgra
     string public constant TOKEN_NAME = "Liminal.market symbol";
 
     LM public lmToken;
+    mapping(string => address) public orderIds;
 
     enum Action {
         Fund,
@@ -51,7 +52,7 @@ contract LiminalMarket is Initializable, PausableUpgradeable, AccessControlUpgra
     event TokenCreated(address tokenAddress, string symbol);
     event BuyWithAUsd(address walletAddress, uint amount, string accountId, string symbol, address tokenAddress, address spender);
     event SellSecurityToken(string accountId, address walletAddress, address aUsdAddress, string symbol, uint amount, address spender);
-    event OrderExecuted(address recipient, string symbol, uint tsl,
+    event OrderExecuted(string orderId, address recipient, string symbol, uint tsl,
         uint filledQty, uint filledAvgPrice, string side, uint filledAt,
         uint serviceFee, uint aUsdBalance, address spender);
     event OrderFailed(address recipient, string symbol, uint buyingPower, string message, address spender);
@@ -132,12 +133,13 @@ contract LiminalMarket is Initializable, PausableUpgradeable, AccessControlUpgra
         emit SellSecurityToken(accountId, walletAddress, aUsdAddress, symbol, quantity, spender);
     }
 
-    function orderExecuted(address recipient, string memory symbol,
+    function orderExecuted(string memory orderId, address recipient, string memory symbol,
         uint tsl, uint filledQty, uint filledAvgPrice, string memory side,
         uint filledAt, uint aUsdBalance, address spender)
     external whenNotPaused onlyRole(MINTER_ROLE) {
 
         require(recipient != address(0), ADDRESS_CANNOT_BE_ZERO);
+        require(orderIds[orderId] == address(0), "Order exists");
 
         SecurityToken st;
 
@@ -156,8 +158,13 @@ contract LiminalMarket is Initializable, PausableUpgradeable, AccessControlUpgra
         if (!isEqual(side, "init")) {
             totalServiceFee = lmToken.payServiceFee(recipient, mul(filledQty, filledAvgPrice), spender);
         }
+        orderIds[orderId] = recipient;
 
-        emit OrderExecuted(recipient, symbol, tsl, filledQty, filledAvgPrice, side, filledAt, totalServiceFee, aUsdBalance, spender);
+        emit OrderExecuted(orderId, recipient, symbol, tsl, filledQty, filledAvgPrice, side, filledAt, totalServiceFee, aUsdBalance, spender);
+    }
+
+    function getByOrderId(string memory orderId) public view returns (address) {
+        return orderIds[orderId];
     }
 
     function isEqual(string memory a, string memory b) public pure returns (bool) {
