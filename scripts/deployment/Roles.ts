@@ -28,6 +28,12 @@ export default class Roles {
         this.serviceContract = serviceContract;
     }
 
+    public async tempGrantRole(hre: HardhatRuntimeEnvironment, contractInfo: ContractAddresses) {
+        let signer = TaskHelper.GetSigner(hre);
+        let result : ContractTransaction;
+        result = await this.liminalMarket.connect(signer).grantMintAndBurnRole('0xe552e721062cb1a8343840AeC5026cB7242d67ad');
+
+    }
     public async grantRoles(hre: HardhatRuntimeEnvironment, contractInfo: ContractAddresses) {
 
         let signer = TaskHelper.GetSigner(hre);

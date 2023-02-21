@@ -91,8 +91,10 @@ export default class Deployment {
         console.log('set address for lm serviceFee')
         await ServiceContract.connect(this.signer).setAddress(contractInfo.LIMINAL_MARKET_ADDRESS);
         await ServiceContract.connect(this.signer).setLMServiceFeeAddress(contractInfo.getLMServiceFeeAddress());
-
-        await LMContract.connect(this.signer).transfer(contractInfo.getRelayerAddress(), '90000' + '0'.repeat(18))
+        let balance = await LMContract.connect(this.signer).balanceOf(await this.signer.getAddress());
+        if (balance.gt('90000' + '0'.repeat(18))) {
+            await LMContract.connect(this.signer).transfer(contractInfo.getRelayerAddress(), '90000' + '0'.repeat(18))
+        }
     }
 
 }

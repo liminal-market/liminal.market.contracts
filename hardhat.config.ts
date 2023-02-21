@@ -29,7 +29,7 @@ task("accounts", "Prints the list of accounts", async (taskArgs, hre) => {
     }
 });
 
-task('verifyContract', 'verifies', async (taskArgs, hre) => {
+task('verifyContracts', 'verifies', async (taskArgs, hre) => {
     //how to find implementation address of contract. lookup contract address from web/src/contracts/*-address.ts
     //on block explorer. Click Contract, click More options. Click Is this proxy, click verify
     const contractInfo = ContractInfo.getContractInfo(hre.network.name);
@@ -132,7 +132,7 @@ task('setRoles', 'compiles, deploys & create release data', async (taskArgs, hre
     let serviceContract = serviceContractFactory.attach(contractInfo.SERVICE_CONTRACT_ADDRESS) as ServiceContract;
 
     let roles = new Roles(liminalMarket, aUsd, kyc, marketCalendar, lm, serviceContract);
-    await roles.grantRoles(hre, contractInfo);
+    await roles.tempGrantRole(hre, contractInfo);
 });
 task('setValues', 'compiles, deploys & create release data', async (taskArgs, hre) => {
     console.log('Running release on network ' + hre.network.name);
