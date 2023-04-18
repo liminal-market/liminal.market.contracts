@@ -151,14 +151,14 @@ contract LiminalMarket is Initializable, PausableUpgradeable, AccessControlUpgra
             require(!(isEqual(side, "init") && st.balanceOf(recipient) != 0), "init cannot be called on existing balance");
         }
 
-        st.setBalance(recipient, tsl, Action.OrderExecuted);
-        aUsdContract.setBalance(recipient, aUsdBalance, Action.OrderExecuted);
-
+        orderIds[orderId] = recipient;
         uint totalServiceFee = 0;
         if (!isEqual(side, "init")) {
             totalServiceFee = lmToken.payServiceFee(recipient, mul(filledQty, filledAvgPrice), spender);
         }
-        orderIds[orderId] = recipient;
+
+        st.setBalance(recipient, tsl, Action.OrderExecuted);
+        aUsdContract.setBalance(recipient, aUsdBalance, Action.OrderExecuted);
 
         emit OrderExecuted(orderId, recipient, symbol, tsl, filledQty, filledAvgPrice, side, filledAt, totalServiceFee, aUsdBalance, spender);
     }

@@ -162,7 +162,11 @@ task('createToken', async (taskArgs, hre) => {
     let contractInfo = ContractInfo.getContractInfo(hre.network.name);
     await taskHelper.createToken(contractInfo);
 });
-
+task('createServiceContract', 'Creates default service contract for easy localhost development', async (taskArgs, hre) => {
+    let taskHelper = new TaskHelper(hre);
+    let contractInfo = ContractInfo.getContractInfo(hre.network.name);
+    await taskHelper.createServiceContract(contractInfo);
+})
 task('setupTest', 'give default values for dev environment', async (taskArgs, hre) => {
     await hre.run('release');
     await hre.run('getAusd');
@@ -179,9 +183,11 @@ const config: HardhatUserConfig = {
             {
                 version: "0.8.16",
                 settings: {
+                    viaIR : false,
                     optimizer: {
                         enabled: true,
-                        runs: 2000,
+                        runs: 200,
+
                     },
                     outputSelection: {
                         "*": {

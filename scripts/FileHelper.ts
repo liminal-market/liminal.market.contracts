@@ -19,7 +19,7 @@ export default class FileHelper {
         let constantFile = this.getConstantFile('ContractAddress.contracts', addresses)
         await fs.writeFileSync('./scripts/addresses/' + addresses.NetworkName + '-contract-addresses.ts', constantFile, {encoding: 'utf-8'});
 
-        constantFile = this.getConstantFile('Abis.libraries.core', addresses)
+        constantFile = this.getConstantFile('ContractAddress.libraries', addresses)
         await fs.writeFileSync('../liminal.market.libraries/javascript/core/src/networks/' + this.UpperFirstLetter(addresses.NetworkName) + 'Network.ts', constantFile, 'utf-8');
         console.log('write to cloud ' + addresses.NetworkName, constantFile)
         constantFile = this.getConstantFile('ContractAddress.cloud', addresses)
@@ -50,7 +50,8 @@ export default class FileHelper {
             }
         }
 
-        obj.balanceOfAbi = JSON.stringify({
+        obj.balanceOfAbi = JSON.stringify(
+            {
             "inputs": [
                 {
                     "internalType": "address",

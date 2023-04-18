@@ -1,5 +1,13 @@
 {
   "name": "liminal.market.contracts",
+  "description": "These are the smart contracts for Liminal.market. The execution of these contracts represents a trading order going through the system, buying and selling stocks & ETFs at the broker. aUSD represents the dollar value at the broker. SecurityToken represent each stock traded in the system",
+  "repository": {
+    "url": "https://github.com/liminal-market/liminal.market.contracts"
+  },
+  "bugs": {
+    "url": "https://github.com/liminal-market/liminal.market.contracts/issues"
+  },
+  "homepage": "https://liminal.market",
   "devDependencies": {
     "@anders-t/ethers-ledger": "^1.0.4",
     "@defi-wonderland/smock": "^2.0.7",
@@ -45,7 +53,7 @@
   "scripts": {
     "test": "nyc --reporter=text --reporter=html --reporter=lcov mocha --recursive \"test/scripts/**/*.ts\"",
     "hardhat": "npx hardhat node --network hardhat --verbose --show-stack-traces",
-    "deploy-local": "npx hardhat release --network localhost --show-stack-traces",
+    "deploy-local": "npx hardhat release --network localhost --show-stack-traces && npx hardhat createServiceContract --network localhost",
     "deploy-mumbai": "npx hardhat release --network mumbai --show-stack-traces",
     "deploy-fuji": "npx hardhat release --network fuji --show-stack-traces",
     "verify-fuji": "npx hardhat verifyContract --network fuji --show-stack-traces",

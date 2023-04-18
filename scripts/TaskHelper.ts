@@ -1,5 +1,5 @@
 import {HardhatRuntimeEnvironment} from "hardhat/types";
-import {AUSD, LiminalMarket, MarketCalendar} from "../typechain-types";
+import {AUSD, LiminalMarket, MarketCalendar, ServiceContract} from "../typechain-types";
 import {LedgerSigner} from "@anders-t/ethers-ledger";
 import {BigNumber} from "ethers";
 import ContractAddresses from "./addresses/ContractAddresses";
@@ -7,6 +7,7 @@ import ContractAddresses from "./addresses/ContractAddresses";
 export default class TaskHelper {
     hre: HardhatRuntimeEnvironment;
 
+    static AddressZero = '0x0000000000000000000000000000000000000000';
     constructor(hre: HardhatRuntimeEnvironment) {
         this.hre = hre;
         console.log('network:', hre.network.name);
@@ -59,5 +60,23 @@ let symbolAddress = await lmContract.getSecurityToken('MSFT')
     async createToken(contractInfo: ContractAddresses) {
         const lmContract = await this.hre.ethers.getContractAt("LiminalMarket", contractInfo.LIMINAL_MARKET_ADDRESS) as LiminalMarket;
         await lmContract.createToken('MSFT')
+    }
+
+    async createServiceContract(contractInfo: ContractAddresses) {
+
+        const serviceContract = await this.hre.ethers.getContractAt("ServiceContract", contractInfo.SERVICE_CONTRACT_ADDRESS) as ServiceContract;
+        let feeAddress = await serviceContract.getServiceFeeAddress(contractInfo.LIMINAL_MARKET_ADDRESS)
+        console.log('fee address:', feeAddress);
+        if (feeAddress == TaskHelper.AddressZero) {
+            console.log('create service contract')
+            await serviceContract.createContract(contractInfo.LIMINAL_MARKET_ADDRESS, "0x8626f6940E2eb28930eFb4CeF49B2d1F2C9C1199", 100, "liminal.market", "liminal.market");
+        }
+
+        feeAddress = await serviceContract.getServiceFeeAddress(contractInfo.NO_FEE_CONTRACT_ADDRESS)
+        console.log('fee address:', feeAddress);
+        if (feeAddress == TaskHelper.AddressZero) {
+            console.log('create service contract')
+            await serviceContract.createContract(contractInfo.NO_FEE_CONTRACT_ADDRESS, "0x8626f6940E2eb28930eFb4CeF49B2d1F2C9C1199", 0, "liminal.market", "liminal.market");
+        }
     }
 }
